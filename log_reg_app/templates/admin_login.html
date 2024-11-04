@@ -1,0 +1,44 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book Shop Login</title>
+    <link rel="stylesheet" href="{% static 'user/css/admin_login.css' %}">
+</head>
+<body>
+    <div class="container">
+        <div class="form-container">
+            <h1>Pagino</h1>
+            <h2>Welcome 👋</h2>
+            <p>Please login here</p>
+            <form action="" method="post">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="text">Username</label>
+                    <input type="text" id="username" name="username" placeholder="Username" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" placeholder="**************" required>
+                </div>
+                <div class="remember-me">
+                    <div class="rem_content">
+                        <input type="checkbox" id="remember" name="remember">
+                        <label for="remember">Remember me</label>
+                    </div>
+                    <a href="#" class="forgot-password">Forgot Password?</a>
+                </div>
+                <!-- Add login button here -->
+                <div class="form-group">
+                    <button type="submit" class="login-btn">Login</button>
+                </div>
+            </form>
+        </div>
+        <div class="image-container">
+            <img src="{% static 'user/images/logo/book_logo.png' %}" alt="Book icon">
+        </div>
+    </div>
+</body>
+</html>

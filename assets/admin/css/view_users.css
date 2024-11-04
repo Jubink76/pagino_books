@@ -1,0 +1,72 @@
+.profile-upload-container {
+    grid-column: span 2;
+    text-align: center;
+    margin: 20px 0;
+}
+
+.profile-image-wrapper {
+    width: 150px;
+    height: 150px;
+    margin: 0 auto;
+    position: relative;
+    cursor: pointer;
+}
+
+.profile-image {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid #00d25b;
+}
+
+.upload-overlay {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    background: #00d25b;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.camera-icon {
+    width: 16px;
+    height: 16px;
+    color: white;
+}
+
+.file-input {
+    display: none;
+}
+
+.upload-text {
+    margin-top: 12px;
+    color: #9ca3af;
+    font-size: 0.875rem;
+}
+
+.format-text {
+    color: #6b7280;
+    font-size: 0.75rem;
+    margin-top: 4px;
+}
+.btn-danger{
+    background-color: #ef0a0a;
+    color: #ffffff;
+    padding: 10px 24px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+}
+.status-inactive {
+    font-weight: bold;
+}
+
+.status-active {
+    font-weight: bold;
+}

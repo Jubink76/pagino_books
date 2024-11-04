@@ -1,0 +1,77 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SignUp page</title>
+    <link rel="stylesheet" href="{% static 'user/css/user_signup.css' %}">
+</head>
+<body class="cnt-home">
+    {% if messages %}
+    <div id="message-container">
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+        {% endfor %}
+    </div>
+{% endif %}
+    <!-- Include your existing header here -->
+    
+    <div class="body-content" id="top-banner-and-menu">
+        <div class="signup-container">
+            <div class="signup-content">
+                <div class="signup-form-container">
+                    <form action="{% url 'user_signup' %}" method="post" class="signup-form">
+
+                        {% csrf_token %}
+                        
+                        <h2>Sign Up</h2>
+                        <p>Create Account !!!</p>
+                        <div class="form-group">
+                            <input type="text" class="form-control" name="first_name" placeholder="First Name" required="required">
+                        </div>
+                        <div class="form-group">
+                            <input type="text" class="form-control" name="last_name" placeholder="Last Name" required="required">
+                        </div>
+                        <div class="form-group">
+                            <input type="text" class="form-control" name="username" placeholder="Username" required="required">
+                        </div>
+                        <div class="form-group">
+                            <input type="email" class="form-control" name="email" placeholder="Email" required="required">
+                        </div>
+                        <div class="form-group">
+                            <input type="tel" class="form-control" name="phone_number" placeholder="Phone Number" required="required">
+                        </div>
+                        <div class="form-group">
+                            <select class="form-control" name="gender" required="required">
+                                <option value="">Select Gender</option>
+                                <option value="male">Male</option>
+                                <option value="female">Female</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <input type="password" class="form-control" name="password" placeholder="Password" required="required">
+                        </div>
+                        <div class="form-group">
+                            <input type="password" class="form-control" name="confirm_password" placeholder="Confirm Password" required="required">
+                        </div>
+                        <div class="form-group">
+                            <button type="submit" class="btn btn-primary btn-block btn-lg">Sign Up</button>
+                        </div>
+                        <div class="text-center">Already have an account? <a href="{% url 'user_login' %}">Sign In</a></div>
+                    </form>
+                </div>
+                <div class="signup-image">
+                    <img src="{% static 'user/images/logo/login_image.png' %}" alt="Sign Up">
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

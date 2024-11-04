@@ -1,0 +1,123 @@
+.login-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: calc(100vh - 200px);
+    background-color: #f8f9fa;
+}
+
+.login-form {
+    background-color: #ffffff;
+    padding: 40px;
+    border-radius: 8px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 400px;
+}
+
+.login-form h1 {
+    color: #ff6b6b;
+    font-size: 36px;
+    margin-bottom: 10px;
+}
+
+.login-form h2 {
+    color: #333;
+    font-size: 24px;
+    margin-bottom: 30px;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    color: #555;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+/* Updated remember-forgot styles */
+.form-group:last-of-type {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 15px 0;
+}
+/* Remember me style */
+.form-group input[type="checkbox"] {
+    width: auto;
+    margin-right: 5px;
+}
+
+.form-group label[for="remember"] {
+    display: inline;
+    margin-left: 0;
+}
+
+/* Forgot password link style */
+.forgot-password {
+    color: #ff6b6b;  /* Same color as the button */
+    text-decoration: none;
+    margin-left: auto;
+}
+
+.forgot-password:hover {
+    text-decoration: underline;
+}
+
+.btn-signin {
+    background-color: #ff6b6b;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    width: 100%;
+    font-size: 16px;
+    margin-top: 10px;
+}
+
+.btn-signin:hover {
+    background-color: #ff5252;
+}
+
+.signup-link {
+    text-align: center;
+    margin-top: 20px;
+}
+
+.signup-link a {
+    color: #ff6b6b;
+    text-decoration: none;
+}
+
+.social-login {
+    
+}
+
+.social-login button {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid #ddd;
+    background-color: white;
+    border-radius: 4px;
+    margin: 0 5px;
+}
+
+.login-image {
+    width: 400px;
+    height: 450px;
+}
+
+/* Sign up link style */
+.signup-link a {
+    color: #ff6b6b;
+    text-decoration: none;

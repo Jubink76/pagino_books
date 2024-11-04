@@ -1,0 +1,161 @@
+{% extends 'admin_base.html' %}
+{% load static %}
+
+{% block csslink %}
+<link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+{% endblock %}
+
+
+{% block content %}
+<div class="container-fluid py-5">
+    <div class="card">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="text-white mb-0">Add New Product</h1>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb mb-0">
+                        <li class="breadcrumb-item"><a href="{% url 'admin_dashboard' %}" class="text-secondary">Admin</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'admin_products' %}" class="text-secondary">Products</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">Add Product</li>
+                    </ol>
+                </nav>
+            </div>
+            <form method="POST" action="{% url 'add_products' %}" enctype="multipart/form-data">
+                {% csrf_token %}
+                <!-- General Information -->
+                <div class="section mb-4">
+                    <h2 class="section-title mb-3">General Information</h2>
+                    
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Book Name</label>
+                            <input type="text" name="book_name" class="form-control" placeholder="Type product name here...">
+                        </div>
+                        <div class="col-md-12 mb-3">
+                            <label class="form-label">Description</label>
+                            <textarea class="form-control" name="description" rows="4" placeholder="Type product description here..."></textarea>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Stock Quantity</label>
+                            <input type="number" name="stock_quantity" class="form-control" placeholder="Type Stock Quantity here...">
+                        </div>
+                    
+                </div>
+            
+                <!-- Pricing -->
+                <div class="section mb-4">
+                    <h2 class="section-title mb-3">Pricing</h2>
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Base Price</label>
+                            <input type="text" name="price" class="form-control" placeholder="Type base price here...">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">VAT Amount (%)</label>
+                            <input type="text" name="vat_amount" class="form-control" placeholder="Type VAT amount...">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Discount Percentage (%)</label>
+                            <input type="text" name="discount_percentage" class="form-control" placeholder="Type discount percentage...">
+                        </div>
+                    </div>
+                </div>
+            
+                <!-- Category, Author, Language -->
+                <div class="section mb-4">
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Category</label>
+                            <!-- Input field with dropdown suggestions -->
+                            <input list="categories" name="category" class="form-control" placeholder="Select or type category">
+                            
+                            <!-- Datalist with predefined options -->
+                            <datalist id="categories">
+                                {% for category in categories %}
+                                    <option value="{{ category.category_name }}">
+                                {% endfor %}
+                            </datalist>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Author Name</label>
+                            <input type="text" name="author_name" class="form-control" placeholder="Author name">
+                            <datalist id="authors">
+                                {% for author in authors %}
+                                    <option value="{{ author.author_name }}">
+                                {% endfor %}
+                            </datalist>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Language</label>
+                            <!-- Input field with dropdown suggestions -->
+                            <input list="languages" name="language" class="form-control" placeholder="Select or type language">
+                            
+                            <!-- Datalist with predefined options -->
+                            <datalist id="languages">
+                                {% for language in languages %}
+                                    <option value="{{ language.language_name }}">
+                                {% endfor %}
+                            </datalist>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-12 mb-3">
+                    <label class="form-label">Author Details</label>
+                    <textarea class="form-control" name="bio" rows="5" placeholder="Type product description here..."></textarea>
+                </div>
+            
+                <!-- Image Upload -->
+                <div class="mb-4 d-flex gap-4">
+                    {% for i in "1234" %}
+                    <div class="border border-dashed border-secondary rounded-lg p-4 d-flex flex-column align-items-center bg-dark text-white" style="flex: 1;">
+                        <div class="mb-2">
+                          <!-- Image placeholder for preview with unique id -->
+                          <img src="{% static 'admin/images/logo/upload.webp' %}" alt="Upload icon" id="image_preview_{{i}}" class="img-fluid" onclick="triggerFileInput({{i}})" style="cursor: pointer;">
+                        </div>
+                        <p class="text-sm">Drag and drop image here, or click add image</p>
+                        <!-- Hidden file input with unique id -->
+                        <input type="file" name="book_images" class="d-none" id="profile_photo_{{i}}" accept="image/jpeg,image/png" onchange="previewImage(event, {{i}})">
+                        
+                        <!-- Add Image Button -->
+                        <label for="profile_photo_{{i}}" class="cursor-pointer text-center">
+                          <button type="button" class="btn btn-primary mt-2" onclick="submitImage()">Add image</button>
+                        </label>
+                    </div>
+                    {% endfor %}
+                </div>
+            
+                <!-- Action Buttons -->
+                <div class="d-flex justify-content-end gap-3 mt-4">
+                    <a href="{% url 'admin_users' %}" class="btn btn-secondary">Cancel</a>
+                    <button type="submit" class="btn btn-primary">Add Product</button>
+                </div>
+            </form>            
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    function previewImage(event, id) {
+        const file = event.target.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = function(e) {
+            document.getElementById(`image_preview_${id}`).src = e.target.result; // Use dynamic id
+          };
+          reader.readAsDataURL(file); // Convert to base64 string for preview
+        }
+      }
+      
+      // JavaScript function to trigger the file input by clicking on the preview image
+      function triggerFileInput(id) {
+        document.getElementById(`profile_photo_${id}`).click(); // Use dynamic id
+      }
+      
+      // JavaScript function to handle form submission when clicking "Add image"
+      function submitImage() {
+        document.getElementById('profile_photo_form').submit(); // Assumes a form with this id is wrapping the input
+      }
+  </script>
+
+{% endblock %}

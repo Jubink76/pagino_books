@@ -1,0 +1,202 @@
+{% extends 'admin_base.html' %}
+{% load static %}
+
+{% block csslink %}
+<link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+{% endblock %}
+
+
+{% block content %}
+<div class="container-fluid py-5">
+    <div class="card">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="text-white mb-0">Edit Product</h1>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb mb-0">
+                        <li class="breadcrumb-item"><a href="{% url 'admin_dashboard' %}" class="text-secondary">Admin</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'admin_products' %}" class="text-secondary">Products</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">Edit Product</li>
+                    </ol>
+                </nav>
+            </div>
+            <form method="POST" action="{% url 'edit_product' book.id %}" enctype="multipart/form-data">
+                {% csrf_token %}
+                <!-- General Information -->
+                <div class="section mb-4">
+                    <h2 class="section-title mb-3">General Information</h2>
+                    
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Book Name</label>
+                            <input type="text" name="book_name" class="form-control" value="{{ book.book_name }}">
+                        </div>
+                        <div class="col-md-12 mb-3">
+                            <label class="form-label">Description</label>
+                            <textarea class="form-control" name="description" rows="4" >{{ book.description }}</textarea>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Stock Quantity</label>
+                            <input type="number" name="stock_quantity" class="form-control" value="{{ book.stock_quantity }}">
+                        </div>
+                    
+                </div>
+            
+                <!-- Pricing -->
+                <div class="section mb-4">
+                    <h2 class="section-title mb-3">Pricing</h2>
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Base Price</label>
+                            <input type="text" name="price" class="form-control" value="{{ book.price }}">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">VAT Amount (%)</label>
+                            <input type="text" name="vat_amount" class="form-control" value="{{ book.vat_amount }}">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Discount Percentage (%)</label>
+                            <input type="text" name="discount_percentage" class="form-control" value="{{ book.discount_percentage }}">
+                        </div>
+                    </div>
+                </div>
+            
+                <!-- Category, Author, Language -->
+                <div class="section mb-4">
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Category</label>
+                            <input list="categories" name="category" class="form-control" 
+                                value="{% if book.category %}{{ book.category.category_name }}{% else %}{% endif %}">
+                            <datalist id="categories">
+                                {% for category in categories %}
+                                    <option value="{{ category.category_name }}">
+                                {% endfor %}
+                            </datalist>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Author Name</label>
+                            <input type="text" name="author_name" class="form-control" 
+                                value="{% if book.author %}{{ book.author.name }}{% else %}{% endif %}">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Language</label>
+                            <input list="languages" name="language" class="form-control" 
+                                value="{% if book.language %}{{ book.language }} {% else %}{% endif %}">
+                            <datalist id="languages">
+                                {% for language in languages %}
+                                    <option value="{{ language.name }}">
+                                {% endfor %}
+                            </datalist>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-12 mb-3">
+                    <label class="form-label">Author Details</label>
+                    <textarea class="form-control" name="bio" rows="5">{% if book.author %}{{ book.author.bio }}{% else %}{% endif %}</textarea>
+                </div>
+            
+                <!-- Image Upload -->
+                <h2 class="section-title mb-3">Edit Images</h2>
+                {% comment %} <div class="row mb-4">
+                    {% for image in images %}
+                        <div class="col-md-3 text-center mb-2">
+                            <!-- Display the current image -->
+                            <img src="{{ image.image.url }}" alt="Book Image" id="image_preview_{{ image.id }}" class="img-fluid mb-2" style="max-width: 100px; height: auto; object-fit: cover; border-radius: 0;">
+                            
+                            <div class="mt-2">
+                                <input type="file" name="updated_images_{{ image.id }}" class="form-control-file d-none" id="file_input_{{ image.id }}" accept="image/jpeg,image/png" onchange="previewImage(event, {{ image.id }})">
+                                <button type="button" class="btn btn-sm btn-primary" onclick="document.getElementById('file_input_{{ image.id }}').click()">Update Image</button>
+                            </div>
+                
+                            <!-- Preview and Delete Checkbox -->
+                            <div class="mt-2">
+                                <input type="checkbox" name="remove_images" value="{{ image.id }}">
+                                <label>Delete this image</label>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div> {% endcomment %}
+                <div class="mb-4 d-flex gap-4">
+                    {% for image in book.images.all %}
+                        <div class="border border-dashed border-secondary rounded-lg p-4 d-flex flex-column align-items-center bg-dark text-white" style="flex: 1;">
+                            <div class="mb-2">
+                                <img src="{{ image.image.url }}" alt="{{ book.book_name }}" id="image_preview_{{forloop.counter}}" class="img-fluid" onclick="triggerFileInput({{forloop.counter}})" style="cursor: pointer;">
+                            </div>
+                            <p class="text-sm">Click to edit image</p>
+                            <input type="file" name="book_images" class="d-none" id="profile_photo_{{forloop.counter}}" accept="image/jpeg,image/png" onchange="previewImage(event, {{forloop.counter}})">
+
+                            <label for="profile_photo_{{forloop.counter}}" class="cursor-pointer text-center">
+                                <button type="button" class="btn btn-primary mt-2" onclick="submitImage({{forloop.counter}})">Edit Image</button>
+                            </label>
+
+                        </div>
+                    {% endfor %}
+                    </div>                    
+                <!-- Action Buttons -->
+                <div class="mt-6">
+                    {% if book.is_available %}
+                        <button type="submit" class="btn-danger" name="delete_book">Delete product</button>
+                    {% else %}
+                        <button type="submit" class="btn-primary" name="readd_book">Add to List Again</button>
+                    {% endif %}
+                    <!-- Save Button -->
+                    <button type="submit" class="btn-primary">Update Product</button>
+                </div>
+            </form>            
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+{% comment %} <script>
+    // JavaScript function to preview the updated image
+    function previewImage(event, id) {
+        const file = event.target.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = function(e) {
+            document.getElementById(`image_preview_${id}`).src = e.target.result; // Update the image preview
+          };
+          reader.readAsDataURL(file); // Convert to base64 string for preview
+        }
+    }
+</script> {% endcomment %}
+<script>
+    function triggerFileInput(index) {
+      document.getElementById(`profile_photo_${index}`).click();
+    }
+  
+    function previewImage(event, index) {
+      const imagePreview = document.getElementById(`image_preview_${index}`);
+      imagePreview.src = URL.createObjectURL(event.target.files[0]);
+    }
+  
+    function submitImage(index) {
+      const fileInput = document.getElementById(`profile_photo_${index}`);
+      const formData = new FormData();
+      formData.append('book_images', fileInput.files[0]);
+      formData.append('index', index);
+  
+      fetch('{% url "edit_product" book.id %}', {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'X-CSRFToken': '{{ csrf_token }}'
+        }
+      })
+      .then(response => response.json())
+      .then(data => {
+        // Update the image preview
+        document.getElementById(`image_preview_${index}`).src = data.image_url;
+  
+        // Optionally, you can redirect the user to the updated product details page
+        window.location.href = '{% url "edit_product" book.id %}';
+      })
+      .catch(error => {
+        console.error('Error updating image:', error);
+      });
+    }
+  </script>
+
+{% endblock %}

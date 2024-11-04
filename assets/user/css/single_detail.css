@@ -1,0 +1,10 @@
+#owl-single-product .single-product-gallery-item {
+    position: relative;
+    overflow: hidden; /* Keeps the zoom effect within the image container */
+    cursor: zoom-in;
+}
+
+#owl-single-product .single-product-gallery-item img {
+    transition: transform 0.3s ease;
+    transform-origin: center center;
+}
