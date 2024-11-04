@@ -4,10 +4,181 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SignUp page</title>
-    <link rel="stylesheet" href="{% static 'user/css/user_signup.css' %}">
+    <title>Sign Up</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .signup-container {
+            background: white;
+            border-radius: 24px;
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.08);
+            width: 100%;
+            max-width: 1200px;
+            overflow: hidden;
+            display: flex;
+        }
+
+        .form-section {
+            flex: 1;
+            padding: 40px;
+        }
+
+        .image-section {
+            flex: 1;
+            background-color: #fff5f5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+        }
+
+        .back-link {
+            color: #6c757d;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            margin-bottom: 32px;
+            font-size: 15px;
+        }
+
+        .back-link:hover {
+            color: #000;
+        }
+
+        .signup-title {
+            color: #ff5c5c;
+            font-size: 32px;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .welcome-text {
+            color: #495057;
+            font-size: 24px;
+            margin-bottom: 32px;
+        }
+
+        .form-label {
+            color: #495057;
+            font-size: 15px;
+            margin-bottom: 8px;
+        }
+
+        .form-control {
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 12px 16px;
+            height: auto;
+            font-size: 15px;
+            margin-bottom: 16px;
+        }
+
+        .form-control:focus {
+            border-color: #ff5c5c;
+            box-shadow: 0 0 0 0.2rem rgba(255, 92, 92, 0.25);
+        }
+
+        .form-select {
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 12px 16px;
+            height: auto;
+            font-size: 15px;
+            margin-bottom: 16px;
+        }
+
+        .form-select:focus {
+            border-color: #ff5c5c;
+            box-shadow: 0 0 0 0.2rem rgba(255, 92, 92, 0.25);
+        }
+
+        .btn-signup {
+            background: #ff5c5c;
+            border: none;
+            border-radius: 8px;
+            color: white;
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+            font-weight: 500;
+            margin: 24px 0;
+            transition: background-color 0.2s;
+        }
+
+        .btn-signup:hover {
+            background: #ff4444;
+        }
+
+        .login-link {
+            text-align: center;
+            color: #6c757d;
+            margin-bottom: 24px;
+        }
+
+        .login-link a {
+            color: #ff5c5c;
+            text-decoration: none;
+        }
+
+        .btn-google {
+            border: 1px solid #dee2e6;
+            background: white;
+            border-radius: 8px;
+            width: 100%;
+            padding: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            color: #333;
+            text-decoration: none;
+            transition: background-color 0.2s;
+        }
+
+        .btn-google:hover {
+            background: #f8f9fa;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 0;
+        }
+
+        .form-row .form-group {
+            flex: 1;
+        }
+
+        @media (max-width: 768px) {
+            .signup-container {
+                flex-direction: column;
+            }
+            
+            .image-section {
+                display: none;
+            }
+            
+            .form-section {
+                padding: 24px;
+            }
+            
+            .form-row {
+                flex-direction: column;
+                gap: 0;
+            }
+        }
+    </style>
 </head>
-<body class="cnt-home">
+<body>
     {% if messages %}
     <div id="message-container">
         {% for message in messages %}
@@ -18,60 +189,59 @@
                 </button>
             </div>
         {% endfor %}
-    </div>
-{% endif %}
-    <!-- Include your existing header here -->
-    
-    <div class="body-content" id="top-banner-and-menu">
-        <div class="signup-container">
-            <div class="signup-content">
-                <div class="signup-form-container">
-                    <form action="{% url 'user_signup' %}" method="post" class="signup-form">
-
-                        {% csrf_token %}
-                        
-                        <h2>Sign Up</h2>
-                        <p>Create Account !!!</p>
-                        <div class="form-group">
-                            <input type="text" class="form-control" name="first_name" placeholder="First Name" required="required">
-                        </div>
-                        <div class="form-group">
-                            <input type="text" class="form-control" name="last_name" placeholder="Last Name" required="required">
-                        </div>
-                        <div class="form-group">
-                            <input type="text" class="form-control" name="username" placeholder="Username" required="required">
-                        </div>
-                        <div class="form-group">
-                            <input type="email" class="form-control" name="email" placeholder="Email" required="required">
-                        </div>
-                        <div class="form-group">
-                            <input type="tel" class="form-control" name="phone_number" placeholder="Phone Number" required="required">
-                        </div>
-                        <div class="form-group">
-                            <select class="form-control" name="gender" required="required">
-                                <option value="">Select Gender</option>
-                                <option value="male">Male</option>
-                                <option value="female">Female</option>
-                                <option value="other">Other</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <input type="password" class="form-control" name="password" placeholder="Password" required="required">
-                        </div>
-                        <div class="form-group">
-                            <input type="password" class="form-control" name="confirm_password" placeholder="Confirm Password" required="required">
-                        </div>
-                        <div class="form-group">
-                            <button type="submit" class="btn btn-primary btn-block btn-lg">Sign Up</button>
-                        </div>
-                        <div class="text-center">Already have an account? <a href="{% url 'user_login' %}">Sign In</a></div>
-                    </form>
+    {% endif %}
+    <div class="signup-container">
+        <div class="form-section">
+            <a href="{% url 'homepage_before_login' %}" class="back-link">
+                ← Back to home
+            </a>
+            <h1 class="signup-title">Sign Up</h1>
+            <h2 class="welcome-text">Create Account !!!</h2>
+            
+            <form action="{% url 'user_signup' %}" method="post" class="signup-form">
+                {% csrf_token %}
+                <div class="form-row">
+                    <div class="form-group">
+                        <input type="text" class="form-control" name="first_name" placeholder="First Name" required>
+                    </div>
+                    <div class="form-group">
+                        <input type="text" class="form-control" name="last_name" placeholder="Last Name" required>
+                    </div>
                 </div>
-                <div class="signup-image">
-                    <img src="{% static 'user/images/logo/login_image.png' %}" alt="Sign Up">
+                
+                <input type="text" class="form-control" name="username" placeholder="Username" required="required">
+                <input type="email" class="form-control" name="email" placeholder="Email" required="required">
+                <input type="tel" class="form-control" name="phone_number" placeholder="Phone Number" required="required">
+                
+                <select class="form-select" name="gender" required="required">
+                    <option value="" selected disabled>Select Gender</option>
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                    <option value="other">Other</option>
+                </select>
+                
+                <input type="password" class="form-control" name="password" placeholder="Password" required="required">
+                <input type="password" class="form-control" name="confirm_password" placeholder="Confirm Password" required>
+                
+                <button type="submit" class="btn-signup">SIGN UP</button>
+                
+                <div class="login-link">
+                    Already have an account? <a href="{% url 'user_login' %}">Sign in</a>
                 </div>
-            </div>
+                
+                <a href="#" class="btn-google">
+                    <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCA0OCA0OCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBmaWxsPSIjRUE0MzM1IiBkPSJNMjQgOS41YzMuNTQgMCA2LjcxIDEuMjIgOS4yMSAzLjZsNi44NS02Ljg1QzM1LjkgMi4zOCAzMC40NyAwIDI0IDAgMTQuNjIgMCA2LjUxIDUuMzggMi41NiAxMy4yMmw3Ljk4IDYuMTlDMTIuNDMgMTMuNzIgMTcuNzQgOS41IDI0IDkuNXoiLz48cGF0aCBmaWxsPSIjNDI4NUY0IiBkPSJNNDYuOTggMjQuNTVjMC0xLjU3LS4xNS0zLjA5LS4zOC00LjU1SDI0djkuMDJoMTIuOTRjLS41OCAyLjk2LTIuMjYgNS40OC00Ljc4IDcuMThsNy43MyA2YzQuNTEtNC4xOCA3LjA5LTEwLjM2IDcuMDktMTcuNjV6Ii8+PHBhdGggZmlsbD0iI0ZCQkMwNSIgZD0iTTEwLjUzIDI4LjU5Yy0uNDgtMS40NS0uNzYtMi45OS0uNzYtNC41OXMuMjctMy4xNC43Ni00LjU5bC03Ljk4LTYuMTlDLjkyIDE2LjQ2IDAgMjAuMTIgMCAyNGMwIDMuODguOTIgNy41NCAyLjU2IDEwLjc4bDcuOTctNi4xOXoiLz48cGF0aCBmaWxsPSIjMzRBODUzIiBkPSJNMjQgNDhjNi40OCAwIDExLjkzLTIuMTMgMTUuODktNS44MWwtNy43My02Yy0yLjE1IDEuNDUtNC45MiAyLjMtOC4xNiAyLjMtNi4yNiAwLTExLjU3LTQuMjItMTMuNDctOS45MWwtNy45OCA2LjE5QzYuNTEgNDIuNjIgMTQuNjIgNDggMjQgNDh6Ii8+PC9zdmc+" 
+                         alt="Google" width="24" height="24">
+                    Continue with Google
+                </a>
+            </form>
+        </div>
+        
+        <div class="image-section">
+            <img src="{% static 'user/images/logo/login_image.png' %}" alt="Sign Up" style="max-width: 100%; height: auto;">
         </div>
     </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

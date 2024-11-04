@@ -1,30 +1,54 @@
-.login-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: calc(100vh - 200px);
+body {
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
     background-color: #f8f9fa;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-.login-form {
-    background-color: #ffffff;
-    padding: 40px;
-    border-radius: 8px;
-    box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+.main-container {
     width: 100%;
-    max-width: 400px;
+    max-width: 1200px;
+    padding: 20px;
 }
 
-.login-form h1 {
+.login-card {
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    display: flex;
+    overflow: hidden;
+    margin: auto;
+    max-width: 1000px;
+}
+
+.login-content {
+    flex: 1;
+    padding: 40px;
+    max-width: 500px;
+}
+
+.back-link a {
+    color: #666;
+    text-decoration: none;
+    font-size: 14px;
+    margin-bottom: 30px;
+    display: inline-block;
+}
+
+.login-title {
     color: #ff6b6b;
-    font-size: 36px;
-    margin-bottom: 10px;
+    font-size: 32px;
+    margin: 20px 0 5px 0;
+    font-weight: 600;
 }
 
-.login-form h2 {
+.welcome-text {
     color: #333;
     font-size: 24px;
-    margin-bottom: 30px;
+    margin: 0 0 30px 0;
 }
 
 .form-group {
@@ -33,91 +57,131 @@
 
 .form-group label {
     display: block;
-    margin-bottom: 5px;
-    color: #555;
+    color: #333;
+    margin-bottom: 8px;
+    font-weight: 500;
 }
 
 .form-group input {
     width: 100%;
-    padding: 10px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
+    padding: 12px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 14px;
 }
 
-/* Updated remember-forgot styles */
-.form-group:last-of-type {
+.form-group input:focus {
+    outline: none;
+    border-color: #ff6b6b;
+    box-shadow: 0 0 0 2px rgba(255, 107, 107, 0.1);
+}
+
+.login-options {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin: 15px 0;
 }
-/* Remember me style */
-.form-group input[type="checkbox"] {
-    width: auto;
-    margin-right: 5px;
+
+.remember-me {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #666;
+    font-size: 14px;
 }
 
-.form-group label[for="remember"] {
-    display: inline;
-    margin-left: 0;
+.remember-me input[type="checkbox"] {
+    margin: 0;
 }
 
-/* Forgot password link style */
-.forgot-password {
-    color: #ff6b6b;  /* Same color as the button */
+.forgot-link {
+    color: #0066ff;
     text-decoration: none;
-    margin-left: auto;
+    font-size: 14px;
 }
 
-.forgot-password:hover {
-    text-decoration: underline;
-}
-
-.btn-signin {
-    background-color: #ff6b6b;
-    color: white;
-    padding: 10px 20px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
+.signin-btn {
     width: 100%;
-    font-size: 16px;
-    margin-top: 10px;
+    padding: 12px;
+    background: #ff6b6b;
+    border: none;
+    border-radius: 8px;
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+    margin: 20px 0;
 }
 
-.btn-signin:hover {
-    background-color: #ff5252;
+.signin-btn:hover {
+    background: #ff5252;
 }
 
-.signup-link {
+.signup-text {
     text-align: center;
+    color: #666;
+    font-size: 14px;
+    margin: 20px 0;
+}
+
+.signup-text a {
+    color: #0066ff;
+    text-decoration: none;
+}
+
+.google-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    background: white;
+    color: #333;
+    text-decoration: none;
+    font-size: 14px;
     margin-top: 20px;
 }
 
-.signup-link a {
-    color: #ff6b6b;
-    text-decoration: none;
+.google-btn img {
+    width: 18px;
+    height: 18px;
 }
 
-.social-login {
-    
-}
-
-.social-login button {
+.image-section {
     flex: 1;
-    padding: 10px;
-    border: 1px solid #ddd;
-    background-color: white;
-    border-radius: 4px;
-    margin: 0 5px;
+    background-color: #fff5f5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
 }
 
 .login-image {
-    width: 400px;
-    height: 450px;
+    max-width: 100%;
+    height: auto;
 }
 
-/* Sign up link style */
-.signup-link a {
-    color: #ff6b6b;
-    text-decoration: none;
+#message-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+}
+
+@media (max-width: 768px) {
+    .login-card {
+        flex-direction: column;
+    }
+    
+    .login-content {
+        padding: 30px;
+        max-width: 100%;
+    }
+    
+    .image-section {
+        padding: 20px;
+    }
+}
