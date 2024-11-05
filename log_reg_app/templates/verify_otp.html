@@ -125,7 +125,10 @@
                         <div class="text-center">
                             <p class="text-secondary mb-0">
                                 Don't receive any code? 
-                                <a href="#" class="resend-link">Resend</a>
+                                <form id="resend-otp-form" method="POST" action="{% url 'resend_otp' %}" style="display: inline;">
+                                    {% csrf_token %}
+                                    <a href="#" class="resend-link" id="resend-otp">Resend</a>
+                                </form>
                             </p>
                         </div>
                     </div>
@@ -143,41 +146,97 @@
         // Timer functionality
         let timeLeft = 90;
         const timerDisplay = document.getElementById('timer');
-        
+    
         function updateTimer() {
             timerDisplay.textContent = timeLeft;
-            
+    
             if (timeLeft > 0) {
                 timeLeft--;
                 setTimeout(updateTimer, 1000);
             }
         }
-
+    
         // Start the timer
         updateTimer();
-
-        // OTP input functionality
-        const otpInputs = document.querySelectorAll('.otp-input');
-        
-        otpInputs.forEach((input, index) => {
-            input.addEventListener('input', (e) => {
-                if (e.target.value.length === 1) {
-                    if (index < otpInputs.length - 1) {
+    
+        document.addEventListener('DOMContentLoaded', function() {
+            const otpInputs = document.querySelectorAll('.otp-input'); // Select OTP input fields
+            const resendLink = document.getElementById('resend-otp'); // Select the resend link
+    
+            // Handle input for OTP fields
+            otpInputs.forEach((input, index) => {
+                input.addEventListener('input', (e) => {
+                    if (e.target.value.length === 1 && index < otpInputs.length - 1) {
                         otpInputs[index + 1].focus();
                     }
-                }
-            });
-
-            input.addEventListener('keydown', (e) => {
-                if (e.key === 'Backspace' && !e.target.value) {
-                    if (index > 0) {
+                });
+    
+                input.addEventListener('keydown', (e) => {
+                    if (e.key === 'Backspace' && !e.target.value && index > 0) {
                         otpInputs[index - 1].focus();
                     }
-                }
+                });
             });
+    
+            // Handle resend OTP functionality
+            resendLink.addEventListener('click', function(event) {
+                event.preventDefault(); // Prevent the default link behavior
+    
+                // Show loading text or disable the link
+                resendLink.textContent = 'Resending...';
+                resendLink.classList.add('disabled');
+    
+                // Send a request to the server to resend the OTP without including email in the request body
+                fetch('/resend_otp/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken') // Get CSRF token
+                    },
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('OTP resent successfully! Please check your email.');
+                        otpInputs.forEach(input => input.value = ''); // Clear input fields
+                        otpInputs[0].focus(); // Focus on the first input
+    
+                        // Reset timer
+                        timeLeft = 90; // Reset timer to 90 seconds
+                        updateTimer(); // Restart the timer
+                    } else {
+                        alert('Failed to resend OTP: ' + data.message);
+                    }
+                    // Reset link text and remove disabled class
+                    resendLink.textContent = 'Resend';
+                    resendLink.classList.remove('disabled');
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred while resending OTP.');
+                    resendLink.textContent = 'Resend';
+                    resendLink.classList.remove('disabled');
+                });
+            });
+    
+            // Function to get CSRF token from cookies
+            function getCookie(name) {
+                let cookieValue = null;
+                if (document.cookie && document.cookie !== '') {
+                    const cookies = document.cookie.split(';');
+                    for (let i = 0; i < cookies.length; i++) {
+                        const cookie = cookies[i].trim();
+                        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                            break;
+                        }
+                    }
+                }
+                return cookieValue;
+            }
         });
     </script>
-
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
+    <script src="{% static 'user/js/message_timer.js' %}"></script>
 </body>
 </html>

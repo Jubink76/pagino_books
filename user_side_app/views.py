@@ -3,6 +3,8 @@ from adminside_app.models import BookTable
 from django.core.paginator import Paginator
 from django.shortcuts import render, get_object_or_404
 
+##########################################################################################################
+
 def shop_page(request):
     books = BookTable.objects.prefetch_related('images').all()
 
@@ -11,6 +13,8 @@ def shop_page(request):
     page_number = request.GET.get('page')
     books = paginator.get_page(page_number)
     return render(request,'shop_page.html',{'books':books})
+
+##########################################################################################################
 
 def single_detail(request,pk):
     book = get_object_or_404(BookTable,id=pk)

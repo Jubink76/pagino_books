@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sign Up</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         body {
             background-color: #f8f9fa;
@@ -50,7 +51,7 @@
             font-size: 15px;
         }
 
-        .back-link:hover {
+        .back-link:hover { 
             color: #000;
         }
 
@@ -157,7 +158,28 @@
         .form-row .form-group {
             flex: 1;
         }
-
+        .error-message {
+            color: red;
+            font-size: 0.9em;
+            display: none; /* Hide by default */
+        }
+        .form-group {
+            margin-bottom: 15px;
+            position: relative; /* Make this relative for absolute positioning of icon */
+        }
+        .form-control {
+            width: 100%; /* Full width */
+            padding-right: 40px; /* Add space for the icon */
+            box-sizing: border-box; /* Include padding in the width calculation */
+        }
+        .fas {
+            position: absolute;
+            right: 10px; /* Distance from the right edge of the input */
+            top: 50%;
+            transform: translateY(-50%); /* Center the icon vertically */
+            cursor: pointer; /* Change cursor to pointer */
+            color: #888; /* Optional: Change icon color */
+        }
         @media (max-width: 768px) {
             .signup-container {
                 flex-direction: column;
@@ -202,16 +224,27 @@
                 {% csrf_token %}
                 <div class="form-row">
                     <div class="form-group">
-                        <input type="text" class="form-control" name="first_name" placeholder="First Name" required>
+                        <input type="text" class="form-control" name="first_name" id="first_name" placeholder="First Name" required>
+                        <span class="error-message" id="first_name_error"></span>
                     </div>
                     <div class="form-group">
-                        <input type="text" class="form-control" name="last_name" placeholder="Last Name" required>
+                        <input type="text" class="form-control" name="last_name" id="last_name" placeholder="Last Name" required>
+                        <span class="error-message" id="last_name_error"></span>
                     </div>
                 </div>
                 
-                <input type="text" class="form-control" name="username" placeholder="Username" required="required">
-                <input type="email" class="form-control" name="email" placeholder="Email" required="required">
-                <input type="tel" class="form-control" name="phone_number" placeholder="Phone Number" required="required">
+                <div class="form-group">
+                    <input type="text" class="form-control" name="username" id="username" placeholder="Username" required>
+                    <span class="error-message" id="username_error"></span> 
+                </div>
+                <div class="form-group">
+                    <input type="email" class="form-control" name="email" id="email" placeholder="Email" required>
+                    <span class="error-message" id="email_error"></span>
+                </div>
+                <div class="form-group">
+                    <input type="tel" class="form-control" id="phone_number" name="phone_number" placeholder="Phone Number" required>
+                    <span class="error-message" id="phone_number_error" style="display: none; color: red;"></span>
+                </div>
                 
                 <select class="form-select" name="gender" required="required">
                     <option value="" selected disabled>Select Gender</option>
@@ -220,8 +253,17 @@
                     <option value="other">Other</option>
                 </select>
                 
-                <input type="password" class="form-control" name="password" placeholder="Password" required="required">
-                <input type="password" class="form-control" name="confirm_password" placeholder="Confirm Password" required>
+                <div class="form-group">
+                    <input type="password" class="form-control" id="password" name="password" placeholder="Password" required>
+                    <span class="error-message" id="password_error" style="display: none; color: red;"></span>
+                    <i id="togglePassword" class="fas fa-eye" style="cursor: pointer;"></i> 
+                </div>
+                
+                <div class="form-group">
+                    <input type="password" class="form-control" id="confirm_password" name="confirm_password" placeholder="Confirm Password" required>
+                    <span class="error-message" id="confirm_password_error" style="display: none; color: red;"></span>
+                    <i id="toggleConfirmPassword" class="fas fa-eye" style="cursor: pointer;"></i>
+                </div>
                 
                 <button type="submit" class="btn-signup">SIGN UP</button>
                 
@@ -243,5 +285,173 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const firstNameInput = document.getElementById('first_name');
+            const lastNameInput = document.getElementById('last_name');
+            const usernameInput = document.getElementById('username');
+            const emailInput = document.getElementById('email');
+            const passwordInput = document.getElementById('password');
+            const confirmPasswordInput = document.getElementById('confirm_password');
+            const passwordErrorMessage = document.getElementById('password_error');
+            const confirmPasswordErrorMessage = document.getElementById('confirm_password_error');
+            const togglePassword = document.getElementById('togglePassword');
+            const toggleConfirmPassword = document.getElementById('toggleConfirmPassword');
+            const phoneInput = document.getElementById('phone_number');
+            const phoneErrorMessage = document.getElementById('phone_number_error');
+    
+        
+                function validateAlphabeticField(inputField, errorFieldId) {
+                    const namePattern = /^[A-Za-z]+$/;
+                    const errorMessageElement = document.getElementById(errorFieldId);
+        
+                    if (!namePattern.test(inputField.value) && inputField.value.length > 0) {
+                        errorMessageElement.style.display = 'block';
+                        errorMessageElement.textContent = 'This field should contain only alphabets.';
+                        return false;
+                    } else {
+                        errorMessageElement.style.display = 'none';
+                        errorMessageElement.textContent = '';
+                        return true;
+                    }
+                }
+        
+                function validateUsernameField() {
+                    const usernamePattern = /^[A-Za-z0-9_-]+$/; 
+                    const errorMessageElement = document.getElementById('username_error');
+        
+                    if (!usernamePattern.test(usernameInput.value) && usernameInput.value.length > 0) {
+                        errorMessageElement.style.display = 'block';
+                        errorMessageElement.textContent = 'Username can only contain letters, numbers, underscores, and hyphens.';
+                        return false;
+                    } else {
+                        errorMessageElement.style.display = 'none';
+                        errorMessageElement.textContent = '';
+                        return true;
+                    }
+                }
+        
+                function validateEmailField() {
+                    const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+                    const invalidChars = /[^a-zA-Z0-9._%+-]/;
+                    const hasInvalidChars = invalidChars.test(emailInput.value.split('@')[0]); 
+                    const errorMessageElement = document.getElementById('email_error');
+        
+                    if (emailInput.value.length > 0) {
+                        if (hasInvalidChars) {
+                            errorMessageElement.style.display = 'block';
+                            errorMessageElement.textContent = 'Email can only contain valid characters before the "@" symbol.';
+                        } else if (!emailPattern.test(emailInput.value) && emailInput.value.includes('@')) {
+                            errorMessageElement.style.display = 'block';
+                            errorMessageElement.textContent = 'Invalid email format.';
+                        } else {
+                            errorMessageElement.style.display = 'none'; 
+                        }
+                    } else {
+                        errorMessageElement.style.display = 'none'; 
+                    }
+                }
+                function validatePhoneNumber() {
+                    const phonePattern = /^[6-9]\d{9}$/; // Start with 6-9, followed by exactly 9 other digits
+                    
+                    if (!phonePattern.test(phoneInput.value) && phoneInput.value.length > 0) {
+                        // Show error if phone number is invalid
+                        phoneErrorMessage.style.display = 'block';
+                        phoneErrorMessage.textContent = 'Phone number must be 10 digits and start with 6-9.';
+                        return false;
+                    } else {
+                        // Hide error message if valid
+                        phoneErrorMessage.style.display = 'none';
+                        return true;
+                    }
+                }
+        
+                function validatePasswordField() {
+                    const minLength = 5; 
+                    const errorMessageElement = passwordErrorMessage;
+        
+                    if (passwordInput.value.length < minLength && passwordInput.value.length > 0) {
+                        errorMessageElement.style.display = 'block';
+                        errorMessageElement.textContent = `Password must be at least ${minLength} characters.`;
+                        return false;
+                    } else {
+                        errorMessageElement.style.display = 'none'; 
+                        return true;
+                    }
+                }
+        
+                function validateConfirmPasswordField() {
+                    const errorMessageElement = confirmPasswordErrorMessage;
+        
+                    if (confirmPasswordInput.value !== passwordInput.value && confirmPasswordInput.value.length > 0) {
+                        errorMessageElement.style.display = 'block';
+                        errorMessageElement.textContent = 'Passwords do not match.';
+                        return false;
+                    } else {
+                        errorMessageElement.style.display = 'none'; 
+                        return true;
+                    }
+                }
+        
+                function checkFormValidity() { 
+                   const isFirstNameValid = validateAlphabeticField(firstNameInput, 'first_name_error');
+                   const isLastNameValid = validateAlphabeticField(lastNameInput, 'last_name_error');
+                   const isUsernameValid = validateUsernameField();
+                   const isEmailValid = validateEmailField();
+                   const isPhoneNumberValid = validatePhoneNumber();
+                   const isPasswordValid = validatePasswordField();
+                   const isConfirmPasswordValid = validateConfirmPasswordField();
+        
+                }
+        
+                // Attach event listeners to input fields with blur event for error messages
+                firstNameInput.addEventListener('input', function() {
+                    checkFormValidity();
+                });
+                
+                lastNameInput.addEventListener('input', function() {
+                    checkFormValidity();
+                });
+                
+                usernameInput.addEventListener('input', function() {
+                    checkFormValidity();
+                });
+                
+                emailInput.addEventListener('input', function() {
+                    checkFormValidity();
+                });
+                phoneInput.addEventListener('input', function() {
+                    validatePhoneNumber();
+                    checkFormValidity(); 
+                });
+                
+                passwordInput.addEventListener('input', function() {
+                    checkFormValidity();
+                });
+                
+                confirmPasswordInput.addEventListener('input', function() {
+                    checkFormValidity();
+                });
+        
+                 //Toggle password visibility
+                togglePassword.addEventListener('click', function() {
+                    const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+                    passwordInput.setAttribute('type', type);
+                    this.classList.toggle('fa-eye');
+                    this.classList.toggle('fa-eye-slash');
+                });
+        
+                toggleConfirmPassword.addEventListener('click', function() {
+                    const type = confirmPasswordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+                    confirmPasswordInput.setAttribute('type', type);
+                    this.classList.toggle('fa-eye');
+                    this.classList.toggle('fa-eye-slash');
+                });
+            
+            
+        });
+    </script>
+    <script src="{% static 'user/js/message_timer.js' %}"></script>
+        
 </body>
 </html>
