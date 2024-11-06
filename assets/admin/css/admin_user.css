@@ -1,6 +1,6 @@
 body {
     background-color: #000;
-    color: #b0b0b0;
+    color: #ede7e7;
 }
 
 .card {
@@ -34,13 +34,13 @@ body {
 }
 
 .table {
-    color: #b0b0b0;
+    color: #eae9e9;
     border-color: #333;
 }
 
 .table thead th {
     background-color: #1a1a1a;
-    color: #666;
+    color: #cdcfdf;
     font-size: 0.8rem;
     font-weight: normal;
     border-bottom: 1px solid #333;

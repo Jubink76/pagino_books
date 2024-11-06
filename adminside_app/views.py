@@ -6,6 +6,7 @@ from django.db.models import Q
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.cache import cache_control,never_cache
 from .models import CategoryTable,Language,Author,BookTable,BookImage
+from django.http import JsonResponse
 # Create your views here.
 
 ##############################################################################################################
@@ -15,9 +16,17 @@ from .models import CategoryTable,Language,Author,BookTable,BookImage
 def admin_dashboard(request):
     return render(request,'admin_dashboard.html')
 
+###############################################################################################################
 
 def admin_users(request):
     users = UserTable.objects.all().order_by('id')
+
+    users_per_page = request.GET.get('users_per_page', 5)
+    try:
+        users_per_page = int(users_per_page)
+    except ValueError:
+        users_per_page = 5
+
 
     # search query
     search_query = request.GET.get('search','')
@@ -36,9 +45,24 @@ def admin_users(request):
         users = UserTable.objects.all().order_by('id')
     # implement pagination
 
-    paginator = Paginator(users, 5)
+    paginator = Paginator(users, users_per_page)
     page_number = request.GET.get('page')
     users = paginator.get_page(page_number)
+
+    # Check for AJAX request and send JSON response
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        users_data = [{
+            "counter": index + 1 + (users.number - 1) * users.paginator.per_page,
+            "id": user.id,
+            "first_name": user.first_name,
+            "last_name": user.last_name,
+            "email": user.email,
+            "phone_number": user.phone_number,
+            "gender": user.gender,
+            "is_blocked": user.is_blocked,
+            "date_joined": user.date_joined.strftime('%Y-%m-%d'),
+        } for index, user in enumerate(users)]
+        return JsonResponse({"users": users_data})
 
     
 
@@ -46,6 +70,7 @@ def admin_users(request):
         'users':users,
         'search_query':search_query
     })
+
 ######################################################################################################################
 
 def add_users(request):
@@ -124,6 +149,12 @@ def admin_category(request):
 
     categories = CategoryTable.objects.all()
 
+    categories_per_page = request.GET.get('categories_per_page', 5)
+    try:
+        categories_per_page = int(categories_per_page)
+    except ValueError:
+        categories_per_page = 5
+
     search_query = request.GET.get('search','')
     if search_query:
         if search_query.isdigit():
@@ -136,11 +167,11 @@ def admin_category(request):
     else:
         categories = CategoryTable.objects.all().order_by('id')
 
-    paginator = Paginator(categories, 5)
+    paginator = Paginator(categories, categories_per_page)
     page_number = request.GET.get('page')
     categories = paginator.get_page(page_number)
 
-    return render(request,'admin_category.html',{'categories':categories})
+    return render(request,'admin_category.html',{'categories':categories,'categories_per_page':categories_per_page})
 
 ##############################################################################################################################
 
@@ -208,6 +239,12 @@ def delete_category(request, pk):
 def admin_products(request):
     books = BookTable.objects.all()
 
+    products_per_page = request.GET.get('product_per_page', 5)
+    try:
+        products_per_page = int(products_per_page)
+    except:
+        products_per_page = 5
+
     # search query for products
     search_query = request.GET.get('search','')
 
@@ -224,9 +261,36 @@ def admin_products(request):
     else:
         books = BookTable.objects.all().order_by('id')
 
-    paginator = Paginator(books, 5)
+    paginator = Paginator(books, products_per_page)
     page_number = request.GET.get('page')
     books = paginator.get_page(page_number)
+
+    product_data = [
+        {
+            'id': product.id,
+            'counter': index + 1,
+            'book_name': product.book_name,
+            'category': product.category,
+            'author': product.author,
+            'language': product.language,
+            'stock_quantity': product.stock_quantity,
+            'price': product.price,
+            'description': product.description,
+            'publication_date': product.publication_date.strftime('%Y-%m-%d'),
+            'is_available': product.is_available,
+            'image_url': product.images.first().image.url if product.images.exists() else None,
+        }
+        for index, product in enumerate(books, start=(books.start_index()))
+    ]
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return JsonResponse({
+            'products': product_data,
+            'has_next': books.has_next(),
+            'has_previous': books.has_previous(),
+            'num_pages': paginator.num_pages,
+            'current_page': books.number,
+        })
+
             
     return render(request,'admin_products.html',{'books':books})
 

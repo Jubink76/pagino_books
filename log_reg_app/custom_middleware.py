@@ -12,17 +12,24 @@ class AccessControlMiddleware:
             reverse('user_signup'),     
             reverse('forgot_password'),
             reverse('homepage_before_login'),
+            reverse('google_callback'), 
+            reverse('admin_login'),
         ]
-
-        # Redirect logged-in users away from login and signup pages
-        if request.user.is_authenticated and request.path in [url for url in public_urls]:
-            return redirect('homepage_after_login')
-
-        # Redirect unauthenticated users trying to access private pages
-        private_urls = [
+        private_user_urls = [
             reverse('homepage_after_login'),
         ]
-        if not request.user.is_authenticated and request.path in [url for url in private_urls]:
-            return redirect('user_login')
+        private_admin_urls = [
+            reverse('admin_dashboard')
+        
+        ]
 
-        return self.get_response(request)
+        if request.user.is_authenticated and not request.user.is_superuser and request.path in public_urls:
+            return redirect('homepage_after_login')
+        if request.user.is_superuser and request.path in public_urls:
+            return redirect('admin_dashboard')
+        
+        response = self.get_response(request)
+        response['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+        response['Pragma'] = 'no-cache'
+
+        return response

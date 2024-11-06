@@ -8,6 +8,16 @@
     <link rel="stylesheet" href="{% static 'user/css/admin_login.css' %}">
 </head>
 <body>
+    {% if messages %}
+    <div id="message-container">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
     <div class="container">
         <div class="form-container">
             <h1>Pagino</h1>
@@ -16,12 +26,14 @@
             <form action="" method="post">
                 {% csrf_token %}
                 <div class="form-group">
-                    <label for="text">Username</label>
-                    <input type="text" id="username" name="username" placeholder="Username" required>
+                    <label for="username" class="form-label">Username</label>
+                    <input type="text" class="form-control" id="username" name="username" placeholder="Enter your username" required>
+                    <span class="error-message" id="username_error"></span>
                 </div>
                 <div class="form-group">
-                    <label for="password">Password</label>
-                    <input type="password" id="password" name="password" placeholder="**************" required>
+                    <label for="password" class="form-label">Password</label>
+                    <input type="password" class="form-control" id="password" name="password" placeholder="*****" required>
+                    <span class="error-message" id="password_error"></span>
                 </div>
                 <div class="remember-me">
                     <div class="rem_content">
@@ -40,5 +52,37 @@
             <img src="{% static 'user/images/logo/book_logo.png' %}" alt="Book icon">
         </div>
     </div>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const usernameInput = document.getElementById("username");
+            const usernameError = document.getElementById("username_error");
+            const passwordInput = document.getElementById("password");
+            const passwordError = document.getElementById("password_error");
+        
+            usernameInput.addEventListener("input", function () {
+                const usernameValue = usernameInput.value;
+                const validPattern = /^[a-zA-Z0-9_-]*$/;
+        
+                if (!validPattern.test(usernameValue)) {
+                    usernameError.textContent = "Username can only contain letters, numbers, underscores, and hyphens.";
+                    usernameError.style.color = "red";
+                } else {
+                    usernameError.textContent = ""; // Clear error message
+                }
+            });
+        
+            passwordInput.addEventListener("input", function () {
+                const passwordValue = passwordInput.value;
+        
+                if (passwordValue.length < 5) {
+                    passwordError.textContent = "Password must be at least 5 characters long.";
+                    passwordError.style.color = "red";
+                } else {
+                    passwordError.textContent = ""; // Clear error message
+                }
+            });
+        });
+    </script>
+    <script src="{% static 'user/js/message_timer.js' %}"></script>
 </body>
 </html>

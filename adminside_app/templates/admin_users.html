@@ -3,11 +3,11 @@
 
 {% block csslink %}
 <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
-<link rel="stylesheet" href="{% static 'admin/css/admin_user.css' %}">
+
 {% endblock %}
 
 {% block content %}
-<div class="container-fluid py-5">
+<div class="col-md-9 ms-sm-auto col-lg-10 offset-md-3 offset-lg-2">
     <div class="card">
         <div class="card-body">
             <div class="d-flex justify-content-between align-items-center mb-4">
@@ -47,9 +47,9 @@
 
             <!-- Table -->
             <div class="table-responsive">
-                <table class="table table-hover">
+                <table class="table text-white">
                     <thead>
-                        <tr>
+                        <tr class="text-gray-300">
                             <th>Sl No</th>
                             <th>Customer ID</th>
                             <th>First Name</th>
@@ -62,22 +62,24 @@
                             <th>Action</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody id="user-table-body" class="bg-gray-800">
                         {% for row in users %}
-                        <tr class="table-row">
-                            <td class="px-6 py-4 text-sm">{{ forloop.counter }}</td>
-                            <td class="px-6 py-4 text-sm">{{row.id}}</td>
-                            <td class="px-6 py-4 text-sm">{{row.first_name}}</td>
-                            <td class="px-6 py-4 text-sm">{{row.last_name}}</td>
-                            <td class="px-6 py-4 text-sm">{{row.email}}</td>
-                            <td class="px-6 py-4 text-sm">{{row.phone_number}}</td>
-                            <td class="px-6 py-4 text-sm">{{row.gender}}</td>
-                            <td class="px-6 py-4 text-sm {% if row.is_blocked %}status-inactive text-red-500{% else %}status-active text-green-500{% endif %}">
-                                {% if row.is_blocked %}
-                                    Inactive
-                                {% else %}
-                                    Active
-                                {% endif %}
+                        <tr class="transition-colors duration-200 hover:bg-gray-700 text-gray-400 group">
+                            <td class="px-6 py-4 text-sm group-hover:text-white">{{ forloop.counter }}</td>
+                            <td class="px-6 py-4 text-sm group-hover:text-white">{{row.id}}</td>
+                            <td class="px-6 py-4 text-sm group-hover:text-white">{{row.first_name}}</td>
+                            <td class="px-6 py-4 text-sm group-hover:text-white">{{row.last_name}}</td>
+                            <td class="px-6 py-4 text-sm group-hover:text-white">{{row.email}}</td>
+                            <td class="px-6 py-4 text-sm group-hover:text-white">{{row.phone_number}}</td>
+                            <td class="px-6 py-4 text-sm group-hover:text-white">{{row.gender}}</td>
+                            <td class="px-6 py-4 text-sm">
+                                <span class="{% if row.is_blocked %}text-red-500{% else %}text-green-500{% endif %} group-hover:text-opacity-90">
+                                    {% if row.is_blocked %}
+                                        Inactive
+                                    {% else %}
+                                        Active
+                                    {% endif %}
+                                </span>
                             </td>
                             <td class="px-6 py-4 text-sm">{{row.date_joined}}</td>
                             <td class="px-6 py-4 text-sm">
@@ -99,10 +101,10 @@
                 <div class="col-auto">
                     <div class="d-flex align-items-center">
                         <span class="me-2">Showing</span>
-                        <select class="form-select form-select-sm" style="width: auto;">
-                            <option>5</option>
-                            <option>10</option>
-                            <option>15</option>
+                        <select id="users-per-page" class="form-select form-select-sm" style="width: auto;">
+                            <option value="5" {% if users.paginator.per_page == 5 %}selected{% endif %}>5</option>
+                            <option value="10" {% if users.paginator.per_page == 10 %}selected{% endif %}>10</option>
+                            <option value="15" {% if users.paginator.per_page == 15 %}selected{% endif %}>15</option>
                         </select>
                     </div>
                 </div>
@@ -113,7 +115,7 @@
                     <ul class="pagination mb-0">
                         <!-- Previous Page Button -->
                         {% if users.has_previous %}
-                            <li class="page-item">
+                            <li class="page-item ml-3">
                                 <a class="page-link" href="?page={{ users.previous_page_number }}" aria-label="Previous">
                                     &laquo;
                                 </a>
@@ -127,25 +129,25 @@
                         <!-- Page Numbers -->
                         {% for page_num in users.paginator.page_range %}
                             {% if users.number == page_num %}
-                                <li class="page-item active">
+                                <li class="page-item active ml-3">
                                     <span class="page-link">{{ page_num }}</span>
                                 </li>
                             {% else %}
-                                <li class="page-item">
-                                    <a class="page-link" href="?page={{ page_num }}">{{ page_num }}</a>
+                                <li class="page-item ml-3">
+                                    <a class="page-link" href="?page={{ page_num }}&users_per_page={{ users.paginator.per_page }}">{{ page_num }}</a>
                                 </li>
                             {% endif %}
                         {% endfor %}
         
                         <!-- Next Page Button -->
                         {% if users.has_next %}
-                            <li class="page-item">
+                            <li class="page-item ml-3">
                                 <a class="page-link" href="?page={{ users.next_page_number }}" aria-label="Next">
                                     &raquo;
                                 </a>
                             </li>
                         {% else %}
-                            <li class="page-item disabled">
+                            <li class="page-item disabled ml-3">
                                 <span class="page-link" aria-label="Next">&raquo;</span>
                             </li>
                         {% endif %}
@@ -159,4 +161,52 @@
 
 <!-- Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    document.getElementById('users-per-page').addEventListener('change', function() {
+        const usersPerPage = this.value;
+        const currentUrl = new URL(window.location.href);
+
+        currentUrl.searchParams.set('users_per_page', usersPerPage);
+        // Fetch data from the server with selected number of users per page
+        fetch(`/admin-users/?users_per_page=${usersPerPage}`)
+            .then(response => response.json())
+            .then(data => {
+                const userTableBody = document.getElementById('user-table-body');
+                userTableBody.innerHTML = ''; // Clear current table rows
+
+                // Populate with new rows from the response data
+                data.users.forEach(user => {
+                    const row = document.createElement('tr');
+                    row.classList.add("transition-colors", "duration-200", "hover:bg-gray-700", "text-gray-400", "group");
+
+                    row.innerHTML = `
+                        <td class="px-6 py-4 text-sm group-hover:text-white">${user.counter}</td>
+                        <td class="px-6 py-4 text-sm group-hover:text-white">${user.id}</td>
+                        <td class="px-6 py-4 text-sm group-hover:text-white">${user.first_name}</td>
+                        <td class="px-6 py-4 text-sm group-hover:text-white">${user.last_name}</td>
+                        <td class="px-6 py-4 text-sm group-hover:text-white">${user.email}</td>
+                        <td class="px-6 py-4 text-sm group-hover:text-white">${user.phone_number}</td>
+                        <td class="px-6 py-4 text-sm group-hover:text-white">${user.gender}</td>
+                        <td class="px-6 py-4 text-sm">
+                            <span class="${user.is_blocked ? 'text-red-500' : 'text-green-500'} group-hover:text-opacity-90">
+                                ${user.is_blocked ? 'Inactive' : 'Active'}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 text-sm">${user.date_joined}</td>
+                        <td class="px-6 py-4 text-sm">
+                            <div class="flex gap-2">
+                                <a href="/view_users/${user.id}"><button class="p-1 hover:text-blue-500">👁️</button></a>
+                                <a href="#"><button class="p-1 hover:text-green-500">✏️</button></a>
+                                <!--<button class="p-1 hover:text-red-500">🗑️</button>-->
+                            </div>
+                        </td>
+                    `;
+                    userTableBody.appendChild(row);
+                });
+            })
+            .catch(error => console.error('Error fetching user data:', error));
+            window.location.href = currentUrl.toString();
+    });
+</script>
+
 {% endblock %}

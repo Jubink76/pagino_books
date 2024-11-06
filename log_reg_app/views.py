@@ -129,14 +129,14 @@ def user_signup(request):
     return render(request,'user_signup.html')
 
 ############################################################################################
-@cache_control(no_cache=True, must_revalidate=True, no_store=True)
+
 def user_login(request):
     
     if request.method == "POST":
         username = request.POST.get('username')
         password = request.POST.get('password')
         user = authenticate(request, username = username, password = password)
-        if user is not None:
+        if user is not None and not user.is_superuser:
             # Check if the user is active
             if user.is_active:
                 login(request, user)
@@ -155,8 +155,7 @@ def user_login(request):
     return render(request,'user_login.html')
 
 ###################################################       #####################################################
-@cache_control(no_cache=True, must_revalidate=True, no_store=True)
-@never_cache
+
 def user_logout(request):
     logout(request)
     request.session.flush()
@@ -169,7 +168,6 @@ def admin_login(request):
         username = request.POST.get('username')
         password = request.POST.get('password')
         user = authenticate(request,username=username,password = password)
-        
         if user is not None and user.is_superuser:
             login(request, user)
             messages.success(request,f"{username}logined successfully." )
@@ -182,17 +180,15 @@ def admin_login(request):
     if request.method == "GET":
         if request.user.is_authenticated:
             if request.user.is_superuser:
-                print("Redirecting to admin dashboard for an already authenticated superuser.")
-                return redirect(reverse('admin_dashboard'))
+                return redirect('admin_dashboard')
             else:
                 messages.error(request,"you dont have admin privileges")
                 return render(request,'admin_login.html')
+            
     return render(request,'admin_login.html')
 
 ##############################################################################################################
 
-@cache_control(no_cache=True, must_revalidate=True, no_store=True)
-@never_cache
 def admin_logout(request):
     logout(request)
     request.session.flush()
@@ -201,7 +197,6 @@ def admin_logout(request):
 ##############################################################################################################
 
 @login_required(login_url='user_login')
-@never_cache
 def homepage_after_login(request):
     return render(request,'homepage_after_login.html')
 
@@ -287,7 +282,7 @@ def verify_otp(request):
 
 ####################################################################################################################
 
-@never_cache
+
 def set_password(request):
     if request.method == "POST":
         password1 = request.POST['password1']
