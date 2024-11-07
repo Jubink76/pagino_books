@@ -3483,15 +3483,27 @@ font-family: FontAwesome;
     width: 100%;
     display: block;
     position: relative;
-    padding-top: 125%;
+    /* padding-top: 125%; */
 }
 .item .products .image a img {
     width: 100%;
+    height:100%;
+    object-fit:cover;
     position: absolute;
-    height: 100%;
     top: 0;
     left: 0;
-    object-fit: cover;
+}
+.product-image, .image {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden; /* This hides any image parts that exceed container bounds */
+}
+
+.product-image img, .image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .item .products .image a .hover-image {
@@ -3501,6 +3513,7 @@ font-family: FontAwesome;
     position: absolute;
     width: 100%;
     height: 100%;
+    object-fit: cover;
     top: 0;
     left: 0;
     z-index: 2;

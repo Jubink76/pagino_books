@@ -56,8 +56,9 @@
                             <th>Author</th>
                             <th>Language</th>
                             <th>Stock</th>
-                            <th>price</th>
-                            <th>Description</th>
+                            <th>Base price</th>
+                            <th>Discount(%)</th>
+                            <th>Offer price</th>
                             <th>Added date</th>
                             <th>Availability</th>
                             <th>Action</th>
@@ -81,8 +82,9 @@
                                     <td class="px-6 py-4 text-sm">{{ book.author }}</td>
                                     <td class="px-6 py-4 text-sm">{{ book.language }}</td>
                                     <td class="px-6 py-4 text-sm">{{ book.stock_quantity }}</td>
-                                    <td class="px-6 py-4 text-sm">{{ book.price }}</td>
-                                    <td class="px-6 py-4 text-sm">{{ book.description }}</td>
+                                    <td class="px-6 py-4 text-sm">{{ book.base_price }}</td>
+                                    <td class="px-6 py-4 text-sm">{{ book.discount_percentage }}</td>
+                                    <td class="px-6 py-4 text-sm">{{ book.offer_price }}</td>
                                     <td class="px-6 py-4 text-sm">{{ book.publication_date }}</td>
                                     <td class="px-6 py-4 text-sm">
                                         {% if book.is_available %}

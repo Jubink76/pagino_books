@@ -39,7 +39,8 @@ def admin_users(request):
                 Q(first_name__icontains=search_query) | 
                 Q(last_name__icontains=search_query) |
                 Q(username__icontains=search_query) |
-                Q(email__icontains=search_query)
+                Q(email__icontains=search_query) |
+                Q(phone_number__icontains = search_query)
             ).order_by('id')
     else:
         users = UserTable.objects.all().order_by('id')
@@ -274,7 +275,9 @@ def admin_products(request):
             'author': product.author,
             'language': product.language,
             'stock_quantity': product.stock_quantity,
-            'price': product.price,
+            'base_price': product.base_price,
+            'discount_percentage':product.discount_percentage,
+            'offer_price': product.offer_price,
             'description': product.description,
             'publication_date': product.publication_date.strftime('%Y-%m-%d'),
             'is_available': product.is_available,
@@ -301,11 +304,10 @@ def add_products(request):
         book_name = request.POST.get('book_name')
         description = request.POST.get('description')
         stock_quantity = request.POST.get('stock_quantity')
-        price = request.POST.get('price')
-        vat_amount = request.POST.get('vat_amount')
-        discount_percentage = request.POST.get('discount_percentage')
+        base_price = float(request.POST.get('base_price'))
+        discount_percentage = float(request.POST.get('discount_percentage'))
+        offer_price = request.POST.get('offer_price')
         
-
         author_name = request.POST.get('author_name')
         bio = request.POST.get('bio')
         author, created = Author.objects.get_or_create(name=author_name)
@@ -337,9 +339,9 @@ def add_products(request):
             book_name = book_name,
             description = description,
             stock_quantity = stock_quantity,
-            price = price,
-            vat_amount = vat_amount,
+            base_price = base_price,
             discount_percentage = discount_percentage,
+            offer_price = offer_price,
             category = category,
             language = language,
             author = author

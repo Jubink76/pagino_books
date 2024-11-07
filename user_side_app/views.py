@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect
-from adminside_app.models import BookTable
+from adminside_app.models import BookTable,CategoryTable
 from django.core.paginator import Paginator
+
 from django.shortcuts import render, get_object_or_404
 
 ##########################################################################################################
@@ -27,3 +28,26 @@ def single_detail(request,pk):
         is_deleted = False
     ).exclude(id=pk)[:6]
     return render(request,'single_detail.html',{'book':book,'images':images,'related_books':related_books})
+
+###########################################################################################################
+
+def single_category(request,pk):
+    category = get_object_or_404(CategoryTable,id=pk,is_available=True,is_deleted=False)
+    books = BookTable.objects.prefetch_related('images').filter(category=category,is_available=True,is_deleted=False)
+    # Set up pagination
+    paginator = Paginator(books, 16)  # Display 16 books per page
+    page_number = request.GET.get('page')
+    books = paginator.get_page(page_number)
+    return render(request,'single_category.html',{'books':books,'category':category})
+
+###########################################################################################################
+
+def cart_page(request):
+    return render(request,'cart_page.html')
+
+###########################################################################################################
+
+def whishlist_page(request):
+    return render(request,'whishlist_page.html')
+
+###########################################################################################################
