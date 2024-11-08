@@ -5402,7 +5402,7 @@ font-family: FontAwesome;
   display: inline-block;
   height: 35px;
   position: relative;
-  width: 70px;
+  width: 100px;
 }
 .shopping-cart-table table tbody tr td .quant-input .arrows {
   height: 100%;

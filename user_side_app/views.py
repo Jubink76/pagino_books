@@ -1,8 +1,13 @@
 from django.shortcuts import render, redirect
 from adminside_app.models import BookTable,CategoryTable
+from user_side_app.models import CartTable
+from django.contrib import messages
 from django.core.paginator import Paginator
+from django.shortcuts import get_object_or_404, redirect
+from django.db.models import Sum
+from django.http import JsonResponse
+import json
 
-from django.shortcuts import render, get_object_or_404
 
 ##########################################################################################################
 
@@ -43,11 +48,111 @@ def single_category(request,pk):
 ###########################################################################################################
 
 def cart_page(request):
-    return render(request,'cart_page.html')
+    if request.user.is_authenticated:
+        user_id = request.user.id
+        cart_items = CartTable.objects.filter(user=request.user)
+    else:
+        if not request.session.session_key:
+            request.session.create()
+        session_id = request.session.session_key
+        cart_items = CartTable.objects.filter(session_id=session_id)
+
+    total_grand_total = cart_items.aggregate(total=Sum('total_price'))['total'] or 0
+
+    return render(request,'cart_page.html',{'cart_items':cart_items,'total_grand_total': total_grand_total})
+
+###########################################################################################################
+
+
+def add_to_cart(request, book_id):
+    book = get_object_or_404(BookTable, id=book_id)
+    item_price = book.offer_price if book.offer_price else book.base_price
+
+    if request.user.is_authenticated:
+        cart_item, created = CartTable.objects.get_or_create(
+            user=request.user,
+            book=book,
+            defaults={
+                'quantity': 1,
+                'item_price': item_price,
+                'total_price': item_price,
+            }
+        )
+    else:
+        session_id = request.session.session_key or request.session.create()
+        cart_item, created = CartTable.objects.get_or_create(
+            session_id=session_id,
+            book=book,
+            defaults={
+                'quantity': 1,
+                'item_price': item_price,
+                'total_price': item_price,
+            }
+        )
+
+    if not created:
+        cart_item.quantity += 1
+        cart_item.save()  # This will trigger the save method which updates total_price and grand_total
+
+    messages.success(request, f"{book.book_name} added to your cart.")
+    return redirect('cart_page')
+
+
+
+###########################################################################################################
+
+def delete_cart_item(request,item_id):
+    if request.user.is_authenticated:
+        cart_item = get_object_or_404(CartTable, id=item_id, user=request.user)
+    else:
+        session_id = request.session.session_key
+        cart_item = get_object_or_404(CartTable, id=item_id, session_id=session_id)
+
+    cart_item.delete()
+
+    messages.success(request, "Item removed from the cart.")
+
+    return redirect('cart_page')
+
+###########################################################################################################
+
+def update_cart_quantity(request, item_id):
+    if request.method == 'POST':
+        cart_item = get_object_or_404(CartTable, id=item_id)
+        book = cart_item.book
+
+        try:
+            data = json.loads(request.body)
+            new_quantity = data.get('quantity')
+            if new_quantity < 1:
+                return JsonResponse({'error': 'Quantity cannot be zero or less.'}, status=400)
+            
+            # Check available stock
+            if new_quantity > book.stock_quantity:
+                return JsonResponse({'error': 'Not enough stock available.'}, status=400)
+
+            # Calculate new total price and update cart item
+            cart_item.quantity = new_quantity
+            cart_item.total_price = cart_item.item_price * new_quantity
+            cart_item.save()
+
+            # Update available stock in BookTable
+            book.stock_quantity -= (new_quantity - cart_item.quantity)  # Adjust stock based on quantity change
+            book.save()
+
+            # Calculate grand total across all items in the user's cart
+            cart_items = CartTable.objects.filter(user=request.user)
+            grand_total = sum(item.total_price for item in cart_items)
+
+            return JsonResponse({
+                'item_total': cart_item.total_price,
+                'grand_total': grand_total,
+            })
+        except ValueError:
+            return JsonResponse({'error': 'Invalid quantity value.'}, status=400)
+    return JsonResponse({'error': 'Invalid request'}, status=400)
 
 ###########################################################################################################
 
 def whishlist_page(request):
     return render(request,'whishlist_page.html')
-
-###########################################################################################################

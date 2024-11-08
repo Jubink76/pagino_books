@@ -116,14 +116,14 @@
         <div class="col-lg-2 col-md-3 col-sm-4 col-xs-12 animate-dropdown top-cart-row"> 
           <!-- ============================================================= SHOPPING CART DROPDOWN ============================================================= -->
           
-          <div class="dropdown dropdown-cart"> <a href="#" class="dropdown-toggle lnk-cart" data-toggle="dropdown">
+          <div class="dropdown dropdown-cart"> <a href="{% url 'cart_page' %}" class="dropdown-toggle lnk-cart" data-toggle="dropdown">
             <div class="user-actions">
               <div class="items-container">
                 <div class="basket">
-                  <div class="icon-container">
+                  <a href="{% url 'cart_page' %}"><div class="icon-container">
                     <img src="{% static 'user/images/logo/cart_logo.png' %}" alt="Cart" class="icon_cart">
                     <div class="item-count"><span class="count">2</span></div>
-                  </div>
+                  </div></a>
                   <div class="info">
                     <span class="lbl">Shopping Cart</span>
                     <span class="value">$4580</span>
