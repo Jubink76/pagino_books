@@ -84,24 +84,24 @@
     </style>
 </head>
 <body>
-    {% if messages %}
-    <div id="message-container">
-        {% for message in messages %}
-            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                {{ message }}
-                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-        {% endfor %}
-    </div>
-{% endif %}
     <div class="verify-container">
         <div class="card">
             <div class="card-body">
                 <div class="row">
                     <div class="col-md-7">
                         <h2 class="text-dark mb-4">Please verify code</h2>
+                        {% if messages %}
+                            <div id="message-container">
+                                {% for message in messages %}
+                                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                        {{ message }}
+                                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                            <span aria-hidden="true">&times;</span>
+                                        </button>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
                         
                         <div class="timer" id="timer">
                             90

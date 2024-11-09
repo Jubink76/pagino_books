@@ -1,4 +1,4 @@
-{% extends 'with_user_base.html' %}
+{% extends 'base.html' %}
 {% load static %}
 {% block css_link %} 
 <link rel="stylesheet" href="{% static 'user/css/single_detail.css' %}">
@@ -47,7 +47,11 @@
 	<div class="container">
 		<div class="breadcrumb-inner">
 			<ul class="list-inline list-unstyled">
-				<li><a href="{% url 'homepage_after_login' %}">Home</a></li>
+				{% if user is user.is_authenticated %}
+					<li><a href="{% url 'homepage_after_login' %}">Home</a></li>
+				{% else %}
+					<li><a href="{% url 'homepage_before_login' %}">Home</a></li>
+				{% endif %}
 				<li><a href="{% url 'shop_page' %}">Shop</a></li>
 				<li class='active'>Details</li>
 			</ul>
@@ -602,7 +606,7 @@
 		                    <div class="product-info text-left">
 			                    <h3 class="name"><a href="{% url 'single_detail' related_book.id %}">{{ related_book.book_name }}</a></h3>
 			                    <div class="rating rateit-small"></div>
-			                    <div class="description">{{ related_book.description|truncatewords:20 }}</div>
+			                    <div class="description">{{ related_book.author }}</div>
 
 			                    <div class="product-price">	
 				                    <span class="price">₹{{ related_book.price }}</span>

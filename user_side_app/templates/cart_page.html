@@ -1,7 +1,61 @@
-{% extends 'with_user_base.html' %}
+{% extends 'base.html' %}
+
 {% load static %}
 
 {% block css_link %}
+<style>
+	.shopping-cart-footer {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		padding: 20px 70px;
+		width: 100%;
+	}
+	
+	.shopping-cart-btn .btn {
+		background: #157ed2;
+		color: #fff;
+		padding: 8px 16px;
+		border-radius: 4px;
+		text-decoration: none;
+		font-weight: 600;
+		text-transform: uppercase;
+	}
+	
+	.cart-shopping-total {
+		background: #f8f8f8;
+		padding: 20px;
+		border-radius: 4px;
+	}
+	
+	.cart-grand-total {
+		font-size: 18px;
+		font-weight: 600;
+		color: #0da827;
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		margin-bottom: 15px;
+	}
+	
+	.checkout-btn {
+		background: #fac825;
+		color: #fff;
+		padding: 10px 20px;
+		border: none;
+		border-radius: 4px;
+		font-weight: 600;
+		cursor: pointer;
+		text-transform: uppercase;
+	}
+	
+	.checkout-info {
+		color: #666;
+		font-size: 14px;
+		margin-top: 8px;
+		text-align: center;
+	}
+</style>
 
 {% endblock %}
 
@@ -35,8 +89,7 @@
 					<th class="cart-product-name item">Product Name</th>
 					<th class="cart-edit item">Edit</th>
 					<th class="cart-qty item">Quantity</th>
-					<th class="cart-sub-total item">Price</th>
-					<th class="cart-total last-item">Total price</th>
+					<th class="cart-sub-total item">Total Price</th>
 				</tr>
 			</thead><!-- /thead -->
 			
@@ -77,7 +130,7 @@
 									<span class="ir"><i class="icon fa fa-sort-desc"></i></span>
 								</div>
 							</div>
-							<input type="number" class="quantity-input" data-id="{{ item.id }}" value="{{ item.quantity }}" min="1">
+							<input type="number" class="quantity-input" data-id="{{ item.id }}" value="{{ item.quantity }}" min="1" max="{{ item.book.stock_quantity}}">
 							<!-- Error message display below the buttons -->
 							<div id="error-message-{{ item.id }}" class="error-message" style="color: red; font-size: 0.9em; display: none;">
 								Quantity cannot be zero or less.
@@ -85,7 +138,6 @@
 						</div>
 					</td>
 					<td class="cart-product-sub-total"><span class="cart-sub-total-price" data-id="{{ item.id }}">₹{{ item.item_price }}</span></td>
-					<td class="cart-product-grand-total"><span class="cart-grand-total-price">₹{{ item.total_price }}</span></td>
 				</tr>
 				{% endfor %}
 			</tbody><!-- /tbody -->
@@ -93,46 +145,30 @@
             <tfoot>
 				<tr>
 					<td colspan="7">
-						<div class="shopping-cart-btn">
-							<span class="">
-								<a href="#" class="btn btn-upper btn-primary outer-left-xs">Continue Shopping</a>
-							</span>
-						</div><!-- /.shopping-cart-btn -->
+						<div class="shopping-cart-footer">
+							<!-- Left side: Continue Shopping -->
+							<div class="shopping-cart-btn">
+								<a href="#" class="btn btn-upper btn-warning outer-left-xs">Continue Shopping</a>
+							</div>
+							
+							<!-- Right side: Cart Total and Checkout -->
+							<div class="cart-shopping-total">
+								<div class="cart-grand-total">
+									Grand Total<span class="inner-left-md">₹{{ grand_total }}</span>
+								</div>
+								<div class="cart-checkout-btn">
+									<button type="submit" class="checkout-btn">Proceed to Checkout</button>
+									<div class="checkout-info">Checkout with multiple address!</div>
+								</div>
+							</div>
+						</div>
 					</td>
 				</tr>
-				
 			</tfoot>
 		</table><!-- /table -->
 	</div>
 </div><!-- /.shopping-cart-table -->				
-
-
-<div class="col-md-4 col-sm-12 cart-shopping-total">
-	<table class="table">
-		<thead>
-			<tr>
-				<th>
-					<div class="cart-sub-total">
-						Subtotal<span class="inner-left-md">₹{{ total_grand_total }}</span>
-					</div>
-					<div class="cart-grand-total">
-						Grand Total<span class="inner-left-md">₹{{ total_grand_total }}</span>
-					</div>
-				</th>
-			</tr>
-		</thead><!-- /thead -->
-		<tbody>
-				<tr>
-					<td>
-						<div class="cart-checkout-btn pull-right">
-							<button type="submit" class="btn btn-primary checkout-btn">PROCCED TO CHEKOUT</button>
-							<span class="">Checkout with multiples address!</span>
-						</div>
-					</td>
-				</tr>
-		</tbody><!-- /tbody -->
-	</table><!-- /table -->
-</div><!-- /.cart-shopping-total -->			
+			
 </div><!-- /.shopping-cart -->
 </div> <!-- /.row -->
 		<!-- ============================================== BRANDS CAROUSEL ============================================== -->

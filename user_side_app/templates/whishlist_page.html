@@ -1,4 +1,4 @@
-{% extends 'with_user_base.html' %}
+{% extends 'base.html' %}
 {% load static %}
 
 {% block css_link %}
@@ -10,7 +10,11 @@
 	<div class="container">
 		<div class="breadcrumb-inner">
 			<ul class="list-inline list-unstyled">
-				<li><a href="home.html">Home</a></li>
+				{% if user is user.is_authenticated %}
+					<li><a href="{% url 'homepage_after_login' %}">Home</a></li>
+				{% else %}
+					<li><a href="{% url 'homepage_before_login' %}">Home</a></li>
+				{% endif %}
 				<li class='active'>Wishlist</li>
 			</ul>
 		</div><!-- /.breadcrumb-inner -->

@@ -1097,7 +1097,7 @@ a {
 .top-bar {
   padding:0px;
   font-size: 14px;
-  background: #157ed2;
+  background: #309176;
 }
 .top-bar .cnt-account {
   float: right;
@@ -1225,7 +1225,7 @@ header{
   -webkit-border-radius: 0px;
   -moz-border-radius: 0px;
   border-radius: 0px;
-  margin: 8px 0 0;
+  margin: 25px 0 0;
   background:#fff;
   border-radius:999px;
 }
@@ -2818,7 +2818,7 @@ font-family: FontAwesome;
 }
 .product .product-info .product-price .price-before-discount {
   text-decoration: line-through;
-  color: #d3d3d3;
+  color: #bb4444;
   font-weight: 400;
   line-height: 30px;
   font-size: 14px;

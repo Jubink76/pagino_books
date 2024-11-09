@@ -1,4 +1,4 @@
-{% extends 'with_user_base.html' %}
+{% extends 'base.html' %}
 {% load static %}
 {% block css_link %}
 {% comment %} <style>
@@ -17,7 +17,11 @@
     <div class="container">
       <div class="breadcrumb-inner">
         <ul class="list-inline list-unstyled">
-          <li><a href="{% url 'homepage_after_login' %}">Home</a></li>
+          {% if user is user.is_authenticated %}
+					<li><a href="{% url 'homepage_after_login' %}">Home</a></li>
+				{% else %}
+					<li><a href="{% url 'homepage_before_login' %}">Home</a></li>
+				{% endif %}
           <li class='active'>Shop</li>
         </ul>
       </div>
@@ -430,9 +434,9 @@
                             <div class="item">
                                 <div class="products">
                                     <div class="product">
-                                        <div class="product-image">
-                                            <div class="image"> 
-                                                <a href="{% url 'single_detail' book.id %}">
+                                        <div class="product-image" style="height: 300px; overflow: hidden;">
+                                            <div class="image" style="height: 100%;"> 
+                                                <a href="{% url 'single_detail' book.id %}" style="display: block; height: 100%;">
                                                   <img src="{{ book.images.first.image.url }}" alt="" 
                                                     style="width: 100%; height: 100%; object-fit: cover;">  
                                                 </a> 

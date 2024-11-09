@@ -46,3 +46,9 @@ class CartTable(models.Model):
 
     def __str__(self):
         return f"Cart item for {self.book.book_name} (Quantity: {self.quantity})"
+    
+
+class WhishlistTable(models.Model):
+    user = models.ForeignKey(UserTable,on_delete=models.CASCADE,null=True,blank=True)
+    book = models.ForeignKey(BookTable,on_delete=models.CASCADE, null=True, blank=True)
+    session_id = models.CharField(max_length=255, null=True, blank=True)

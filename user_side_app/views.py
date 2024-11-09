@@ -57,9 +57,9 @@ def cart_page(request):
         session_id = request.session.session_key
         cart_items = CartTable.objects.filter(session_id=session_id)
 
-    total_grand_total = cart_items.aggregate(total=Sum('total_price'))['total'] or 0
+    grand_total = cart_items.aggregate(total=Sum('total_price'))['total'] or 0
 
-    return render(request,'cart_page.html',{'cart_items':cart_items,'total_grand_total': total_grand_total})
+    return render(request,'cart_page.html',{'cart_items':cart_items,'grand_total': grand_total})
 
 ###########################################################################################################
 
@@ -90,6 +90,18 @@ def add_to_cart(request, book_id):
             }
         )
 
+    if created:
+        if book.stock_quantity > 0:
+            book.stock_quantity -= 1
+            if book.stock_quantity <= 0:
+                book.is_available = False  # Mark as unavailable if stock reaches zero
+            book.save()
+            messages.success(request, f"{book.book_name} added to your cart.")
+        else:
+            messages.error(request, f"{book.book_name} is out of stock.")
+            return redirect('cart_page')
+    
+
     if not created:
         cart_item.quantity += 1
         cart_item.save()  # This will trigger the save method which updates total_price and grand_total
@@ -107,6 +119,12 @@ def delete_cart_item(request,item_id):
     else:
         session_id = request.session.session_key
         cart_item = get_object_or_404(CartTable, id=item_id, session_id=session_id)
+
+    book = cart_item.book
+    book.stock_quantity += cart_item.quantity
+    if book.stock_quantity > 0:
+        book.is_available = True  # Mark as available if stock is above zero
+    book.save()
 
     cart_item.delete()
 
@@ -127,8 +145,11 @@ def update_cart_quantity(request, item_id):
             if new_quantity < 1:
                 return JsonResponse({'error': 'Quantity cannot be zero or less.'}, status=400)
             
-            # Check available stock
-            if new_quantity > book.stock_quantity:
+            # Calculate the change in quantity
+            quantity_diff = new_quantity - cart_item.quantity
+            
+            # Check if stock is sufficient for the new quantity
+            if quantity_diff > 0 and new_quantity > book.stock_quantity + cart_item.quantity:
                 return JsonResponse({'error': 'Not enough stock available.'}, status=400)
 
             # Calculate new total price and update cart item
@@ -137,7 +158,9 @@ def update_cart_quantity(request, item_id):
             cart_item.save()
 
             # Update available stock in BookTable
-            book.stock_quantity -= (new_quantity - cart_item.quantity)  # Adjust stock based on quantity change
+            book.stock_quantity -= quantity_diff  # Adjust stock based on quantity change
+            if book.stock_quantity <= 0:
+                book.is_available = False  # Mark book as unavailable if stock is zero
             book.save()
 
             # Calculate grand total across all items in the user's cart

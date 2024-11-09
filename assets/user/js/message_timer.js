@@ -2,26 +2,44 @@ document.addEventListener('DOMContentLoaded', function() {
     const messageContainer = document.getElementById('message-container');
     if (messageContainer) {
         const alerts = messageContainer.getElementsByClassName('alert');
+        
+        Array.from(alerts).forEach(alert => {
+            // Set initial state
+            alert.style.opacity = '1';
+            alert.style.transform = 'translateX(0)';
+            
+            // Auto-dismiss after 3 seconds
+            setTimeout(() => {
+                dismissAlert(alert);
+            }, 3000);
 
-        // Loop through alerts and set the timer for each
-        for (let alert of alerts) {
-            let timeoutDuration = 3000; // Default timeout duration
-
-            // Optional: Adjust timeout based on alert type
-            if (alert.classList.contains('alert-success')) {
-                // Green success alert
-                alert.style.backgroundColor = '#d4edda'; // Bootstrap success background color
-                alert.style.color = '#155724'; // Bootstrap success text color
-            } else if (alert.classList.contains('alert-danger')) {
-                // Red error alert
-                alert.style.backgroundColor = '#f8d7da'; // Bootstrap danger background color
-                alert.style.color = '#721c24'; // Bootstrap danger text color
+            // Close button handler
+            const closeButton = alert.querySelector('.btn-close');
+            if (closeButton) {
+                closeButton.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    dismissAlert(alert);
+                });
             }
-
-            // Set a timeout to hide the alert
-            setTimeout(function() {
-                alert.style.display = 'none';
-            }, timeoutDuration);
-        }
+        });
     }
 });
+
+function dismissAlert(alert) {
+    // Add fade out animation
+    alert.style.opacity = '0';
+    alert.style.transform = 'translateX(100%)';
+    
+    // Remove the alert after animation
+    setTimeout(() => {
+        if (alert.parentElement) {
+            alert.parentElement.removeChild(alert);
+            
+            // Remove container if empty
+            const container = document.getElementById('message-container');
+            if (container && container.children.length === 0) {
+                container.remove();
+            }
+        }
+    }, 300);
+}

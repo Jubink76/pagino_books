@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     'log_reg_app',
     'adminside_app',
     'user_side_app',
+    'user_profile_app',
 ]
 
 MIDDLEWARE = [
@@ -61,6 +62,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'log_reg_app.custom_middleware.AccessControlMiddleware',
+    'user_side_app.custom_middleware.UserAccessControlMiddleware',
     # Add the account middleware:
     "allauth.account.middleware.AccountMiddleware",
 ]
