@@ -87,7 +87,6 @@
 					<th class="cart-romove item">Remove</th>
 					<th class="cart-description item">Image</th>
 					<th class="cart-product-name item">Product Name</th>
-					<th class="cart-edit item">Edit</th>
 					<th class="cart-qty item">Quantity</th>
 					<th class="cart-sub-total item">Total Price</th>
 				</tr>
@@ -119,7 +118,6 @@
 							<span class="product-color">Author:<span>{{ item.book.author }}</span></span>
 						</div>
 					</td>
-					<td class="cart-product-edit"><a href="#" class="product-edit">Edit</a></td>
 					<td class="cart-product-quantity">
 						<div class="quant-input">
 							<div class="arrows">
@@ -148,7 +146,7 @@
 						<div class="shopping-cart-footer">
 							<!-- Left side: Continue Shopping -->
 							<div class="shopping-cart-btn">
-								<a href="#" class="btn btn-upper btn-warning outer-left-xs">Continue Shopping</a>
+								<a href="{% url 'shop_page' %}" class="btn btn-upper btn-warning outer-left-xs">Continue Shopping</a>
 							</div>
 							
 							<!-- Right side: Cart Total and Checkout -->

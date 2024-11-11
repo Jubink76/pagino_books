@@ -51,7 +51,7 @@
               <li class="login"><a href="#"><span>Profile</span></a></li>
             {% else %}
               <li class="check"><a href="{% url 'user_login' %}"><span>Login</span></a></li>
-              <li class="login"><a href="#"><span>SignUp</span></a></li>
+              <li class="login"><a href="{% url 'user_signup' %}"><span>SignUp</span></a></li>
             {% endif %}
 
           </ul>
@@ -122,7 +122,7 @@
         <div class="col-lg-2 col-md-3 col-sm-4 col-xs-12 animate-dropdown top-cart-row"> 
           <!-- ============================================================= SHOPPING CART DROPDOWN ============================================================= -->
           
-          <div class="dropdown dropdown-cart"> <a href="{% url 'cart_page' %}" class="dropdown-toggle lnk-cart" data-toggle="dropdown">
+          <div class="dropdown dropdown-cart"> <a href="" class="dropdown-toggle lnk-cart" data-toggle="dropdown">
             <div class="user-actions">
               <div class="items-container">
                 <div class="basket">

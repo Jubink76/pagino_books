@@ -103,24 +103,32 @@ def user_signup(request):
             )
             user.set_password(password) # hash password
             user.save()
-            otp = random.randint(100000, 999999)  # Generate a 6-digit OTP
 
+            otp = random.randint(100000, 999999)  # Generate a 6-digit OTP
+            print(f"Generated OTP: {otp}")
             # Store OTP and email in session
             request.session['otp'] = otp
             request.session['otp_timestamp'] = timezone.now().isoformat()
             request.session['email'] = email  # Store email in session
+            print(f"Stored OTP: {request.session['otp']}")
+            print(f"Stored Email: {request.session['email']}")
 
             # Send OTP via email
-            send_mail(
-                'Your OTP for Account Verification',
-                f'Your OTP code is {otp}. It will expire in 90 seconds.',
-                'jubink76@gmail.com',  # Replace with your email
-                [email],
-                fail_silently=False,
-            )
-
-            messages.success(request, 'OTP has been sent to your email. Please check and verify.')
-            return redirect('verify_otp') 
+            try:
+                send_mail(
+                    'Your OTP for Account Verification',
+                    f'Your OTP code is {otp}. It will expire in 90 seconds.',
+                    'jubink76@gmail.com',  # Replace with your sender email
+                    [email],  # Use the email directly here
+                    fail_silently=False,
+                )
+                print("Email sent successfully")
+                messages.success(request, 'OTP has been sent to your email. Please check and verify.')
+                return redirect('verify_otp')
+            except Exception as e:
+                print(f"Error sending email: {str(e)}")
+                messages.error(request, f'Error sending OTP: {str(e)}')
+                return render(request, 'user_signup.html')
         
         except Exception as e:
             messages.error(request, f'An error occurred: {str(e)}')
@@ -285,15 +293,15 @@ def verify_otp(request):
 
 def set_password(request):
     if request.method == "POST":
-        password1 = request.POST['password1']
-        password2 = request.POST['password2']
+        password = request.POST['password']
+        confirm_password = request.POST['confirm_password']
 
         email = request.session.get('email') # get the email from the session 
         if email: # checking if email is in session
             try:
                 user = UserTable.objects.get(email = email)
-                if password1 == password2:
-                    user.set_password(password1)
+                if password == confirm_password:
+                    user.set_password(password)
                     user.save()
                     messages.success(request,'password reset successfully')
                     return redirect('user_login')

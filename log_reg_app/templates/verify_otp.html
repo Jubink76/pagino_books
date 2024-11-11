@@ -127,7 +127,7 @@
                                 Don't receive any code? 
                                 <form id="resend-otp-form" method="POST" action="{% url 'resend_otp' %}" style="display: inline;">
                                     {% csrf_token %}
-                                    <a href="#" class="resend-link" id="resend-otp">Resend</a>
+                                    <a href="#" class="resend-link disabled" id="resend-otp">Resend</a>
                                 </form>
                             </p>
                         </div>
@@ -146,6 +146,7 @@
         // Timer functionality
         let timeLeft = 90;
         const timerDisplay = document.getElementById('timer');
+        const resendLink = document.getElementById('resend-otp');
     
         function updateTimer() {
             timerDisplay.textContent = timeLeft;
@@ -153,6 +154,11 @@
             if (timeLeft > 0) {
                 timeLeft--;
                 setTimeout(updateTimer, 1000);
+            }else {
+                // Enable the resend link when the timer reaches zero
+                resendLink.textContent = 'Resend OTP';
+                resendLink.classList.remove('disabled'); // Enable the link
+                resendLink.style.pointerEvents = 'auto'; // Re-enable pointer events to make it clickable
             }
         }
     
@@ -181,10 +187,15 @@
             // Handle resend OTP functionality
             resendLink.addEventListener('click', function(event) {
                 event.preventDefault(); // Prevent the default link behavior
+
+                if (resendLink.classList.contains('disabled')) {
+                    return; // Prevent clicking if disabled
+                }
     
                 // Show loading text or disable the link
                 resendLink.textContent = 'Resending...';
                 resendLink.classList.add('disabled');
+                resendLink.style.pointerEvents = 'none';
     
                 // Send a request to the server to resend the OTP without including email in the request body
                 fetch('/resend_otp/', {

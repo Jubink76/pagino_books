@@ -17,7 +17,7 @@ def admin_dashboard(request):
     return render(request,'admin_dashboard.html')
 
 ###############################################################################################################
-
+@login_required(login_url='admin_login')
 def admin_users(request):
     users = UserTable.objects.all().order_by('id')
 
@@ -30,17 +30,20 @@ def admin_users(request):
 
     # search query
     search_query = request.GET.get('search','')
+    print(search_query)
 
     if search_query:
         if search_query.isdigit():
-            users = users.filter(id=search_query)
+            users = users.filter(
+                Q(id=search_query) |
+                Q(phone_number__icontains=search_query)
+            )
         else:
             users = UserTable.objects.filter(
                 Q(first_name__icontains=search_query) | 
                 Q(last_name__icontains=search_query) |
                 Q(username__icontains=search_query) |
-                Q(email__icontains=search_query) |
-                Q(phone_number__icontains = search_query)
+                Q(email__icontains=search_query)
             ).order_by('id')
     else:
         users = UserTable.objects.all().order_by('id')
@@ -73,7 +76,7 @@ def admin_users(request):
     })
 
 ######################################################################################################################
-
+@login_required(login_url='admin_login')
 def add_users(request):
     if request.method == "POST":
         first_name = request.POST.get('first_name')
@@ -126,7 +129,7 @@ def add_users(request):
     return render(request, 'add_users.html')
 
 #######################################################################################################################
-
+@login_required(login_url='admin_login')
 def view_users(request, pk):
     # single user view
     #id = request.GET.get('pk')
@@ -145,7 +148,7 @@ def view_users(request, pk):
     return render(request,'view_users.html',{'record':user_detail})
 
 #######################################################################################################################
-
+@login_required(login_url='admin_login')
 def admin_category(request):
 
     categories = CategoryTable.objects.all()
@@ -175,10 +178,13 @@ def admin_category(request):
     return render(request,'admin_category.html',{'categories':categories,'categories_per_page':categories_per_page})
 
 ##############################################################################################################################
-
+@login_required(login_url='admin_login')
 def add_category(request):
     if request.method == "POST":
         category_name = request.POST.get('category_name')
+        if CategoryTable.objects.filter(category_name__iexact = category_name).exists():
+            messages.error(request,f"The category '{category_name}' already exists")
+            return render(request,'add_category.html')
         description = request.POST.get('description')
 
         CategoryTable.objects.create(
@@ -190,7 +196,7 @@ def add_category(request):
     return render(request,'add_category.html')
 
 ################################################################################################################################
-
+@login_required(login_url='admin_login')
 def edit_category(request, pk):
     category = get_object_or_404(CategoryTable,id = pk)
     if request.method == "POST":
@@ -226,7 +232,7 @@ def edit_category(request, pk):
     return render(request,'edit_category.html',{'category':category})
 
 ######################################################################################################################
-
+@login_required(login_url='admin_login')
 def delete_category(request, pk):  
     category = get_object_or_404(CategoryTable,id=pk)
     category.is_deleted = True
@@ -236,7 +242,7 @@ def delete_category(request, pk):
     return redirect('admin_category')
 
 ######################################################################################################################
-
+@login_required(login_url='admin_login')
 def admin_products(request):
     books = BookTable.objects.all()
 
@@ -298,7 +304,7 @@ def admin_products(request):
     return render(request,'admin_products.html',{'books':books})
 
 #####################################################################################################################
-
+@login_required(login_url='admin_login')
 def add_products(request):
     if request.method == 'POST':
         book_name = request.POST.get('book_name')
@@ -355,14 +361,14 @@ def add_products(request):
     return render(request,'add_products.html',{'categories':categories,'languages':languages})
 
 ########################################################################################################################
-
+@login_required(login_url='admin_login')
 def view_product(request,pk):
     book = get_object_or_404(BookTable,id=pk)
     images = book.images.all()
     return render(request,'view_product.html',{'book':book,'images':images})
 
 ###########################################################################################################################
-
+@login_required(login_url='admin_login')
 def edit_product(request, pk):
     book = get_object_or_404(BookTable, id=pk)
     
@@ -454,7 +460,7 @@ def edit_product(request, pk):
     return render(request, 'edit_product.html', context)
 
 ############################################################################################################################
-
+@login_required(login_url='admin_login')
 def delete_product(request,pk):
     book = get_object_or_404(BookTable, id=pk)
     book.is_deleted = True

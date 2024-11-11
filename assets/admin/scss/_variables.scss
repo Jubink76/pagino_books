@@ -51,7 +51,7 @@ dark: #0d0d0d);
 ////////// COLOR SYSTEM //////////
 
 ////////// COLOR VARIABLES //////////
-$content-bg: #000000;
+$content-bg: #698e99;
 $footer-bg: $content-bg;
 $footer-color: color(dark);
 $border-color: #2c2e33;
@@ -84,14 +84,14 @@ $font-weight-bold: 700;
 
 $default-font-size: .875rem; // 14px as base font size
 
-$text-muted: #6c7293;
+$text-muted: #ffffff;
 $body-color: #ffffff;
 
 ////////// FONT VARIABLES //////////
 
 
 ///////// CARD ////////
-$card-bg: #191c24;
+$card-bg: #677392;
 $card-description-color: #bfbfbf;
 $card-title-color: #ffffff;
 ///////// CARD ////////
@@ -114,7 +114,7 @@ $modal-content-bg: $content-bg;
 ////////// MODALS VARIABLES //////////
 
 ///////// NAVBAR ////////
-$navbar-bg: #191c24;
+$navbar-bg: #627097;
 $navbar-brand-wrapper-tinted-bg: #fa424a;
 $navbar-height: 70px;
 $navbar-menu-color: #ffffff;
@@ -128,7 +128,7 @@ $sidebar-width-lg: 244px;
 $sidebar-width-mini: 185px;
 $sidebar-width-icon: 70px;
 
-$sidebar-dark-bg: #191c24;
+$sidebar-dark-bg: #6f7da5;
 $sidebar-dark-menu-color: $text-muted;
 $sidebar-dark-menu-active-bg: darken($sidebar-dark-bg, 5%);
 $sidebar-dark-menu-active-color: #ffffff;

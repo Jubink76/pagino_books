@@ -1,12 +1,13 @@
 from django.shortcuts import render, redirect
 from adminside_app.models import BookTable,CategoryTable
-from user_side_app.models import CartTable
+from user_side_app.models import CartTable,WhishlistTable
 from django.contrib import messages
 from django.core.paginator import Paginator
 from django.shortcuts import get_object_or_404, redirect
 from django.db.models import Sum
 from django.http import JsonResponse
 import json
+
 
 
 ##########################################################################################################
@@ -94,7 +95,7 @@ def add_to_cart(request, book_id):
         if book.stock_quantity > 0:
             book.stock_quantity -= 1
             if book.stock_quantity <= 0:
-                book.is_available = False  # Mark as unavailable if stock reaches zero
+                book.is_available = False  
             book.save()
             messages.success(request, f"{book.book_name} added to your cart.")
         else:
@@ -104,7 +105,7 @@ def add_to_cart(request, book_id):
 
     if not created:
         cart_item.quantity += 1
-        cart_item.save()  # This will trigger the save method which updates total_price and grand_total
+        cart_item.save()  
 
     messages.success(request, f"{book.book_name} added to your cart.")
     return redirect('cart_page')
@@ -123,7 +124,7 @@ def delete_cart_item(request,item_id):
     book = cart_item.book
     book.stock_quantity += cart_item.quantity
     if book.stock_quantity > 0:
-        book.is_available = True  # Mark as available if stock is above zero
+        book.is_available = True  
     book.save()
 
     cart_item.delete()
@@ -136,7 +137,14 @@ def delete_cart_item(request,item_id):
 
 def update_cart_quantity(request, item_id):
     if request.method == 'POST':
-        cart_item = get_object_or_404(CartTable, id=item_id)
+        if request.user.is_authenticated:
+            cart_item = get_object_or_404(CartTable, id=item_id, user=request.user)
+        else:
+            if not request.session.session_key:
+                request.session.create()
+            session_key = request.session.session_key
+            cart_item = get_object_or_404(CartTable, id=item_id, session_id=session_key)
+
         book = cart_item.book
 
         try:
@@ -158,13 +166,17 @@ def update_cart_quantity(request, item_id):
             cart_item.save()
 
             # Update available stock in BookTable
-            book.stock_quantity -= quantity_diff  # Adjust stock based on quantity change
+            book.stock_quantity -= quantity_diff  
             if book.stock_quantity <= 0:
-                book.is_available = False  # Mark book as unavailable if stock is zero
+                book.is_available = False  
             book.save()
 
             # Calculate grand total across all items in the user's cart
-            cart_items = CartTable.objects.filter(user=request.user)
+            if request.user.is_authenticated:
+                cart_items = CartTable.objects.filter(user=request.user)
+            else:
+                cart_items = CartTable.objects.filter(session_id=session_key)
+                
             grand_total = sum(item.total_price for item in cart_items)
 
             return JsonResponse({
@@ -179,3 +191,30 @@ def update_cart_quantity(request, item_id):
 
 def whishlist_page(request):
     return render(request,'whishlist_page.html')
+
+###########################################################################################################
+
+def add_to_whishlist(request,book_id):
+    book = get_object_or_404(BookTable, id=book_id)
+
+    if request.user.is_authenticated:
+        whishlist_item, created = WhishlistTable.objects.get_or_create(
+            user = request.user,
+            book = book
+        )
+
+    else:
+        session_id = request.session.session_key or request.session.create()
+        whishlist_item, created = WhishlistTable.objects.get_or_create(
+            session_id=session_id,
+            book=book,
+        )
+
+    if created:
+        response = {'message': 'Book added to wishlist successfully!'}
+    else:
+        response = {'message': 'This book is already in your wishlist.'}
+
+    if request.is_ajax():
+        return JsonResponse(response)
+    return render(request,'add_whishlist',response)
