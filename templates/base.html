@@ -14,7 +14,10 @@
 <meta name="robots" content="all">
 <title>Pagino</title>
 
+
 <!-- Bootstrap Core CSS -->
+
+
 <link rel="stylesheet" href="{% static 'user/css/bootstrap.min.css' %}">
 
 <!-- Customizable CSS -->
@@ -25,7 +28,9 @@
 <link rel="stylesheet" href="{% static 'user/css/animate.min.css' %}">
 <link rel="stylesheet" href="{% static 'user/css/rateit.css' %}">
 <link rel="stylesheet" href="{% static 'user/css/bootstrap-select.min.css' %}">
-{% block css_link %}            {% endblock %}
+{% block css_link %}       
+     
+{% endblock %}
 
 <!-- Icons/Glyphs -->
 <link rel="stylesheet" href="{% static 'user/css/font-awesome.css' %}">
@@ -48,7 +53,7 @@
           <ul class="list-unstyled">
             {% if user.is_authenticated %}
               <li class="check"><a href="{% url 'user_logout' %}"><span>Logout</span></a></li>
-              <li class="login"><a href="#"><span>Profile</span></a></li>
+              <li class="login"><a href="{% url 'user_profile' %}"><i class="fa fa-user me-2"></i><span>  Profile</span></a></li>
             {% else %}
               <li class="check"><a href="{% url 'user_login' %}"><span>Login</span></a></li>
               <li class="login"><a href="{% url 'user_signup' %}"><span>SignUp</span></a></li>

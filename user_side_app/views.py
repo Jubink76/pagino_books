@@ -190,7 +190,16 @@ def update_cart_quantity(request, item_id):
 ###########################################################################################################
 
 def whishlist_page(request):
-    return render(request,'whishlist_page.html')
+    if request.user.is_authenticated:
+        user_id = request.user.id 
+        whishlist_items = WhishlistTable.objects.filter(user = request.user)
+    else:
+        if not request.session.session_key:
+            request.session.create()
+        session_id = request.session.session_key
+        whishlist_items = WhishlistTable.objects.filter(session_id= session_id)
+
+    return render(request,'whishlist_page.html',{'whishlist_items':whishlist_items})
 
 ###########################################################################################################
 
@@ -212,9 +221,26 @@ def add_to_whishlist(request,book_id):
 
     if created:
         response = {'message': 'Book added to wishlist successfully!'}
+        messages.success(request, response['message'])
     else:
         response = {'message': 'This book is already in your wishlist.'}
+        messages.info(request, response['message'])
 
-    if request.is_ajax():
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
         return JsonResponse(response)
-    return render(request,'add_whishlist',response)
+
+    return redirect('whishlist_page')
+
+#################################################################################################################
+
+def del_whishlist_item(request,book_id):
+    if request.user.is_authenticated:
+        whishlist_item = get_object_or_404(WhishlistTable, book_id=book_id, user=request.user)
+    else:
+        session_id = request.session.session_key
+        whishlist_item = get_object_or_404(WhishlistTable,  book_id=book_id, session_id=session_id)
+
+    whishlist_item.delete()
+    messages.success(request,"item removed from whishlist")
+
+    return redirect('whishlist_page')

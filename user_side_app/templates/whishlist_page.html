@@ -34,10 +34,11 @@
 				</tr>
 			</thead>
 			<tbody>
+				{% for item in whishlist_items %}
 				<tr>
-					<td class="col-md-2 col-sm-6 col-xs-6"><img src="{% static 'user/images/products/p1.jpg' %}" alt="imga"></td>
+					<td class="col-md-2 col-sm-6 col-xs-6"><img src="{{ item.book.images.first.image.url }}" alt="{{ item.book.book_name }}"></td>
 					<td class="col-md-7 col-sm-6 col-xs-6">
-						<div class="product-name"><a href="#">Floral Print Buttoned</a></div>
+						<div class="product-name"><a href="">{{ item.book.book_name }}</a></div>
 						<div class="rating">
 							<i class="fa fa-star rate"></i>
 							<i class="fa fa-star rate"></i>
@@ -46,42 +47,29 @@
 							<i class="fa fa-star non-rate"></i>
 							<span class="review">( 06 Reviews )</span>
 						</div>
+						<div class="cart-product-info">
+							<span class="product-color " style="color: #2b8c18;" >Author:<span>{{ item.book.author }}</span></span>
+						</div>
 						<div class="price">
-							$400.00
-							<span>$900.00</span>
+							₹{{ item.book.offer_price }}
+							<span>₹{{ item.book.base_price }}</span>
 						</div>
 					</td>
 					<td class="col-md-2 ">
-						<a href="#" class="btn-upper btn btn-primary">Add to cart</a>
+						{% if item.book and item.book.id %}
+    						<a href="{% url 'add_to_cart' item.book.id %}" class="btn-upper btn btn-primary">Add to cart</a>
+						{% else %}
+    						<p>Book is unavailable.</p>
+						{% endif %}
 					</td>
 					<td class="col-md-1 close-btn">
-						<a href="#" class=""><i class="fa fa-times"></i></a>
+						{% if item.book and item.book.id %}
+							<a href="{% url 'delete_whishlist_item' item.book.id %}" data-toggle="tooltip" title="Remove"><i class="fa fa-times"></i></a>
+						{% endif %}
 					</td>
 				</tr>
-				<tr>
-					<td class="col-md-2"><img src="{% static 'user/images/products/p2.jpg' %}" alt="phoro"></td>
-					<td class="col-md-7">
-						<div class="product-name"><a href="#">Floral Print Buttoned</a></div>
-						<div class="rating">
-							<i class="fa fa-star rate"></i>
-							<i class="fa fa-star rate"></i>
-							<i class="fa fa-star rate"></i>
-							<i class="fa fa-star rate"></i>
-							<i class="fa fa-star non-rate"></i>
-							<span class="review">( 06 Reviews )</span>
-						</div>
-						<div class="price">
-							$450.00
-							<span>$900.00</span>
-						</div>
-					</td>
-					<td class="col-md-2">
-						<a href="#" class="btn-upper btn btn-default">Add to cart</a>
-					</td>
-					<td class="col-md-1 close-btn">
-						<a href="#" class=""><i class="fa fa-times"></i></a>
-					</td>
-				</tr>
+				{% endfor %}
+	
 			</tbody>
 		</table>
 	</div>

@@ -1097,7 +1097,7 @@ a {
 .top-bar {
   padding:0px;
   font-size: 14px;
-  background: #309176;
+  background: #157ed2;
 }
 .top-bar .cnt-account {
   float: right;
@@ -2837,6 +2837,23 @@ font-family: FontAwesome;
    top:0;
     margin-left:-70px
  
+}
+.product .cart .action ul {
+  display: flex;
+  justify-content: center; /* Centers the items horizontally */
+  align-items: center; /* Centers the items vertically */
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+.product .cart .action ul li {
+  margin: 0 3px; /* Adjust spacing between items */
+}
+
+.product .cart .action {
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 .product .cart .action ul li {
   float: left;

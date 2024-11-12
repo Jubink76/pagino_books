@@ -130,9 +130,9 @@
 							</div>
 							<input type="number" class="quantity-input" data-id="{{ item.id }}" value="{{ item.quantity }}" min="1" max="{{ item.book.stock_quantity}}">
 							<!-- Error message display below the buttons -->
-							<div id="error-message-{{ item.id }}" class="error-message" style="color: red; font-size: 0.9em; display: none;">
-								Quantity cannot be zero or less.
-							</div>
+						</div>
+						<div id="error-message-{{ item.id }}" class="error-message" style="color: red; font-size: 0.9em; display: none;">
+							Quantity cannot be zero or less.
 						</div>
 					</td>
 					<td class="cart-product-sub-total"><span class="cart-sub-total-price" data-id="{{ item.id }}">₹{{ item.item_price }}</span></td>

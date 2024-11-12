@@ -12,6 +12,7 @@ from django.views.decorators.cache import cache_control,never_cache
 import re
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
+from django.conf import settings
 
 # Create your views here.
 
@@ -118,8 +119,8 @@ def user_signup(request):
                 send_mail(
                     'Your OTP for Account Verification',
                     f'Your OTP code is {otp}. It will expire in 90 seconds.',
-                    'jubink76@gmail.com',  # Replace with your sender email
-                    [email],  # Use the email directly here
+                    settings.EMAIL_HOST_USER, 
+                    [email], 
                     fail_silently=False,
                 )
                 print("Email sent successfully")

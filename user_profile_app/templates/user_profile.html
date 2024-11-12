@@ -1,107 +1,320 @@
-{% extends 'homepage_after_login' %}
+{% extends 'base.html' %}
+{% load static %}
 
 {% block css_link %}
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 <style>
-    body {
-        background-color: #f8f9fa;
+    /* Scope all styles under a specific class to avoid affecting inherited elements */
+    .account-management {
+        font-family: Arial, sans-serif;
+    }
+
+    .account-management .container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 40px 20px;
+    }
+
+    .account-management .breadcrumb {
+        margin-bottom: 30px;
+        font-size: 16px;
+    }
+
+    .account-management .breadcrumb a {
+        color: #007bff;
+        text-decoration: none;
+    }
+
+    .account-management .breadcrumb span {
+        color: #6c757d;
+        margin: 0 10px;
+    }
+
+    .account-management .content-wrapper {
+        display: flex;
+        gap: 30px;
+        background: white;
+        border-radius: 12px;
+        padding: 30px;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+
+    .account-management .sidebar {
+        width: 300px;
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 25px;
+    }
+
+    .account-management .sidebar h2 {
+        font-size: 24px;
+        margin-bottom: 25px;
+        color: #333;
+    }
+
+    .account-management .nav-list {
+        list-style: none;
+    }
+
+    .account-management .nav-item {
+        margin-bottom: 15px;
+    }
+
+    .account-management .nav-link {
+        display: flex;
+        align-items: center;
+        padding: 12px 20px;
+        text-decoration: none;
+        color: #495057;
+        border-radius: 6px;
+        font-size: 16px;
+    }
+
+    .account-management .nav-link.active {
+        background-color: #007bff;
+        color: white;
+    }
+
+    .account-management .nav-link:hover:not(.active) {
+        background-color: #e9ecef;
+    }
+
+    .account-management .nav-icon {
+        margin-right: 12px;
+        width: 24px;
+        font-size: 20px;
+    }
+
+    .account-management .main-content {
+        flex: 1;
+        padding: 0 20px;
+    }
+
+    .account-management .profile-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 40px;
+    }
+
+    .account-management .profile-icon {
+        width: 60px;
+        height: 60px;
+        background-color: #007bff;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 20px;
+    }
+
+    .account-management .profile-icon svg {
+        width: 30px;
+        height: 30px;
+        color: white;
+    }
+
+    .account-management .profile-title {
+        font-size: 28px;
+        color: #333;
+    }
+
+    .account-management .form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 30px;
+        margin-bottom: 30px;
+    }
+
+    .account-management .form-group {
+        margin-bottom: 25px;
+    }
+
+    .account-management .form-label {
+        display: block;
+        margin-bottom: 8px;
+        color: #495057;
+        font-size: 16px;
+        font-weight: 500;
+    }
+
+    .account-management .form-control {
+        width: 100%;
+        padding: 12px 15px;
+        border: 1px solid #ced4da;
+        border-radius: 6px;
+        font-size: 16px;
+        background-color: #fff;
+    }
+
+    .account-management .form-control:focus {
+        outline: none;
+        border-color: #007bff;
+        box-shadow: 0 0 0 3px rgba(0,123,255,0.25);
+    }
+
+    .account-management select.form-control {
+        height: 48px;
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23333' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10l-5 5z'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 15px center;
+        padding-right: 40px;
+    }
+
+    .account-management .button-group {
+        display: flex;
+        gap: 20px;
+        margin-top: 40px;
+    }
+
+    .account-management .btn {
+        padding: 12px 25px;
+        border-radius: 6px;
+        border: none;
+        font-size: 16px;
+        cursor: pointer;
+        min-width: 160px;
+        text-align: center;
+    }
+
+    .account-management .btn-primary {
+        background-color: #007bff;
+        color: white;
+    }
+
+    .account-management .btn-primary:hover {
+        background-color: #0056b3;
+    }
+
+    .account-management .btn-warning {
+        background-color: #ffc107;
+        color: #000;
+    }
+
+    .account-management .btn-warning:hover {
+        background-color: #e0a800;
+    }
+
+    @media (max-width: 992px) {
+        .account-management .content-wrapper {
+            flex-direction: column;
+        }
+
+        .account-management .sidebar {
+            width: 100%;
+        }
+
+        .account-management .form-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .account-management .button-group {
+            flex-direction: column;
+        }
+
+        .account-management .btn {
+            width: 100%;
+        }
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="container py-4">
-    <!-- Breadcrumb -->
-    <nav aria-label="breadcrumb">
-        <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="#" class="text-decoration-none">Home</a></li>
-            <li class="breadcrumb-item active" aria-current="page">My Account</li>
-        </ol>
-    </nav>
-
-    <div class="row">
-        <!-- Left Sidebar -->
-        <div class="col-md-3">
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title">Manage Account</h5>
-                    <div class="list-group list-group-flush">
-                        <a href="#" class="list-group-item list-group-item-action bg-danger text-white">
-                            <i class="fa fa-user me-2"></i> My Profile
-                        </a>
-                        <a href="#" class="list-group-item list-group-item-action">
-                            <i class="fa fa-address-book me-2"></i> Address Book
-                        </a>
-                        <a href="#" class="list-group-item list-group-item-action">
-                            <i class="fa fa-shopping-bag me-2"></i> My Orders
-                        </a>
-                        <a href="#" class="list-group-item list-group-item-action">
-                            <i class="fa fa-credit-card me-2"></i> Payment Options
-                        </a>
-                    </div>
-                </div>
-            </div>
+<div class="account-management">
+    <div class="container">
+        <div class="breadcrumb">
+            <a href="{% url 'homepage_after_login' %}">Home</a>
+            <span>/</span>
+            <span>My Account</span>
         </div>
 
-        <!-- Right Content Area -->
-        <div class="col-md-9">
-            <div class="card">
-                <div class="card-body">
-                    <div class="d-flex align-items-center mb-4">
-                        <div class="bg-danger bg-opacity-10 p-3 rounded-circle me-3">
-                            <i class="fa fa-user text-danger"></i>
+        <div class="content-wrapper">
+            <div class="sidebar">
+                <h2>Manage Account</h2>
+                <ul class="nav-list">
+                    <li class="nav-item">
+                        <a href="#" class="nav-link active">
+                            <span class="nav-icon">👤</span>
+                            My Profile
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{% url 'user_address' %}" class="nav-link">
+                            <span class="nav-icon">📖</span>
+                            Address Book
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{% url 'user_orders' %}" class="nav-link">
+                            <span class="nav-icon">🛍️</span>
+                            My Orders
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" class="nav-link">
+                            <span class="nav-icon">💳</span>
+                            Payment Options
+                        </a>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="main-content">
+                <div class="profile-header">
+                    <div class="profile-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                            <circle cx="12" cy="7" r="4"/>
+                        </svg>
+                    </div>
+                    <h1 class="profile-title">Edit Your Profile</h1>
+                </div>
+
+                <form>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label">First Name*</label>
+                            <input type="text" class="form-control" value="jubin">
                         </div>
-                        <h5 class="card-title mb-0">Edit Your Profile</h5>
+                        <div class="form-group">
+                            <label class="form-label">Last Name*</label>
+                            <input type="text" class="form-control" value="k">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">User name *</label>
+                        <input type="text" class="form-control" value="User name">
                     </div>
 
-                    <form>
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <label for="firstName" class="form-label">First Name*</label>
-                                <input type="text" class="form-control" id="firstName" value="jubink" required>
-                            </div>
-                            <div class="col-md-6">
-                                <label for="lastName" class="form-label">Last Name*</label>
-                                <input type="text" class="form-control" id="lastName" required>
-                            </div>
-                        </div>
+                    <div class="form-group">
+                        <label class="form-label">Email Address*</label>
+                        <input type="email" class="form-control" value="jubink11421@gmail.com">
+                    </div>
 
-                        <div class="mb-3">
-                            <label for="email" class="form-label">Email Address*</label>
-                            <input type="email" class="form-control" id="email" value="jubink11421@gmail.com" required>
-                        </div>
+                    <div class="form-group">
+                        <label class="form-label">Phone Number</label>
+                        <input type="tel" class="form-control">
+                    </div>
 
-                        <div class="mb-3">
-                            <label for="phone" class="form-label">Phone Number</label>
-                            <input type="tel" class="form-control" id="phone">
-                        </div>
+                    <div class="form-group">
+                        <label class="form-label">Gender</label>
+                        <select class="form-control">
+                            <option>Select Gender</option>
+                            <option>Male</option>
+                            <option>Female</option>
+                            <option>Other</option>
+                        </select>
+                    </div>
 
-                        <div class="mb-3">
-                            <label for="gender" class="form-label">Gender</label>
-                            <select class="form-select" id="gender">
-                                <option selected>Select Gender</option>
-                                <option value="male">Male</option>
-                                <option value="female">Female</option>
-                                <option value="other">Other</option>
-                            </select>
-                        </div>
-
-                        <div class="d-flex gap-2 mt-4">
-                            <button type="button" class="btn btn-primary">
-                                <i class="fa fa-key me-2"></i>Reset Password
-                            </button>
-                            <button type="submit" class="btn btn-danger ms-auto">
-                                <i class="fa fa-save me-2"></i>Save Changes
-                            </button>
-                        </div>
-                    </form>
-                </div>
+                    <div class="button-group">
+                        <button type="button" class="btn btn-primary">Reset Password</button>
+                        <button type="submit" class="btn btn-warning">Save Changes</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
 </div>
-{% enbblock %}
+{% endblock %}
 
 {% block script %}
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
