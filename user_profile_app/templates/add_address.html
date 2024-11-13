@@ -272,6 +272,14 @@
             gap: 15px;
         }
     }
+    .is-invalid {
+        border-color: #dc3545 !important;
+        background-color: #fff8f8 !important;
+    }
+    
+    .form-group {
+        margin-bottom: 1rem;
+    }
 </style>
 {% endblock %}
 
@@ -320,7 +328,8 @@
                     <h1>Add New Address</h1>
                 </div>
 
-                <form class="address-form">
+                <form onsubmit="return validateForm()" action="" method="post" class="address-form">
+                    {% csrf_token %}
                     <div class="address-type-selector">
                         <div class="type-option active">
                             <i>🏠</i>
@@ -334,39 +343,43 @@
 
                     <div class="form-group">
                         <label>Full Name</label>
-                        <input type="text" placeholder="Enter your full name">
+                        <input type="text" placeholder="Enter your full name" name='address_name'>
                     </div>
 
                     <div class="form-group">
                         <label>Street Address</label>
-                        <input type="text" placeholder="Enter your street address">
+                        <input type="text" placeholder="Enter your street address" name="street_name">
                     </div>
 
                     <div class="form-row">
                         <div class="form-group">
                             <label>Apartment/Suite</label>
-                            <input type="text" placeholder="Enter apartment or suite number">
+                            <input type="text" placeholder="Enter apartment or suite number" name="building_no">
                         </div>
                         <div class="form-group">
                             <label>Landmark</label>
-                            <input type="text" placeholder="Enter nearby landmark">
+                            <input type="text" placeholder="Enter nearby landmark" name="landmark">
                         </div>
                     </div>
 
                     <div class="form-row">
                         <div class="form-group">
                             <label>City</label>
-                            <input type="text" placeholder="Enter city">
+                            <input type="text" placeholder="Enter city" name="city">
                         </div>
                         <div class="form-group">
                             <label>Postal Code</label>
-                            <input type="text" placeholder="Enter postal code">
+                            <input type="text" placeholder="Enter postal code" name="pincode">
                         </div>
                     </div>
 
                     <div class="form-group">
                         <label>Phone Number</label>
-                        <input type="tel" placeholder="Enter phone number">
+                        <input type="tel" placeholder="Enter phone number" name="address_phone">
+                    </div>
+                    <div class="form-group">
+                        <label>State</label>
+                        <input type="text" placeholder="Enter your state" name="state">
                     </div>
 
                     <div class="form-actions">
@@ -391,4 +404,99 @@
         });
     });
 </script>
+<script>
+    function validateForm() {
+        let isValid = true;
+        const errorMessages = [];
+    
+        // Full Name validation
+        const addressName = document.getElementsByName('address_name')[0];
+        if (!addressName.value.trim()) {
+            errorMessages.push("Full name is required");
+            addressName.classList.add('is-invalid');
+            isValid = false;
+        } else if (!/^[A-Za-z\s]+$/.test(addressName.value.trim())) {
+            errorMessages.push("Name should only contain letters and spaces");
+            addressName.classList.add('is-invalid');
+            isValid = false;
+        }
+    
+        // Street Address validation
+        const streetName = document.getElementsByName('street_name')[0];
+        if (!streetName.value.trim()) {
+            errorMessages.push("Street address is required");
+            streetName.classList.add('is-invalid');
+            isValid = false;
+        }
+    
+        // City validation
+        const city = document.getElementsByName('city')[0];
+        if (!city.value.trim()) {
+            errorMessages.push("City is required");
+            city.classList.add('is-invalid');
+            isValid = false;
+        } else if (!/^[A-Za-z\s]+$/.test(city.value.trim())) {
+            errorMessages.push("City should only contain letters and spaces");
+            city.classList.add('is-invalid');
+            isValid = false;
+        }
+    
+        // Pincode validation
+        const pincode = document.getElementsByName('pincode')[0];
+        if (!pincode.value.trim()) {
+            errorMessages.push("Postal code is required");
+            pincode.classList.add('is-invalid');
+            isValid = false;
+        } else if (!/^\d{6}$/.test(pincode.value.trim())) {
+            errorMessages.push("Please enter a valid 6-digit postal code");
+            pincode.classList.add('is-invalid');
+            isValid = false;
+        }
+    
+        // Phone number validation
+        const phone = document.getElementsByName('address_phone')[0];
+        if (!phone.value.trim()) {
+            errorMessages.push("Phone number is required");
+            phone.classList.add('is-invalid');
+            isValid = false;
+        } else if (!/^[6-9]\d{9}$/.test(phone.value.trim())) {
+            errorMessages.push("Please enter a valid 10-digit Indian phone number");
+            phone.classList.add('is-invalid');
+            isValid = false;
+        }
+    
+        // State validation
+        const state = document.getElementsByName('state')[0];
+        if (!state.value.trim()) {
+            errorMessages.push("State is required");
+            state.classList.add('is-invalid');
+            isValid = false;
+        } else if (!/^[A-Za-z\s]+$/.test(state.value.trim())) {
+            errorMessages.push("State should only contain letters and spaces");
+            state.classList.add('is-invalid');
+            isValid = false;
+        }
+    
+        // If there are errors, show them using SweetAlert
+        if (!isValid) {
+            Swal.fire({
+                title: 'Validation Error',
+                html: errorMessages.join('<br>'),
+                icon: 'error',
+                confirmButtonText: 'OK'
+            });
+            return false;
+        }
+    
+        return true;
+    }
+    
+    // Add this to your form inputs for real-time validation
+    document.querySelectorAll('input').forEach(input => {
+        input.addEventListener('input', function() {
+            this.classList.remove('is-invalid');
+        });
+    });
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 {% endblock %}

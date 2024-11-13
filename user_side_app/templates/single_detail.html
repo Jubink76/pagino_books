@@ -580,8 +580,8 @@
 	    <div class="owl-carousel homepage-owl-carousel upsell-product custom-carousel owl-theme outer-top-xs">
 	    	
 		    <div class="item item-carousel">
+				{% for related_book in related_books %}
 			    <div class="products">
-				    {% for related_book in related_books %}
 	                <div class="product">		
 		                <div class="product-image">
 			                <div class="image">
@@ -609,10 +609,9 @@
 			                    <div class="description">{{ related_book.author }}</div>
 
 			                    <div class="product-price">	
-				                    <span class="price">₹{{ related_book.price }}</span>
-                                    {% if related_book.discounted_price %}
-							            <span class="price-before-discount">₹ {{ related_book.discounted_price }}<</span>
-                                    {% endif %}			
+				                    <span class="price">₹{{ related_book.offer_price }}</span>
+									<span class="price-strike">₹{{ related_book.base_price }}</span>
+                            		
 			                    </div><!-- /.product-price -->
 			
 		                </div><!-- /.product-info -->
@@ -631,9 +630,9 @@
 				                </div><!-- /.action -->
 			                </div><!-- /.cart -->
 			            </div><!-- /.product -->
-                        {% endfor %}
 			        </div><!-- /.products -->
-		        </div><!-- /.item -->
+		        </div>
+				{% endfor %}<!-- /.item -->
 			</div><!-- /.home-owl-carousel -->
         </div>
     </div>

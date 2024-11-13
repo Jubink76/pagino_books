@@ -882,8 +882,8 @@
                         <div class="product-image">
                           <div class="image"> 
                           <a href="{% url 'single_detail' book.id %}">
-                             <img src="{{ book.images.first.image.url }}" alt=""> 
-                              {% comment %} <img src="{% static 'user/images/products/p1_hover.jpg' %}" alt="" class="hover-image"> {% endcomment %}
+                             <img src="{{ book.images.first.image.url }}" alt="book image"> 
+                             <img src="{{ book.images.first.image.url }}" alt="book image" class="hover-image">
                           </a> 
                        </div>
                           <!-- /.image -->

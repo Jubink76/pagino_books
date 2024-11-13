@@ -55,6 +55,37 @@
 		margin-top: 8px;
 		text-align: center;
 	}
+	.empty-cart {
+        text-align: center;
+        padding: 60px 20px;
+    }
+
+    .empty-cart img {
+        width: 200px;
+        height: 200px;
+        margin-bottom: 30px;
+    }
+
+    .empty-cart h2 {
+        font-size: 24px;
+        color: #333;
+        margin-bottom: 15px;
+    }
+
+    .empty-cart p {
+        color: #6c757d;
+        font-size: 16px;
+        margin-bottom: 30px;
+    }
+	.btn-explore {
+        background-color: #ffc107;
+        color: #000000;
+        padding: 12px 30px;
+        border-radius: 6px;
+        text-decoration: none;
+        display: inline-block;
+        font-size: 16px;
+    }
 </style>
 
 {% endblock %}
@@ -82,6 +113,7 @@
 				<div class="shopping-cart-table ">
 	<div class="table-responsive">
 		<table class="table">
+			{% if cart_items %}
 			<thead>
 				<tr>
 					<th class="cart-romove item">Remove</th>
@@ -93,9 +125,8 @@
 			</thead><!-- /thead -->
 			
 			<tbody>
+				{% for item in cart_items %}
 				<tr>
-					{% for item in cart_items %}
-					
 					<td class="romove-item"><a href="{% url 'delete_cart_item' item.id %}" title="cancel" class="icon"><i class="fa fa-trash-o"></i></a></td>
 					<td class="cart-image">
 						<a class="entry-thumbnail" href="">
@@ -138,8 +169,8 @@
 					<td class="cart-product-sub-total"><span class="cart-sub-total-price" data-id="{{ item.id }}">₹{{ item.item_price }}</span></td>
 				</tr>
 				{% endfor %}
+				
 			</tbody><!-- /tbody -->
-            
             <tfoot>
 				<tr>
 					<td colspan="7">
@@ -163,6 +194,14 @@
 					</td>
 				</tr>
 			</tfoot>
+			{% else %}
+				<div class="empty-cart">
+                    <img src="{% static 'user/images/logo/empty.jpeg' %}" alt="Empty Cart" />
+                    <h2>Your Cart is Empty</h2>
+                    <p>Add products to cart</p>
+                    <a href="{% url 'shop_page' %}" class="btn-explore">Explore Products</a>
+                </div>
+			{% endif %}
 		</table><!-- /table -->
 	</div>
 </div><!-- /.shopping-cart-table -->				

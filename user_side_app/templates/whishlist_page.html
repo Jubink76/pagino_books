@@ -2,7 +2,39 @@
 {% load static %}
 
 {% block css_link %}
+<style>
+	.empty-whishlist {
+        text-align: center;
+        padding: 60px 20px;
+    }
 
+    .empty-whishlist img {
+        width: 200px;
+        height: 200px;
+        margin-bottom: 30px;
+    }
+
+    .empty-whishlist h2 {
+        font-size: 24px;
+        color: #333;
+        margin-bottom: 15px;
+    }
+
+    .empty-whishlist p {
+        color: #6c757d;
+        font-size: 16px;
+        margin-bottom: 30px;
+    }
+	.btn-explore {
+		background-color: #ffc107;
+		color: #000000;
+		padding: 12px 30px;
+		border-radius: 6px;
+		text-decoration: none;
+		display: inline-block;
+		font-size: 16px;
+	}
+</style>
 {% endblock %}
 
 {% block content %}
@@ -27,6 +59,7 @@
 			<div class="row">
 				<div class="col-md-12 my-wishlist">
 	<div class="table-responsive">
+		{% if whishlist_items %}
 		<table class="table">
 			<thead>
 				<tr>
@@ -34,6 +67,7 @@
 				</tr>
 			</thead>
 			<tbody>
+				
 				{% for item in whishlist_items %}
 				<tr>
 					<td class="col-md-2 col-sm-6 col-xs-6"><img src="{{ item.book.images.first.image.url }}" alt="{{ item.book.book_name }}"></td>
@@ -68,9 +102,16 @@
 						{% endif %}
 					</td>
 				</tr>
-				{% endfor %}
-	
+			{% endfor %}
 			</tbody>
+			{% else %}
+				<div class="empty-whishlist">
+					<img src="{% static 'user/images/logo/empty.jpeg' %}" alt="Empty Whishlist" />
+					<h2>Your Whishlist is Empty</h2>
+					<p>Add products to Whishlist</p>
+					<a href="{% url 'shop_page' %}" class="btn-explore">Explore Products</a>
+				</div>
+			{% endif %}
 		</table>
 	</div>
 </div>			</div><!-- /.row -->
