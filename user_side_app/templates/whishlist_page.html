@@ -9,10 +9,12 @@
     }
 
     .empty-whishlist img {
-        width: 200px;
-        height: 200px;
-        margin-bottom: 30px;
-    }
+		max-width: 200px;  /* Limit maximum width */
+		width: 100%;       /* Make image responsive */
+		height: 200px;      /* Maintain aspect ratio */
+		object-fit: contain; /* Ensure image isn't stretched */
+		margin-bottom: 1.5rem;
+	}
 
     .empty-whishlist h2 {
         font-size: 24px;

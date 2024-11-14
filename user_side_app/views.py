@@ -7,8 +7,8 @@ from django.shortcuts import get_object_or_404, redirect
 from django.db.models import Sum
 from django.http import JsonResponse
 import json
-
-
+from user_profile_app.models import AddressTable
+from django.contrib.auth.decorators import login_required
 
 ##########################################################################################################
 
@@ -244,3 +244,19 @@ def del_whishlist_item(request,book_id):
     messages.success(request,"item removed from whishlist")
 
     return redirect('whishlist_page')
+
+###################################################################################################################
+@login_required
+def checkout_page(request):
+    addresses = AddressTable.objects.filter(user=request.user)
+    cart_items = CartTable.objects.filter(user=request.user)
+    grand_total = sum(item.quantity * item.item_price for item in cart_items)
+    return render(request,'checkout_page.html',{'addresses':addresses,'cart_items':cart_items,'grand_total':grand_total})
+
+###################################################################################################################
+
+def order_success(request):
+    return render(request,'order_success.html')
+
+
+###################################################################################################################

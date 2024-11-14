@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     'adminside_app',
     'user_side_app',
     'user_profile_app',
+    'order_detail_app',
 ]
 
 MIDDLEWARE = [

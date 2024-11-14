@@ -8,4 +8,5 @@ urlpatterns = [
     path('delete-address/<int:address_id>/', views.delete_address, name='delete_address'),
     path('user_orders/',views.user_orders,name='user_orders'),
     path('user_password_reset',views.user_password_reset,name='user_password_reset'),
+    path('checkout_add_address/', views.add_address, {'redirect_to': 'checkout_page'}, name='checkout_add_address'),
 ]
