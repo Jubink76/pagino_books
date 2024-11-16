@@ -42,7 +42,7 @@ def user_address(request):
 #######################################################################################################################
 
 @login_required
-def add_address(request, redirect_to='user_address'):
+def add_address(request):
     if request.method == "POST":
         address_name = request.POST.get('address_name')
         street_name= request.POST.get('street_name')
@@ -139,8 +139,6 @@ def add_address(request, redirect_to='user_address'):
                 )
                 address.save()
                 messages.success(request, "Address added successfully!")
-                if redirect_to == 'checkout_page':
-                    return redirect('checkout_page')
                 return redirect('user_address')
             
         except Exception as e:

@@ -6,9 +6,12 @@ from user_profile_app.models import AddressTable
 from adminside_app.models import BookTable
 import uuid 
 
-# creating random alpha-numeric order id 
 def generate_order_id():
-    return ''.join(random.choices(string.ascii_uppercase + string.ascii_lowercase + string.digits, k=10))
+    # Generate a unique order ID
+    while True:
+        order_id = ''.join(random.choices(string.ascii_uppercase + string.ascii_lowercase + string.digits, k=10))
+        if not OrderDetails.objects.filter(order_id=order_id).exists():
+            return order_id
 
 # Create your models here.
 def generate_coupon_code():
@@ -18,7 +21,8 @@ class CouponTable(models.Model):
     code = models.CharField(max_length=20, default=generate_coupon_code, unique=True)  # Unique code for the coupon
     coupon_type = models.CharField(
         max_length=20,
-        choices=[('flat', 'Flat'), ('percentage', 'Percentage')]
+        choices=[('flat', 'Flat'), ('percentage', 'Percentage')],
+        default='flat'
     )
     created_at = models.DateTimeField(auto_now_add=True)
     valid_from = models.DateTimeField()
@@ -34,7 +38,8 @@ class OfferTable(models.Model):
     name = models.CharField(max_length=50)
     offer_type = models.CharField(
         max_length=20,
-        choices=[('flat', 'Flat'), ('percentage', 'Percentage')]
+        choices=[('flat', 'Flat'), ('percentage', 'Percentage')],
+        default='flat'
     )
     created_at = models.DateTimeField(auto_now_add=True)
     valid_from = models.DateTimeField()
@@ -48,7 +53,7 @@ class OfferTable(models.Model):
 
 
 class OrderDetails(models.Model):
-    order_id = models.CharField(max_length =10, unique=True,default=generate_order_id,editable=False)
+    order_id = models.CharField(max_length =10, primary_key=True)
     user = models.ForeignKey(UserTable,on_delete=models.CASCADE,null=True,blank=True)
     address = models.ForeignKey(AddressTable, on_delete=models.SET_NULL, null=True)
     total_amount = models.DecimalField(max_digits=10, decimal_places=2)
@@ -77,11 +82,11 @@ class OrderDetails(models.Model):
     
 
 class OrderItem(models.Model):
-    order = models.ForeignKey(OrderDetails, related_name='items', on_delete=models.CASCADE)
+    order = models.ForeignKey(OrderDetails, on_delete=models.CASCADE, to_field='order_id',db_column='order_id', null=True)
     book = models.ForeignKey(BookTable,on_delete=models.CASCADE, null=True, blank=True)
-    quantity = models.PositiveIntegerField()
-    price_per_item = models.DecimalField(max_digits=10, decimal_places=2)
-    total_price = models.DecimalField(max_digits=10, decimal_places=2)  # price_per_item * quantity
+    quantity = models.PositiveIntegerField(default=1)
+    price_per_item = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    total_price = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)  # price_per_item * quantity
 
     def __str__(self):
         return f"{self.quantity} x {self.product.name} in Order {self.order.order_id}"

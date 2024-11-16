@@ -1,150 +1,205 @@
 document.addEventListener('DOMContentLoaded', function() {
-    // Existing functionality for address management
-    const savedAddressesSection = document.getElementById('savedAddressesSection');
-    const newAddressFormSection = document.getElementById('newAddressFormSection');
-    const addNewAddressBtn = document.getElementById('addNewAddressBtn');
-    const savedAddressItems = document.querySelectorAll('.saved-address-item');
-    const deliveryAddressSection = document.querySelector('.delivery-address');
-    const previewAddress = document.querySelector('.preview-address') || createPreviewAddress();
+    // UI Elements
+    const elements = {
+        savedAddressesSection: document.getElementById('savedAddressesSection'),
+        newAddressFormSection: document.getElementById('newAddressFormSection'),
+        addNewAddressBtn: document.getElementById('addNewAddressBtn'),
+        deliveryAddressPanel: document.querySelector('.delivery-address'),
+        placeOrderButton: document.querySelector('.btn-place-order'),
+        paymentRadios: document.querySelectorAll('input[name="payment"]'),
+        savedAddressItems: document.querySelectorAll('.saved-address-item')
+    };
 
-    // New elements for checkout validation
-    const addressRadios = document.querySelectorAll('input[name="savedAddress"]');
-    const paymentRadios = document.querySelectorAll('input[name="payment"]');
-    const placeOrderBtn = document.querySelector('.btn-place-order');
+    // State management
+    let state = {
+        selectedAddress: null,
+        selectedPayment: null
+    };
 
-    // Initialize preview address section
-    function createPreviewAddress() {
-        const previewDiv = document.createElement('div');
-        previewDiv.className = 'preview-address';
-        deliveryAddressSection.appendChild(previewDiv);
-        return previewDiv;
-    }
+    // Initialize event listeners
+    function initializeEventListeners() {
+        // Address item click handler
+        elements.savedAddressItems.forEach(item => {
+            item.addEventListener('click', function(e) {
+                // Prevent triggering if clicking on radio input
+                if (e.target.type === 'radio') return;
+                
+                const radio = this.querySelector('.address-radio');
+                if (radio) {
+                    radio.checked = true;
+                    state.selectedAddress = this;
+                    updateDeliveryAddress();
+                    validateOrderButton();
+                }
+            });
 
-    // Function to check selections and update button state
-    function updatePlaceOrderButton() {
-        const isAddressSelected = Array.from(addressRadios).some(radio => radio.checked);
-        const isPaymentSelected = Array.from(paymentRadios).some(radio => radio.checked);
-
-        if (isAddressSelected && isPaymentSelected) {
-            placeOrderBtn.classList.remove('disabled');
-            placeOrderBtn.removeAttribute('disabled');
-        } else {
-            placeOrderBtn.classList.add('disabled');
-            placeOrderBtn.setAttribute('disabled', '');
-        }
-    }
-
-    // Handle address selection
-    savedAddressItems.forEach(item => {
-        item.addEventListener('click', function() {
-            // Remove selection from all items
-            savedAddressItems.forEach(addr => addr.classList.remove('selected'));
+            // Make the entire address item focusable
+            item.setAttribute('tabindex', '0');
             
-            // Add selection to clicked item
-            this.classList.add('selected');
-            
-            // Find and check the radio button within this address item
-            const radio = this.querySelector('input[type="radio"]');
-            if (radio) {
-                radio.checked = true;
-                // Trigger the place order button update
-                updatePlaceOrderButton();
-            }
-            
-            // Update the delivery address preview
-            updateDeliveryAddress(this);
+            // Handle keyboard selection
+            item.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    const radio = this.querySelector('.address-radio');
+                    if (radio) {
+                        radio.checked = true;
+                        state.selectedAddress = this;
+                        updateDeliveryAddress();
+                        validateOrderButton();
+                    }
+                }
+            });
         });
-    });
 
-    // Function to update delivery address preview
-    function updateDeliveryAddress(selectedAddress) {
-        const addressContent = selectedAddress.querySelector('.address-details').cloneNode(true);
-        
-        // Clear and update preview
-        previewAddress.innerHTML = '';
-        previewAddress.appendChild(addressContent);
-        
-        // Show preview and update section styles
-        previewAddress.classList.add('active');
-        deliveryAddressSection.classList.add('has-address');
-        
-        // Update or hide the placeholder text
-        const textMuted = deliveryAddressSection.querySelector('.text-muted');
-        if (textMuted) {
-            textMuted.style.display = 'none';
+        // Radio button handlers
+        elements.paymentRadios.forEach(radio => {
+            radio.addEventListener('change', function() {
+                state.selectedPayment = this.value;
+                validateOrderButton();
+            });
+        });
+
+        // Add New Address button handler
+        if (elements.addNewAddressBtn) {
+            elements.addNewAddressBtn.addEventListener('click', toggleAddressForm);
         }
 
-        // Smooth scroll to delivery address section on mobile
-        if (window.innerWidth < 768) {
-            deliveryAddressSection.scrollIntoView({ behavior: 'smooth' });
+        // Place order button handler
+        if (elements.placeOrderButton) {
+            elements.placeOrderButton.addEventListener('click', handlePlaceOrder);
         }
     }
 
-    // Handle "Add New Address" button
-    addNewAddressBtn?.addEventListener('click', function() {
-        savedAddressesSection.style.display = 'none';
-        newAddressFormSection.style.display = 'block';
-        addNewAddressBtn.style.display = 'none';
-    });
+    // Update delivery address panel
+    function updateDeliveryAddress() {
+        if (!state.selectedAddress || !elements.deliveryAddressPanel) return;
 
-    // Handle address form submission
-    document.querySelector('.address-form')?.addEventListener('submit', async function(e) {
+        const addressDetails = state.selectedAddress.querySelector('.address-details');
+        const addressType = state.selectedAddress.querySelector('.address-type .type-label')?.textContent || 'Home';
+        
+        // Safely get text content from elements
+        const nameText = addressDetails.querySelector('.name')?.textContent || '';
+        const streetText = addressDetails.querySelector('.street')?.textContent || '';
+        const areaText = addressDetails.querySelector('.area')?.textContent || '';
+        const cityStateText = addressDetails.querySelector('.city-state')?.textContent || '';
+        const phoneText = addressDetails.querySelector('.phone')?.textContent || '';
+
+        elements.deliveryAddressPanel.innerHTML = `
+            <h4 class="mt-4">Delivery Address</h4>
+            <div class="selected-address bg-light p-3 rounded">
+                <div class="address-type mb-2">
+                    <span class="badge bg-secondary">${addressType}</span>
+                </div>
+                <p class="mb-1"><strong>${nameText}</strong></p>
+                <p class="mb-1">${streetText}</p>
+                ${areaText ? `<p class="mb-1">${areaText}</p>` : ''}
+                <p class="mb-1">${cityStateText}</p>
+                <p class="mb-1">${phoneText}</p>
+                <button class="btn btn-link btn-sm p-0 mt-2" onclick="window.changeAddress()">Change</button>
+            </div>
+        `;
+
+        elements.deliveryAddressPanel.classList.add('has-address');
+    }
+
+    // Toggle address form visibility
+    function toggleAddressForm() {
+        const savedSection = elements.savedAddressesSection;
+        const formSection = elements.newAddressFormSection;
+        
+        if (savedSection && formSection) {
+            if (formSection.style.display === 'none') {
+                savedSection.style.display = 'none';
+                formSection.style.display = 'block';
+                elements.addNewAddressBtn.textContent = 'Back to Saved Addresses';
+            } else {
+                savedSection.style.display = 'block';
+                formSection.style.display = 'none';
+                elements.addNewAddressBtn.innerHTML = '<i class="fa fa-plus"></i> Add New Address';
+            }
+        }
+    }
+
+    // Validate order button state
+    function validateOrderButton() {
+        if (!elements.placeOrderButton) return;
+
+        const isValid = state.selectedAddress && state.selectedPayment;
+        
+        elements.placeOrderButton.classList.toggle('disabled', !isValid);
+        elements.placeOrderButton.disabled = !isValid;
+        elements.placeOrderButton.style.backgroundColor = isValid ? '#fac825' : '#6c757d';
+        elements.placeOrderButton.style.cursor = isValid ? 'pointer' : 'not-allowed';
+    }
+
+    // Handle place order
+    function handlePlaceOrder(e) {
         e.preventDefault();
         
-        if (validateForm()) {
-            const formData = new FormData(this);
-            try {
-                const response = await fetch('/api/save-address/', {
-                    method: 'POST',
-                    body: formData,
-                    headers: {
-                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
-                    }
-                });
-                
-                if (response.ok) {
-                    window.location.reload();
-                }
-            } catch (error) {
-                console.error('Error saving address:', error);
-            }
+        if (!state.selectedAddress || !state.selectedPayment) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Oops...',
+                text: 'Please select both delivery address and payment method!'
+            });
+            return;
         }
-    });
+        const addressId = state.selectedAddress.querySelector('.address-radio').value;
 
-    // Handle form cancellation
-    window.cancelNewAddress = function() {
-        const hasExistingAddresses = document.querySelector('.saved-address-item');
-        if (hasExistingAddresses) {
-            savedAddressesSection.style.display = 'block';
-            addNewAddressBtn.style.display = 'block';
-            newAddressFormSection.style.display = 'none';
+        // Log data for debugging (replace with your form submission logic)
+        console.log('Submitting order:', {
+            addressId: addressId,
+            paymentMethod: state.selectedPayment
+        });
+    
+        // Submit the form with the required data
+        const placeOrderForm = document.getElementById('placeOrderForm');
+        if (placeOrderForm) {
+            const addressInput = document.createElement('input');
+            addressInput.type = 'hidden';
+            addressInput.name = 'savedAddress';
+            addressInput.value = addressId;
+    
+            const paymentInput = document.createElement('input');
+            paymentInput.type = 'hidden';
+            paymentInput.name = 'payment';
+            paymentInput.value = state.selectedPayment;
+    
+            // Append hidden inputs to the form
+            placeOrderForm.appendChild(addressInput);
+            placeOrderForm.appendChild(paymentInput);
+    
+            // Submit the form
+            placeOrderForm.submit();
+        }
+
+        Swal.fire({
+            icon: 'success',
+            title: 'Order Placed!',
+            text: 'Your order has been placed successfully.'
+        });
+    }
+
+    // Change address handler (exposed to window for inline onclick access)
+    window.changeAddress = function() {
+        state.selectedAddress = null;
+        if (elements.deliveryAddressPanel) {
+            elements.deliveryAddressPanel.innerHTML = `
+                <h4 class="mt-4">Delivery Address</h4>
+                <p class="text-muted">Please select a delivery address</p>
+            `;
+            elements.deliveryAddressPanel.classList.remove('has-address');
+        }
+        
+        validateOrderButton();
+
+        // Uncheck the selected address radio
+        const selectedRadio = document.querySelector('input[name="savedAddress"]:checked');
+        if (selectedRadio) {
+            selectedRadio.checked = false;
         }
     };
 
-    // Address type selector functionality
-    document.querySelectorAll('.type-option').forEach(option => {
-        option.addEventListener('click', () => {
-            document.querySelectorAll('.type-option').forEach(opt => 
-                opt.classList.remove('active')
-            );
-            option.classList.add('active');
-        });
-    });
-
-    // Add change event listeners for checkout validation
-    addressRadios.forEach(radio => {
-        radio.addEventListener('change', updatePlaceOrderButton);
-    });
-
-    paymentRadios.forEach(radio => {
-        radio.addEventListener('change', updatePlaceOrderButton);
-    });
-
-    // Initial check when page loads
-    updatePlaceOrderButton();
+    // Initialize the page
+    initializeEventListeners();
 });
-
-function validateForm() {
-    // Add your form validation logic here
-    return true;
-}

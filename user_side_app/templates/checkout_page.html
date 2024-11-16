@@ -5,16 +5,7 @@
 <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet">
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
 <link href="{% static 'user/css/checkout_page.css' %}" rel="stylesheet">
-{% endblock %}
-
-{% block content %}
-{% extends 'base.html' %}
-{% load static %}
-
-{% block css_link %}
-<link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet">
-<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
-<link href="{% static 'user/css/checkout_page.css' %}" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
 {% endblock %}
 
 {% block content %}
@@ -28,208 +19,205 @@
     </ol>
 
     <h2 class="text-center mb-4">Billing Details</h2>
-
-    <div class="row">
+        <div class="row">
         <!-- Left Column - Address Form -->
-        <div class="col-md-8">
-            <div class="panel panel-default">
-                <div class="panel-body">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h4 class="m-0">Saved Addresses</h4>
-                        <button id="addNewAddressBtn" class="btn btn-outline-secondary">
-                            <i class="fa fa-plus"></i> Add New Address
-                        </button>
-                    </div>
-                    <hr>
+            <div class="col-md-8">
+                <div class="panel panel-default">
+                    <div class="panel-body">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h4 class="m-0">Saved Addresses</h4>
+                            <button id="addNewAddressBtn" class="btn btn-outline-secondary">
+                                <i class="fa fa-plus"></i> Add New Address
+                            </button>
+                        </div>
+                        <hr>
                     
-                    <!-- Saved Addresses Section -->
+                        <!-- Saved Addresses Section -->
                     
-                    <div id="savedAddressesSection">
-                        {% if addresses %}
-                            <div class="saved-addresses-list">
-                                {% for address in addresses %}
-                                    <div class="saved-address-item">
-                                        <input type="radio" name="savedAddress" class="address-radio" value="{{ address.id }}">
-                                        <div class="address-content">
-                                            <div class="address-type">
-                                                <i class="fa fa-{% if address.type == 'home' %}home{% else %}building{% endif %}"></i>
-                                                <span class="type-label">{{ address.type|default:"Home"|title }}</span>
-                                            </div>
-                                            <div class="address-details">
-                                                <p class="name"><strong>{{ address.address_name }}</strong></p>
-                                                <p class="street">{{ address.street_name }}</p>
-                                                {% if address.landmark %}
-                                                    <p class="area">Near {{ address.landmark }}</p>
-                                                {% endif %}
-                                                <p class="city-state">{{ address.city }}, {{ address.state }} {{ address.pincode }}</p>
-                                                <p class="phone">Phone: {{ address.address_phone }}</p>
+                        <div id="savedAddressesSection">
+                            {% if addresses %}
+                                <div class="saved-addresses-list">
+                                    {% for address in addresses %}
+                                        <div class="saved-address-item">
+                                            <input type="radio" name="savedAddress" class="address-radio" value="{{ address.id }}" required>
+                                            <div class="address-content">
+                                                <div class="address-type">
+                                                    <i class="fa fa-{% if address.type == 'home' %}home{% else %}building{% endif %}"></i>
+                                                    <span class="type-label">{{ address.type|default:"Home"|title }}</span>
+                                                </div>
+                                                <div class="address-details">
+                                                    <p class="name"><strong>{{ address.address_name }}</strong></p>
+                                                    <p class="street">{{ address.street_name }}</p>
+                                                    {% if address.landmark %}
+                                                        <p class="area">Near {{ address.landmark }}</p>
+                                                    {% endif %}
+                                                    <p class="city-state">{{ address.city }}, {{ address.state }} {{ address.pincode }}</p>
+                                                    <p class="phone">Phone: {{ address.address_phone }}</p>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                {% endfor %}
-                            </div>
-                        {% else %}
-                            <div class="text-center">
-                                <p>No saved addresses found. Please add a new address.</p>
-                            </div>
-                        {% endif %}
-                    </div>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <div class="text-center">
+                                    <p>No saved addresses found. Please add a new address.</p>
+                                </div>
+                            {% endif %}
+                        </div>
         
                     <!-- New Address Form Section -->
-                    <div id="newAddressFormSection" style="display: none;">
-                        <h4>Add New Address</h4>
-                        <form onsubmit="return validateForm()" action="{% url 'checkout_add_address' %}" method="post" class="address-form">
-                            {% csrf_token %}
-                            <div class="address-type-selector">
-                                <div class="type-option active">
-                                    <i>🏠</i>
-                                    <div>Home</div>
+                        <div id="newAddressFormSection" style="display: none;">
+                            <h4>Add New Address</h4>
+                            <form action="{% url 'checkout_add_address' %}" method="post" class="address-form">
+                                {% csrf_token %}
+                                <div class="address-type-selector">
+                                    <div class="type-option active">
+                                        <i>🏠</i>
+                                        <div>Home</div>
+                                    </div>
+                                    <div class="type-option">
+                                        <i>🏢</i>
+                                        <div>Office</div>
+                                    </div>
                                 </div>
-                                <div class="type-option">
-                                    <i>🏢</i>
-                                    <div>Office</div>
-                                </div>
-                            </div>
         
-                            <div class="form-group">
-                                <label>Full Name</label>
-                                <input type="text" placeholder="Enter your full name" name='address_name'>
-                            </div>
-        
-                            <div class="form-group">
-                                <label>Street Address</label>
-                                <input type="text" placeholder="Enter your street address" name="street_name">
-                            </div>
-        
-                            <div class="form-row">
                                 <div class="form-group">
-                                    <label>Apartment/Suite</label>
-                                    <input type="text" placeholder="Enter apartment or suite number" name="building_no">
+                                    <label>Full Name</label>
+                                    <input type="text" placeholder="Enter your full name" name='address_name'>
+                                </div>
+            
+                                <div class="form-group">
+                                    <label>Street Address</label>
+                                    <input type="text" placeholder="Enter your street address" name="street_name">
+                                </div>
+            
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label>Apartment/Suite</label>
+                                        <input type="text" placeholder="Enter apartment or suite number" name="building_no">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Landmark</label>
+                                        <input type="text" placeholder="Enter nearby landmark" name="landmark">
+                                    </div>
+                                </div>
+        
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label>City</label>
+                                        <input type="text" placeholder="Enter city" name="city">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Postal Code</label>
+                                        <input type="text" placeholder="Enter postal code" name="pincode">
+                                    </div>
+                                </div>
+            
+                                <div class="form-group">
+                                    <label>Phone Number</label>
+                                    <input type="tel" placeholder="Enter phone number" name="address_phone">
                                 </div>
                                 <div class="form-group">
-                                    <label>Landmark</label>
-                                    <input type="text" placeholder="Enter nearby landmark" name="landmark">
+                                    <label>State</label>
+                                    <input type="text" placeholder="Enter your state" name="state">
                                 </div>
-                            </div>
         
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label>City</label>
-                                    <input type="text" placeholder="Enter city" name="city">
+                                <div class="form-actions">
+                                    <a href="{% url 'checkout_page' %}"><button type="button" class="btn-cancel">Cancel</button></a>
+                                    <button type="submit" class="btn-save">Save Address</button>
                                 </div>
-                                <div class="form-group">
-                                    <label>Postal Code</label>
-                                    <input type="text" placeholder="Enter postal code" name="pincode">
-                                </div>
-                            </div>
-        
-                            <div class="form-group">
-                                <label>Phone Number</label>
-                                <input type="tel" placeholder="Enter phone number" name="address_phone">
-                            </div>
-                            <div class="form-group">
-                                <label>State</label>
-                                <input type="text" placeholder="Enter your state" name="state">
-                            </div>
-        
-                            <div class="form-actions">
-                                <a href="{% url 'checkout_page' %}"><button type="button" class="btn-cancel">Cancel</button></a>
-                                <button type="submit" class="btn-save">Save Address</button>
-                            </div>
-                        </form>
+                            </form>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
 
         <!-- Right Column - Order Summary -->
-        {% if cart_items %}
-        <div class="col-md-4">
-            <div class="order-summary">
-                <h4>Order Summary</h4>
-                {% for item in cart_items %}
-                <div class="product-item">
-                    <img src="{{ item.book.images.first.image.url }}" alt="{{ item.book.book_name }}" class="product-img">
-                    <div class="product-details">
-                        <div>{{ item.book.book_name }}</div>
-                        <small>Qty: {{ item.quantity }}</small>
-                    </div>
-                    <div class="price">₹{{ item.total_price }}</div>
-                </div>
-                
-                {% endfor %}
-                <hr>
-                <div class="d-flex justify-content-between">
-                    <div>Subtotal:</div>
-                    <div class="price">₹ {{ grand_total }}</div>
-                </div>
-                <div class="d-flex justify-content-between">
-                    <div>Coupon Discount:</div>
-                    <div class="text-success">- ₹ 0</div>
-                </div>
-                <div class="d-flex justify-content-between">
-                    <div>Shipping:</div>
-                    <div class="text-success">+ ₹ Free</div>
-                </div>
-                <hr>
-                <div class="d-flex justify-content-between">
-                    <div><strong>Total:</strong></div>
-                    <div class="price">₹ {{ grand_total }}</div>
-                </div>
-                
-                <div class="delivery-address">
-                    <h4 class="mt-4">Delivery Address</h4>
-                    <p class="text-muted">Please select a delivery address</p>
-                </div>
+            {% if cart_items %}
+            <div class="col-md-4">
+                <form id="placeOrderForm" action="{% url 'create_order' %}" method="post">
+                    {% csrf_token %}
+                    <div class="order-summary">
+                        <h4>Order Summary</h4>
+                        {% for item in cart_items %}
+                        <div class="product-item">
+                            <img src="{{ item.book.images.first.image.url }}" alt="{{ item.book.book_name }}" class="product-img">
+                            <div class="product-details">
+                                <div>{{ item.book.book_name }}</div>
+                                <small>Qty: {{ item.quantity }}</small>
+                            </div>
+                            <div class="price">₹{{ item.total_price }}</div>
+                        </div>
+                    
+                        {% endfor %}
+                        <hr>
+                        <div class="d-flex justify-content-between">
+                            <div>Subtotal:</div>
+                            <div class="price">₹ {{ grand_total }}</div>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <div>Coupon Discount:</div>
+                            <div class="text-success">- ₹ 0</div>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <div>Shipping:</div>
+                            <div class="text-success">+ ₹ Free</div>
+                        </div>
+                        <hr>
+                        <div class="d-flex justify-content-between">
+                            <div><strong>Total:</strong></div>
+                            <div class="price">₹ {{ grand_total }}</div>
+                        </div>
+                        
+                        <div class="delivery-address">
+                            <h4 class="mt-4">Delivery Address</h4>
+                            <p class="text-muted">Please select a delivery address</p>
+                        </div>
 
-                <div class="payment-method">
-                    <h4>Payment Method</h4> 
-                    <div class="payment-option">
-                        <input type="radio" name="payment" id="cod">
-                        <label for="cod">Cash on Delivery</label>
-                        <div class="text-muted small">Pay when you receive your order</div>
-                    </div>
-                    <div class="payment-option">
-                        <input type="radio" name="payment" id="online">
-                        <label for="online">Pay Online (Card/UPI/Netbanking)</label>
-                        <div class="text-muted small">Pay securely with Razorpay</div>
-                    </div>
-                    <div class="payment-option">
-                        <input type="radio" name="payment" id="online">
-                        <label for="online">Pay Wallet</label>
-                        <div class="text-muted small">Pay through wallet amount</div>
-                    </div>
+                        <div class="payment-method">
+                            <h4>Payment Method</h4> 
+                            <div class="payment-option">
+                                <input type="radio" name="payment" id="cod"  value="COD" required>
+                                <label for="cod">Cash on Delivery</label>
+                                <div class="text-muted small">Pay when you receive your order</div>
+                            </div>
+                            <div class="payment-option">
+                                <input type="radio" name="payment" id="online" value="ONLINE">
+                                <label for="online">Pay Online (Card/UPI/Netbanking)</label>
+                                <div class="text-muted small">Pay securely with Razorpay</div>
+                            </div>
+                            <div class="payment-option">
+                                <input type="radio" name="payment" id="online" value="WALLET">
+                                <label for="online">Pay Wallet</label>
+                                <div class="text-muted small">Pay through wallet amount</div>
+                            </div>
 
 
-                    <div class="input-group mt-3">
-                        <input type="text" class="form-control" placeholder="Enter coupon code">
-                        <span class="input-group-btn">
-                            <button class="btn btn-danger" type="button">Apply</button>
-                        </span>
-                    </div>
+                            <div class="input-group mt-3">
+                                <input type="text" class="form-control" placeholder="Enter coupon code">
+                                <span class="input-group-btn">
+                                    <button class="btn btn-danger" type="button">Apply</button>
+                                </span>
+                            </div>
 
-                    <button class="btn-place-order disabled" disabled>
-                        Place Order <i class="fa fa-arrow-right"></i>
-                    </button>
-                </div>
+                            <button type="submit" class="btn-place-order disabled" disabled>
+                                Place Order <i class="fa fa-arrow-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                </form> 
             </div>
+            {% endif %}
         </div>
-        {% endif %}
-    </div>
 </div>
 {% endblock %}
 
 {% block script %}
 <script src="{% static 'user/js/checkout_page.js' %}"></script>
+<script src="{% static 'user/js/add_address.js' %}"></script>
+<script src="{% static 'user/js/create_order.js' %}"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/3.3.7/js/bootstrap.min.js"></script>
-
-{% endblock %}
-{% endblock %}
-
-{% block script %}
-<script src="{% static 'user/js/checkout_page.js' %}"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 {% endblock %}

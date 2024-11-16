@@ -12,5 +12,6 @@ urlpatterns = [
     path('add_to_whishlist/<int:book_id>/',views.add_to_whishlist,name='add_to_whishlist'),
     path('delete_whishlist_item/<int:book_id>/',views.del_whishlist_item,name='delete_whishlist_item'),
     path('checkout_page/',views.checkout_page,name='checkout_page'),
-    path('order_success/',views.order_success,name='order_success')
+    path('checkout_add_address/', views.checkout_add_address, name='checkout_add_address'),
+    path('order-success/<str:order_id>/',views.order_success,name='order_success')
 ]

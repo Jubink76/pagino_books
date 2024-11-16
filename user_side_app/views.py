@@ -9,6 +9,7 @@ from django.http import JsonResponse
 import json
 from user_profile_app.models import AddressTable
 from django.contrib.auth.decorators import login_required
+from order_detail_app.models import OrderDetails,OrderItem
 
 ##########################################################################################################
 
@@ -248,14 +249,59 @@ def del_whishlist_item(request,book_id):
 ###################################################################################################################
 @login_required
 def checkout_page(request):
+
     addresses = AddressTable.objects.filter(user=request.user)
     cart_items = CartTable.objects.filter(user=request.user)
     grand_total = sum(item.quantity * item.item_price for item in cart_items)
-    return render(request,'checkout_page.html',{'addresses':addresses,'cart_items':cart_items,'grand_total':grand_total})
+    discount = 0  # Placeholder for discount logic
+    final_total = grand_total - discount
+    show_new_address_form = request.GET.get('show_new_address_form', 'false') == 'true'
+    context = {
+        "addresses": addresses,
+        "cart_items": cart_items,
+        "grand_total": grand_total,
+        "discount": discount,
+        "final_total": final_total,
+        'show_new_address_form': show_new_address_form,
+    }
+
+    return render(request,'checkout_page.html',context)
 
 ###################################################################################################################
+@login_required
+def checkout_add_address(request):
+    if request.method == "POST":
+        address_name = request.POST.get('address_name')
+        street_name= request.POST.get('street_name')
+        building_no = request.POST.get('building_no')
+        landmark = request.POST.get('landmark')
+        city = request.POST.get('city')
+        pincode = request.POST.get('pincode')
+        address_phone = request.POST.get('address_phone')
+        state = request.POST.get('state')
 
-def order_success(request):
+
+        address = AddressTable(
+                    user=request.user,
+                    address_name=address_name,
+                    street_name=street_name,
+                    building_no=building_no,
+                    landmark=landmark,
+                    city=city,
+                    pincode=pincode,
+                    address_phone=address_phone,
+                    state=state
+                )
+
+                # Attempt to save the address
+        address.save()
+        print("address saved")
+        messages.success(request, "Address added successfully!")
+
+    return render(request, 'checkout_page.html')
+###################################################################################################################
+
+def order_success(request,order_id):
     return render(request,'order_success.html')
 
 

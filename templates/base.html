@@ -205,7 +205,11 @@
           <div class="navbar-collapse collapse" id="mc-horizontal-menu-collapse">
             <div class="nav-outer">
               <ul class="nav navbar-nav">
-                <li class="active dropdown"> <a href="home.html">Home</a> </li>
+                {% if user.is_authenticated %}
+                  <li class="active dropdown"> <a href="{% url 'homepage_after_login' %}">Home</a> </li>
+                {% else %}
+                  <li class="active dropdown"> <a href="{% url 'homepage_before_login' %}">Home</a> </li>
+                {% endif %}
                 <li class="dropdown"> <a href="{% url 'shop_page' %}">Shop</a></li>
                 <li class="dropdown"> <a href="">Best Sellers<span class="menu-label hot-menu hidden-xs">hot</span></a></li>
                 <li class="dropdown"> <a href="">New arrivers<span class="menu-label new-menu hidden-xs">new</span> </a> </li>
@@ -219,20 +223,27 @@
                         <div class="row">
                           <div class="col-xs-12 col-menu">
                             <ul class="links">
-                              <li><a href="home.html">Home</a></li>
-                              <li><a href="category.html">Shop</a></li>
-                              <li><a href="detail.html">Categories</a></li>
+                              {% if user.is_authenticated %}
+                                <li><a href="{% url 'homepage_after_login' %}">Home</a></li>
+                              {% else %}
+                                <li><a href="{% url 'homepage_before_login' %}">Home</a></li>
+                              {% endif %}
+                              <li><a href="{% url 'shop_page' %}">Shop</a></li>
+                              <li><a href="">Categories</a></li>
                               <li><a href="shopping-cart.html">Authors</a></li>
-                              <li><a href="checkout.html">Blogs</a></li>
-                              <li><a href="blog.html">Shopping Cart</a></li>
-                              <li><a href="blog-details.html">Whishlist</a></li>
-                              <li><a href="contact.html">Contact</a></li>
-                              <li><a href="sign-in.html">Sign In</a></li>
-                              <li><a href="my-wishlist.html">LogIn</a></li>
-                              <li><a href="terms-conditions.html">Whishlist</a></li>
-                              <li><a href="track-orders.html">My profile</a></li>
-                              <li><a href="product-comparison.html">About Us</a></li>
-                              <li><a href="faq.html">Terms and Condition</a></li> 
+                              <li><a href="">Blogs</a></li>
+                              <li><a href="{% url 'cart_page' %}">Shopping Cart</a></li>
+                              <li><a href="{% url 'whishlist_page' %}">Whishlist</a></li>
+                              <li><a href="">Contact</a></li>
+                              <li><a href="{% url 'user_signup' %}">Sign In</a></li>
+                              <li><a href="{% url 'user_login' %}">LogIn</a></li>
+                              {% if user.is_authenticated %}
+                                <li><a href="{% url 'user_profile' %}">My profile</a></li>
+                              {% else %}
+                                <li><a href="{% url 'user_login' %}">My profile</a></li>
+                              {% endif %}
+                              <li><a href="">About Us</a></li>
+                              <li><a href="">Terms and Condition</a></li> 
                               <li><a href="404.html">404</a></li>
                             </ul>
                           </div>

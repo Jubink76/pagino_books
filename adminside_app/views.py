@@ -7,6 +7,7 @@ from django.contrib.auth.decorators import login_required
 from django.views.decorators.cache import cache_control,never_cache
 from .models import CategoryTable,Language,Author,BookTable,BookImage
 from django.http import JsonResponse
+from order_detail_app.models import OrderDetails,OrderItem
 # Create your views here.
 
 ##############################################################################################################
@@ -468,3 +469,11 @@ def delete_product(request,pk):
     book.save()
     messages.success(request,f"{book.book_name} is deleted successfully")
     return redirect('admin_products')
+
+############################################################################################################################
+
+def admin_orders(request):
+    orders = OrderDetails.objects.all()
+    return render(request,'admin_orders.html',{'orders':orders})
+
+############################################################################################################################

@@ -1,0 +1,252 @@
+{% extends 'admin_base.html' %}
+{% load static %}
+
+{% block csslink %}
+<link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="col-md-9 ms-sm-auto col-lg-10 offset-md-3 offset-lg-2">
+    <div class="card">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="text-white mb-0">Order Management</h1>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb mb-0">
+                        <li class="breadcrumb-item"><a href="{% url 'admin_dashboard' %}" class="text-secondary">Admin</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">Orders</li>
+                    </ol>
+                </nav>
+            </div>
+            <div class="row mb-4 d-flex justify-content-between">
+                <!-- Box 1 -->
+                <div class="col-md-3 d-flex align-items-center justify-content-center">
+                    <div class="box p-3 text-center rounded" style="height: 100px; width: 100%; background-color: #4CAF50; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+                        <div class="content d-flex align-items-center justify-content-between p-4" style="width: 100%;">
+                            <img src="https://via.placeholder.com/30" alt="Demo Icon">
+                            <p class="text-white mb-0">Demo Text 1</p>
+                        </div>
+                    </div>
+                </div>
+            
+                <!-- Box 2 -->
+                <div class="col-md-3 d-flex align-items-center justify-content-center">
+                    <div class="box p-3 text-center rounded" style="height: 100px; width: 100%; background-color: #2196F3; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+                        <div class="content d-flex align-items-center justify-content-between p-4" style="width: 100%;">
+                            <img src="https://via.placeholder.com/30" alt="Demo Icon">
+                            <p class="text-white mb-0">Demo Text 2</p>
+                        </div>
+                    </div>
+                </div>
+            
+                <!-- Box 3 -->
+                <div class="col-md-3 d-flex align-items-center justify-content-center">
+                    <div class="box p-3 text-center rounded" style="height: 100px; width: 100%; background-color: #FF5722; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+                        <div class="content d-flex align-items-center justify-content-between p-4" style="width: 100%;">
+                            <img src="https://via.placeholder.com/30" alt="Demo Icon">
+                            <p class="text-white mb-0">Demo Text 3</p>
+                        </div>
+                    </div>
+                </div>
+            
+                <!-- Box 4 -->
+                <div class="col-md-3 d-flex align-items-center justify-content-center">
+                    <div class="box p-3 text-center rounded" style="height: 100px; width: 100%; background-color: #FFC107; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+                        <div class="content d-flex align-items-center justify-content-between p-4" style="width: 100%;">
+                            <img src="https://via.placeholder.com/30" alt="Demo Icon">
+                            <p class="text-dark mb-0">Demo Text 4</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        
+            <!-- Buttons -->
+            <div class="row justify-content-center">
+                <div class="col-auto mb-2">
+                    <button class="btn btn-primary">Button 1</button>
+                </div>
+                <div class="col-auto mb-2">
+                    <button class="btn btn-secondary">Button 2</button>
+                </div>
+                <div class="col-auto mb-2">
+                    <button class="btn btn-success">Button 3</button>
+                </div>
+                <div class="col-auto mb-2">
+                    <button class="btn btn-danger">Button 4</button>
+                </div>
+                <div class="col-auto mb-2">
+                    <button class="btn btn-warning">Button 5</button>
+                </div>
+            </div>
+            <!-- Search and Actions Bar -->
+            <div class="row mb-4 align-items-center">
+                <div class="col">
+                    <form method="GET" action="{% url 'admin_users' %}">
+                        <div class="search-container">
+                            <div class="input-group">
+                                <input type="search" name="search" class="form-control search-input" 
+                                       placeholder="Search" value="{{ search_query }}">
+                                <button class="btn btn-primary" type="submit">Search
+                                    <i class="bi bi-search"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="col-auto">
+                    <button class="btn btn-secondary">
+                        <i class="bi bi-funnel me-2"></i>Filter
+                    </button>
+                </div>
+            </div>
+
+            <!-- Table -->
+            <div class="table-responsive">
+                <table class="table text-white">
+                    <thead class="text-yellow-300">
+                        <tr class="text-yellow-300">
+                            <th>Sl No</th>
+                            <th>Order ID</th>
+                            <th>Customer</th>
+                            <th>Order Date</th>
+                            <th>Payment</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="user-table-body" class="bg-gray-800">
+                        <tr class="transition-colors duration-200 hover:bg-gray-700 text-gray-400 group">
+                            <td class="px-6 py-4 text-sm group-hover:text-white">{{ forloop.counter }}</td>
+                            <td class="px-6 py-4 text-sm group-hover:text-white"></td>
+                            <td class="px-6 py-4 text-sm group-hover:text-white"></td>
+                            <td class="px-6 py-4 text-sm group-hover:text-white"></td>
+                            <td class="px-6 py-4 text-sm group-hover:text-white"></td>
+                            <td class="px-6 py-4 text-sm group-hover:text-white"></td>
+                            <td class="px-6 py-4 text-sm group-hover:text-white"></td>
+                            <td class="px-6 py-4 text-sm">
+                                <div class="flex gap-2">
+                                    <a href=""><button class="p-1 hover:text-blue-500">👁️</button></a>
+                                    <a href=""><button class="p-1 hover:text-green-500">✏️</button></a>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            <div class="row align-items-center mt-4">
+                <!-- Records per page selector -->
+                <div class="col-auto">
+                    <div class="d-flex align-items-center">
+                        <span class="me-2">Showing</span>
+                        <select id="users-per-page" class="form-select form-select-sm" style="width: auto;">
+                            <option value="5" {% if users.paginator.per_page == 5 %}selected{% endif %}>5</option>
+                            <option value="10" {% if users.paginator.per_page == 10 %}selected{% endif %}>10</option>
+                            <option value="15" {% if users.paginator.per_page == 15 %}selected{% endif %}>15</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col text-center">
+                    <span class="text-muted">Showing {{ users.start_index }}  to {{ users.end_index }} out of {{ users.paginator.count }} records</span>
+                </div>
+                <div class="col-auto">
+                    <ul class="pagination mb-0">
+                        <!-- Previous Page Button -->
+                        {% if users.has_previous %}
+                            <li class="page-item ml-3">
+                                <a class="page-link" href="?page={{ users.previous_page_number }}" aria-label="Previous">
+                                    &laquo;
+                                </a>
+                            </li>
+                        {% else %}
+                            <li class="page-item disabled">
+                                <span class="page-link" aria-label="Previous">&laquo;</span>
+                            </li>
+                        {% endif %}
+        
+                        <!-- Page Numbers -->
+                        {% for page_num in users.paginator.page_range %}
+                            {% if users.number == page_num %}
+                                <li class="page-item active ml-3">
+                                    <span class="page-link">{{ page_num }}</span>
+                                </li>
+                            {% else %}
+                                <li class="page-item ml-3">
+                                    <a class="page-link" href="?page={{ page_num }}&users_per_page={{ users.paginator.per_page }}">{{ page_num }}</a>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+        
+                        <!-- Next Page Button -->
+                        {% if users.has_next %}
+                            <li class="page-item ml-3">
+                                <a class="page-link" href="?page={{ users.next_page_number }}" aria-label="Next">
+                                    &raquo;
+                                </a>
+                            </li>
+                        {% else %}
+                            <li class="page-item disabled ml-3">
+                                <span class="page-link" aria-label="Next">&raquo;</span>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    document.getElementById('users-per-page').addEventListener('change', function() {
+        const usersPerPage = this.value;
+        const currentUrl = new URL(window.location.href);
+
+        currentUrl.searchParams.set('users_per_page', usersPerPage);
+        // Fetch data from the server with selected number of users per page
+        fetch(`/admin-users/?users_per_page=${usersPerPage}`)
+            .then(response => response.json())
+            .then(data => {
+                const userTableBody = document.getElementById('user-table-body');
+                userTableBody.innerHTML = ''; // Clear current table rows
+
+                // Populate with new rows from the response data
+                data.users.forEach(user => {
+                    const row = document.createElement('tr');
+                    row.classList.add("transition-colors", "duration-200", "hover:bg-gray-700", "text-gray-400", "group");
+
+                    row.innerHTML = `
+                        <td class="px-6 py-4 text-sm group-hover:text-white">${user.counter}</td>
+                        <td class="px-6 py-4 text-sm group-hover:text-white">${user.id}</td>
+                        <td class="px-6 py-4 text-sm group-hover:text-white">${user.first_name}</td>
+                        <td class="px-6 py-4 text-sm group-hover:text-white">${user.last_name}</td>
+                        <td class="px-6 py-4 text-sm group-hover:text-white">${user.email}</td>
+                        <td class="px-6 py-4 text-sm group-hover:text-white">${user.phone_number}</td>
+                        <td class="px-6 py-4 text-sm group-hover:text-white">${user.gender}</td>
+                        <td class="px-6 py-4 text-sm">
+                            <span class="${user.is_blocked ? 'text-red-500' : 'text-green-500'} group-hover:text-opacity-90">
+                                ${user.is_blocked ? 'Inactive' : 'Active'}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 text-sm">${user.date_joined}</td>
+                        <td class="px-6 py-4 text-sm">
+                            <div class="flex gap-2">
+                                <a href="/view_users/${user.id}"><button class="p-1 hover:text-blue-500">👁️</button></a>
+                                <a href="#"><button class="p-1 hover:text-green-500">✏️</button></a>
+                                <!--<button class="p-1 hover:text-red-500">🗑️</button>-->
+                            </div>
+                        </td>
+                    `;
+                    userTableBody.appendChild(row);
+                });
+            })
+            .catch(error => console.error('Error fetching user data:', error));
+            window.location.href = currentUrl.toString();
+    });
+</script>
+
+{% endblock %}

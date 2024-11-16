@@ -8,7 +8,7 @@ class CartTable(models.Model):
     user = models.ForeignKey(UserTable,on_delete=models.CASCADE,null=True,blank=True)
     book = models.ForeignKey(BookTable,on_delete=models.CASCADE, null=True, blank=True)
     session_id = models.CharField(max_length=255, null=True, blank=True)
-    quantity = models.PositiveIntegerField(default=1)
+    quantity = models.PositiveIntegerField(null=True, blank=True)
     item_price = models.DecimalField(max_digits=10,decimal_places=2,editable=False)
     total_price = models.DecimalField(max_digits=10,decimal_places=2,editable=False)
     grand_total = models.DecimalField(max_digits=10, decimal_places=2, default=0,editable=False)

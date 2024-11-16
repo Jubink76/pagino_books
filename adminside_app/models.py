@@ -1,4 +1,5 @@
 from django.db import models
+from decimal import Decimal
 
 # Create your models here.
 class CategoryTable(models.Model):
@@ -46,7 +47,10 @@ class BookTable(models.Model):
             self.discount_percentage = float(self.discount_percentage)
 
         # Calculate the discount amount and offer price
-        discount_amount = (self.base_price * self.discount_percentage) / 100
+        if self.discount_percentage:
+            discount_amount = (self.base_price * Decimal(self.discount_percentage)) / 100
+        else:
+            discount_amount = Decimal(0)
         self.offer_price = self.base_price - discount_amount
 
         super().save(*args, **kwargs)
