@@ -25,14 +25,16 @@
         <div class="side-menu animate-dropdown outer-bottom-xs">
           <div class="head"><i class="icon fa fa-align-justify fa-fw"></i> Categories</div>
           <nav class="yamm megamenu-horizontal">
-            <ul class="nav">
+            
+          <ul class="nav">
             {% for category in categories %}
               {% if category.is_available %}
-                <li class="dropdown menu-item"> <a href="#" class="dropdown-toggle" data-toggle="dropdown"><i class="icon fa fa-book" aria-hidden="true"></i>{{ category.category_name }}</a></li>
+                <li class="dropdown menu-item"> <a href="#" class="dropdown-toggle" data-toggle="dropdown"><i class="icon fa fa-shopping-bag" aria-hidden="true"></i>{{ category.category_name }}</a></li>
               {% endif %}
             {% endfor %}
-    
-            </ul>
+              
+          </ul>
+            
             <!-- /.nav --> 
           </nav>
           <!-- /.megamenu-horizontal --> 
@@ -822,14 +824,14 @@
         
         <div id="hero">
           <div id="owl-main" class="owl-carousel owl-inner-nav owl-ui-sm">
-            <div class="item" style="background-image: url('{% static 'user/images/sliders/01.jpg' %}');">
+            <div class="item" style="background-image: url('{% static 'user/images/logo/banner1.jpg' %}');">
 
               <div class="container-fluid">
                 <div class="caption bg-color vertical-center text-left">
-                  <div class="slider-header fadeInDown-1">Top Brands</div>
+                  <div class="slider-header fadeInDown-1">Must read</div>
                   <div class="big-text fadeInDown-1"> New Collections </div>
-                  <div class="excerpt fadeInDown-2 hidden-xs"> <span>Lorem ipsum dolor sit amet, consectetur adipisicing elit.</span> </div>
-                  <div class="button-holder fadeInDown-3"> <a href="index6c11.html?page=single-product" class="btn-lg btn btn-uppercase btn-primary shop-now-button">Shop Now</a> </div>
+                  <div class="excerpt fadeInDown-2 hidden-xs"> <span>From our great authors</span> </div>
+                  <div class="button-holder fadeInDown-3"> <a href="{% url 'shop_page' %}" class="btn-lg btn btn-uppercase btn-primary shop-now-button">Shop Now</a> </div>
                 </div>
                 <!-- /.caption --> 
               </div>
@@ -837,13 +839,13 @@
             </div>
             <!-- /.item -->
             
-            <div class="item" style="background-image: url({% static 'user/images/sliders/02.jpg' %});">
+            <div class="item" style="background-image: url({% static 'user/images/logo/banner2.jpg' %});">
               <div class="container-fluid">
                 <div class="caption bg-color vertical-center text-left">
-                  <div class="slider-header fadeInDown-1">Spring 2018</div>
-                  <div class="big-text fadeInDown-1"> Women Fashion </div>
-                  <div class="excerpt fadeInDown-2 hidden-xs"> <span>Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit</span> </div>
-                  <div class="button-holder fadeInDown-3"> <a href="index6c11.html?page=single-product" class="btn-lg btn btn-uppercase btn-primary shop-now-button">Shop Now</a> </div>
+                  <div class="slider-header fadeInDown-1">Read</div>
+                  <div class="big-text fadeInDown-1">Read</div>
+                  <div class="excerpt fadeInDown-2 hidden-xs"> <span>Keep reading</span> </div>
+                  <div class="button-holder fadeInDown-3"> <a href="{% url 'shop_page' %}" class="btn-lg btn btn-uppercase btn-primary shop-now-button">Shop Now</a> </div>
                 </div>
                 <!-- /.caption --> 
               </div>
@@ -874,7 +876,7 @@
             <div class="tab-pane in active" id="all">
               <div class="product-slider">
                 <div class="owl-carousel home-owl-carousel custom-carousel owl-theme">
-                {% for book in books %}
+                  {% for book in books %}
                   {% if book.is_available %}
                   <div class="item item-carousel"> 
                     <div class="products">
@@ -882,8 +884,8 @@
                         <div class="product-image">
                           <div class="image"> 
                           <a href="{% url 'single_detail' book.id %}">
-                             <img src="{{ book.images.first.image.url }}" alt="book image"> 
-                             <img src="{{ book.images.first.image.url }}" alt="book image" class="hover-image">
+                             <img src="{{ book.images.first.image.url }}" alt=""> 
+                              {% comment %} <img src="{% static 'user/images/products/p1_hover.jpg' %}" alt="" class="hover-image"> {% endcomment %}
                           </a> 
                        </div>
                           <!-- /.image -->
@@ -905,12 +907,13 @@
                           <div class="action">
                             <ul class="list-unstyled">
                               <li class="add-cart-button btn-group">
-                                <button data-toggle="tooltip" class="btn btn-primary icon" type="button" title="Add Cart"> <i class="fa fa-shopping-cart"></i> </button>
-                                <button class="btn btn-primary cart-btn" type="button">Add to cart</button>
+                                <a href="{% url 'add_to_cart' book.id %}"><button data-toggle="tooltip" class="btn btn-primary icon" type="button" title="Add Cart"> <i class="fa fa-shopping-cart"></i> </button>
+                                <button class="btn btn-primary cart-btn" type="button">Add to cart</button></a>
                               </li>
+                              <li class="lnk wishlist"> <a class="add-to-cart" href="detail.html" title="Buy now"> <i class="fa fa-arrow-circle-right"></i> </a> </li>
                               <li class="add-cart-button btn-group">
-                                <button data-toggle="tooltip" class="btn btn-primary icon" type="button" title="Add Cart"> <i class="icon fa fa-heart"></i> </button>
-                                <button class="btn btn-primary cart-btn" type="button">Add to cart</button>
+                                <a href="{% url 'add_to_whishlist' book.id %}"><button data-toggle="tooltip" class="btn btn-primary icon" type="button" title="Add whishlist "> <i class="icon fa fa-heart"></i> </button>
+                                <button class="btn btn-primary cart-btn" type="button">Add to Whishlist</button></a>
                               </li>
                             </ul>
                           </div>
@@ -944,14 +947,14 @@
           <div class="row">
             <div class="col-md-4 col-sm-4">
               <div class="wide-banner cnt-strip">
-                <div class="image"> <img class="img-responsive" src="{% static 'user/images/banners/home-banner1.jpg' %}" alt=""> </div>
+                <div class="image"> <img class="img-responsive" src="{% static 'user/images/logo/slider1.jpeg' %}" alt=""> </div>
               </div>
               <!-- /.wide-banner --> 
             </div>
             
             <div class="col-md-4 col-sm-4">
               <div class="wide-banner cnt-strip">
-                <div class="image"> <img class="img-responsive" src="{% static 'user/images/banners/home-banner3.jpg' %}" alt=""> </div>
+                <div class="image"> <img class="img-responsive" src="{% static 'user/images/logo/slider2.jpeg' %}" alt=""> </div>
               </div>
               <!-- /.wide-banner --> 
             </div>
@@ -959,7 +962,7 @@
             <!-- /.col -->
             <div class="col-md-4 col-sm-4">
               <div class="wide-banner cnt-strip">
-                <div class="image"> <img class="img-responsive" src="{% static 'user/images/banners/home-banner2.jpg' %}" alt=""> </div>
+                <div class="image"> <img class="img-responsive" src="{% static 'user/images/logo/slider3.jpeg' %}" alt=""> </div>
               </div>
               <!-- /.wide-banner --> 
             </div>
@@ -1016,9 +1019,10 @@
                           <button data-toggle="tooltip" class="btn btn-primary icon" type="button" title="Add Cart"> <i class="fa fa-shopping-cart"></i> </button>
                           <button class="btn btn-primary cart-btn" type="button">Add to cart</button>
                         </li>
+                        <li class="lnk wishlist"> <a class="add-to-cart" href="detail.html" title="Buy now"> <i class="fa fa-arrow-circle-right"></i> </a> </li>
                         <li class="add-cart-button btn-group">
-                          <button data-toggle="tooltip" class="btn btn-primary icon" type="button" title="Add Cart"> <i class="icon fa fa-heart"></i> </button>
-                          <button class="btn btn-primary cart-btn" type="button">Add to cart</button>
+                          <button data-toggle="tooltip" class="btn btn-primary icon" type="button" title="Add whishlist "> <i class="icon fa fa-heart"></i> </button>
+                          <button class="btn btn-primary cart-btn" type="button">Add to Whishlist</button>
                         </li>
                       </ul>
                     </div>
@@ -1063,11 +1067,14 @@
                     <div class="action">
                       <ul class="list-unstyled">
                         <li class="add-cart-button btn-group">
-                          <button class="btn btn-primary icon" data-toggle="dropdown" type="button"> <i class="fa fa-shopping-cart"></i> </button>
+                          <button data-toggle="tooltip" class="btn btn-primary icon" type="button" title="Add Cart"> <i class="fa fa-shopping-cart"></i> </button>
                           <button class="btn btn-primary cart-btn" type="button">Add to cart</button>
                         </li>
-                        <li class="lnk wishlist"> <a class="add-to-cart" href="detail.html" title="Wishlist"> <i class="icon fa fa-heart"></i> </a> </li>
-                        <li class="lnk"> <a class="add-to-cart" href="detail.html" title="Compare"> <i class="fa fa-signal" aria-hidden="true"></i> </a> </li>
+                        <li class="lnk wishlist"> <a class="add-to-cart" href="detail.html" title="Buy now"> <i class="fa fa-arrow-circle-right"></i> </a> </li>
+                        <li class="add-cart-button btn-group">
+                          <button data-toggle="tooltip" class="btn btn-primary icon" type="button" title="Add whishlist "> <i class="icon fa fa-heart"></i> </button>
+                          <button class="btn btn-primary cart-btn" type="button">Add to Whishlist</button>
+                        </li>
                       </ul>
                     </div>
                     <!-- /.action --> 
@@ -1111,11 +1118,14 @@
                     <div class="action">
                       <ul class="list-unstyled">
                         <li class="add-cart-button btn-group">
-                          <button class="btn btn-primary icon" data-toggle="dropdown" type="button"> <i class="fa fa-shopping-cart"></i> </button>
+                          <button data-toggle="tooltip" class="btn btn-primary icon" type="button" title="Add Cart"> <i class="fa fa-shopping-cart"></i> </button>
                           <button class="btn btn-primary cart-btn" type="button">Add to cart</button>
                         </li>
-                        <li class="lnk wishlist"> <a class="add-to-cart" href="detail.html" title="Wishlist"> <i class="icon fa fa-heart"></i> </a> </li>
-                        <li class="lnk"> <a class="add-to-cart" href="detail.html" title="Compare"> <i class="fa fa-signal" aria-hidden="true"></i> </a> </li>
+                        <li class="lnk wishlist"> <a class="add-to-cart" href="detail.html" title="Buy now"> <i class="fa fa-arrow-circle-right"></i> </a> </li>
+                        <li class="add-cart-button btn-group">
+                          <button data-toggle="tooltip" class="btn btn-primary icon" type="button" title="Add whishlist "> <i class="icon fa fa-heart"></i> </button>
+                          <button class="btn btn-primary cart-btn" type="button">Add to Whishlist</button>
+                        </li>
                       </ul>
                     </div>
                     <!-- /.action --> 
@@ -1284,13 +1294,7 @@
           <div class="row">
             <div class="col-md-8">
               <div class="wide-banner1 cnt-strip">
-                <div class="image"> <img class="img-responsive" src="{% static 'user/images/banners/home-banner.jpg' %}" alt=""> </div>
-                <div class="strip strip-text">
-                  <div class="strip-inner">
-                    <h2 class="text-right">Amazing Sunglasses<br>
-                      <span class="shopping-needs">Get 40% off on selected items</span></h2>
-                  </div>
-                </div>
+                <div class="image"> <img class="img-responsive" src="{% static 'user/images/logo/badge.jpg' %}" alt=""> </div>
                 <div class="new-label">
                   <div class="text">NEW</div>
                 </div>
@@ -1301,7 +1305,7 @@
             <!-- /.col --> 
             <div class="col-md-4">
               <div class="wide-banner cnt-strip">
-                <div class="image"> <img class="img-responsive" src="{% static 'user/images/banners/home-banner4.jpg' %}" alt=""> </div>
+                <div class="image"> <img class="img-responsive" src="{% static 'user/images/logo/badge2.jpeg' %}" alt=""> </div>
                 
                 
                 <!-- /.new-label --> 
@@ -1328,7 +1332,7 @@
               <div class="item">
                 <div class="blog-post">
                   <div class="blog-post-image">
-                    <div class="image"> <a href="blog.html"><img src="{% static 'user/images/blog-post/blog_big_01.jpg' %}" alt=""></a> </div>
+                    <div class="image"> <a href="blog.html"><img src="{% static 'user/images/logo/blog1.jpg' %}" alt=""></a> </div>
                   </div>
                   <!-- /.blog-post-image -->
                   
@@ -1347,7 +1351,7 @@
               <div class="item">
                 <div class="blog-post">
                   <div class="blog-post-image">
-                    <div class="image"> <a href="blog.html"><img src="{% static 'user/images/blog-post/blog_big_02.jpg' %}" alt=""></a> </div>
+                    <div class="image"> <a href="blog.html"><img src="{% static 'user/images/logo/blog2.png' %}" alt=""></a> </div>
                   </div>
                   <!-- /.blog-post-image -->
                   
@@ -1368,7 +1372,7 @@
               <div class="item">
                 <div class="blog-post">
                   <div class="blog-post-image">
-                    <div class="image"> <a href="blog.html"><img src="{% static 'user/images/blog-post/blog_big_03.jpg' %}" alt=""></a> </div>
+                    <div class="image"> <a href="blog.html"><img src="{% static 'user/images/logo/blog3.png' %}" alt=""></a> </div>
                   </div>
                   <!-- /.blog-post-image -->
                   
@@ -1464,12 +1468,13 @@
                     <div class="action">
                       <ul class="list-unstyled">
                         <li class="add-cart-button btn-group">
-                          <button data-toggle="tooltip" class="btn btn-primary icon" type="button" title="Add Cart"> <i class="fa fa-shopping-cart"></i> </button>
+                          <a href=""><button data-toggle="tooltip" class="btn btn-primary icon" type="button" title="Add Cart"> <i class="fa fa-shopping-cart"></i> </button></a>
                           <button class="btn btn-primary cart-btn" type="button">Add to cart</button>
                         </li>
+                        <li class="lnk wishlist"> <a class="add-to-cart" href="detail.html" title="Buy now"> <i class="fa fa-arrow-circle-right"></i> </a> </li>
                         <li class="add-cart-button btn-group">
-                          <button data-toggle="tooltip" class="btn btn-primary icon" type="button" title="Add Cart"> <i class="icon fa fa-heart"></i> </button>
-                          <button class="btn btn-primary cart-btn" type="button">Add to cart</button>
+                          <a href=""><button data-toggle="tooltip" class="btn btn-primary icon" type="button" title="Add whishlist "> <i class="icon fa fa-heart"></i> </button>
+                          <button class="btn btn-primary cart-btn" type="button">Add to Whishlist</button></a>
                         </li>
                       </ul>
                     </div>
@@ -1733,48 +1738,6 @@
       <!-- /.homebanner-holder --> 
       <!-- ============================================== CONTENT : END ============================================== --> 
     </div>
-    <!-- /.row --> 
-    <!-- ============================================== BRANDS CAROUSEL ============================================== -->
-    <div id="brands-carousel" class="logo-slider">
-      <div class="logo-slider-inner">
-        <div id="brand-slider" class="owl-carousel brand-slider custom-carousel owl-theme">
-          <div class="item m-t-15"> <a href="#" class="image"> <img data-echo="{% static 'user/images/sliders/01.jpg' %}"  src="{% static 'user/images/blank.gif' %}"alt=""> </a> </div>
-          <!--/.item-->
-          
-          <div class="item m-t-10"> <a href="#" class="image"> <img data-echo="{% static 'user/images/sliders/01.jpg' %}" src="{% static 'user/images/blank.gif' %}" alt=""> </a> </div>
-          <!--/.item-->
-          
-          <div class="item"> <a href="#" class="image"> <img data-echo="{% static 'user/images/sliders/01.jpg' %}" src="{% static 'user/images/blank.gif' %}" alt=""> </a> </div>
-          <!--/.item-->
-          
-          <div class="item"> <a href="#" class="image"> <img data-echo="{% static 'user/images/sliders/01.jpg' %}" src="{% static 'user/images/blank.gif' %}" alt=""> </a> </div>
-          <!--/.item-->
-          
-          <div class="item"> <a href="#" class="image"> <img data-echo="{% static 'user/images/sliders/01.jpg' %}" src="{% static 'user/images/blank.gif' %}" alt=""> </a> </div>
-          <!--/.item-->
-          
-          <div class="item"> <a href="#" class="image"> <img data-echo="{% static 'user/images/sliders/01.jpg' %}" src="{% static 'user/images/blank.gif' %}" alt=""> </a> </div>
-          <!--/.item-->
-          
-          <div class="item"> <a href="#" class="image"> <img data-echo="{% static 'user/images/sliders/01.jpg' %}" src="{% static 'user/images/blank.gif' %}" alt=""> </a> </div>
-          <!--/.item-->
-          
-          <div class="item"> <a href="#" class="image"> <img data-echo="{% static 'user/images/sliders/01.jpg' %}" src="{% static 'user/images/blank.gif' %}" alt=""> </a> </div>
-          <!--/.item-->
-          
-          <div class="item"> <a href="#" class="image"> <img data-echo="{% static 'user/images/sliders/01.jpg' %}" src="{% static 'user/images/blank.gif' %}" alt=""> </a> </div>
-          <!--/.item-->
-          
-          <div class="item"> <a href="#" class="image"> <img data-echo="{% static 'user/images/sliders/01.jpg' %}" src="{% static 'user/images/blank.gif' %}" alt=""> </a> </div>
-          <!--/.item--> 
-        </div>
-        <!-- /.owl-carousel #logo-slider --> 
-      </div>
-      <!-- /.logo-slider-inner -->  
-      
-    </div>
-    <!-- /.logo-slider --> 
-    <!-- ============================================== BRANDS CAROUSEL : END ============================================== --> 
   </div>
   <!-- /.container --> 
 </div>

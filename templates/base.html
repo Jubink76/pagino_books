@@ -133,7 +133,9 @@
                 <div class="basket">
                   <a href="{% url 'cart_page' %}"><div class="icon-container">
                     <img src="{% static 'user/images/logo/cart_logo.png' %}" alt="Cart" class="icon_cart">
-                    <div class="item-count"><span class="count">2</span></div>
+                    
+                      <div class="item-count"><span class="count">{{ cart_items.count }}</span></div>
+
                   </div>
                   <div class="info">
                     <span class="lbl">Shopping Cart</span>
@@ -143,7 +145,7 @@
                 <div class="wishlist">
                   <a href="{% url 'whishlist_page' %}"><div class="icon-container">
                     <img src="{% static 'user/images/logo/whishlist.png' %}" alt="Wishlist" class="icon_whishlist">
-                    <div class="item-count"><span class="count">0</span></div>
+                    <div class="item-count"><span class="count">{{ whishlist_items.count }}</span></div>
                   </div>
                   <div class="info">
                     <span class="lbl">Wishlist items</span>

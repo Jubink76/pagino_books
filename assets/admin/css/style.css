@@ -20622,7 +20622,7 @@ div.tagsinput {
 
 /* Sidebar */
 .sidebar {
-  min-height: calc(100vh - 70px);
+  min-height: calc(100vh);
   background: #000000;
   font-weight: normal;
   padding: 0;
@@ -20637,7 +20637,7 @@ div.tagsinput {
     -webkit-transition: width 0.25s ease, background 0.25s ease;
     -moz-transition: width 0.25s ease, background 0.25s ease;
     -ms-transition: width 0.25s ease, background 0.25s ease;
-    background: #191c24;
+    background: #000000;
     width: 244px;
     height: 70px; }
     @media (max-width: 991px) {
@@ -20926,7 +20926,7 @@ div.tagsinput {
 @media screen and (max-width: 991px) {
   .sidebar-offcanvas {
     position: fixed;
-    max-height: calc(100vh - 70px);
+    max-height: calc(100vh);
     top: 70px;
     bottom: 0;
     overflow: auto;

@@ -473,7 +473,70 @@ def delete_product(request,pk):
 ############################################################################################################################
 
 def admin_orders(request):
-    orders = OrderDetails.objects.all()
-    return render(request,'admin_orders.html',{'orders':orders})
+    orders = OrderDetails.objects.select_related('user').all()
+    orders_per_page = request.GET.get('orders_per_page', 5)
+    try:
+        orders_per_page = int(orders_per_page)
+    except ValueError:
+        orders_per_page = 5
+
+    search_query = request.GET.get('search','')
+
+    # search query
+    if search_query:
+        if search_query.isdigit():
+            # Numeric search: Order ID, user ID, phone number
+            orders = OrderDetails.objects.select_related('user', 'coupon', 'offer', 'address').filter(
+                Q(order_id__icontains=search_query) |                # Order ID
+                Q(user__id=search_query) |                          # User ID
+                Q(user__phone_number__icontains=search_query)       # User phone number
+            )
+        else:
+            # Text-based search: Name, email, username, order status, coupon, offer
+            orders = OrderDetails.objects.select_related('user', 'coupon', 'offer', 'address').filter(
+                Q(user__first_name__icontains=search_query) |       # User first name
+                Q(user__last_name__icontains=search_query) |        # User last name
+                Q(user__username__icontains=search_query) |         # User username
+                Q(user__email__icontains=search_query) |            # User email
+                Q(order_status__icontains=search_query) |           # Order status
+                Q(payment_method__icontains=search_query) |         # Payment method
+                Q(coupon__code__icontains=search_query) |           # Coupon code (if applicable)
+                Q(offer__name__icontains=search_query) |            # Offer name (if applicable)
+                Q(address__city__icontains=search_query) |          # Address city
+                Q(address__state__icontains=search_query)           # Address state
+            ).order_by('order_date')
+    else:
+        # Fetch all orders when no search query is provided
+        orders = OrderDetails.objects.select_related('user', 'coupon', 'offer', 'address').all()
+    # implement pagination
+
+    paginator = Paginator(orders, orders_per_page)
+    page_number = request.GET.get('page')
+    orders = paginator.get_page(page_number)
+
+    # Check for AJAX request and send JSON response
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        orders_data = [
+            {
+                "counter": index + 1 + (orders.number - 1) * orders.paginator.per_page,
+                "order_id": order.order_id,
+                "user": f"{order.user.first_name} {order.user.last_name}",
+                "order_date": order.order_date.strftime('%Y-%m-%d %H:%M'),
+                "payment_method": order.payment_method,
+                "total_amount": str(order.total_amount),
+                "order_status": order.order_status,
+            }
+            for index, order in enumerate(orders)
+        ]
+        return JsonResponse({"orders": orders_data})
+
+    
+
+    return render(request, 'admin_orders.html', {
+        'orders': orders,
+        'search_query': search_query,
+        'orders_per_page': orders_per_page,
+    })
+    
 
 ############################################################################################################################
