@@ -1,4 +1,4 @@
-from django.shortcuts import render,redirect
+from django.shortcuts import render,redirect,get_object_or_404
 from django.contrib import messages
 from user_profile_app.models import AddressTable
 from user_side_app.models import CartTable
@@ -6,7 +6,7 @@ from .models import OrderDetails, OrderItem
 import random
 import string
 from django.db import transaction
-
+from django.contrib.auth.decorators import login_required
 
 # generating unique order id
 def generate_order_id():
@@ -60,7 +60,6 @@ def create_order(request):
                 total_amount=grand_total,
                 order_status='Pending'
             )
-            print("order created ")
             # Create order items
             for cart_item in cart_items:
                 if cart_item.book.stock_quantity < cart_item.quantity:
@@ -80,7 +79,6 @@ def create_order(request):
 
             # Clear cart
             cart_items.delete()
-            print("cart items deleted")
             messages.success(request, "Order placed successfully!")
             return redirect('order_success', order_id=order.order_id)
 
@@ -93,3 +91,20 @@ def create_order(request):
     except Exception as e:
         messages.error(request, f"An error occurred: {str(e)}")
         return redirect('checkout_page')
+    
+#################################################################################################################################
+@login_required
+def cancel_order(request,order_id):
+    if request.method == "POST":
+        order = get_object_or_404(OrderDetails, order_id=order_id, user=request.user)
+
+        if order.order_status != 'Canceled':
+            order.order_status = 'Canceled'
+            order.is_canceled = True
+            order.save()
+            messages.success(request, f"Order {order.order_id} has been canceled.")
+        else:
+            messages.warning(request, f"Order {order.order_id} is already canceled.")
+    return redirect('user_orders')
+
+################################################################################################################################

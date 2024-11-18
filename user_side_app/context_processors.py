@@ -18,4 +18,5 @@ def list_items(request):
         # Fetch cart items for the current session
         cart_items = CartTable.objects.filter(session_id=session_id)
         whishlist_items = WhishlistTable.objects.filter(session_id = session_id)
-    return {'categories':categories,'books':books,'cart_items':cart_items,'whishlist_items':whishlist_items}
+    grand_total = sum(item.total_price for item in cart_items)
+    return {'categories':categories,'books':books,'cart_items':cart_items,'whishlist_items':whishlist_items,'grand_total':grand_total}

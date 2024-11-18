@@ -471,7 +471,7 @@ def delete_product(request,pk):
     return redirect('admin_products')
 
 ############################################################################################################################
-
+@login_required(login_url='admin_login')
 def admin_orders(request):
     orders = OrderDetails.objects.select_related('user').all()
     orders_per_page = request.GET.get('orders_per_page', 5)
@@ -482,32 +482,18 @@ def admin_orders(request):
 
     search_query = request.GET.get('search','')
 
-    # search query
     if search_query:
-        if search_query.isdigit():
-            # Numeric search: Order ID, user ID, phone number
-            orders = OrderDetails.objects.select_related('user', 'coupon', 'offer', 'address').filter(
-                Q(order_id__icontains=search_query) |                # Order ID
-                Q(user__id=search_query) |                          # User ID
-                Q(user__phone_number__icontains=search_query)       # User phone number
-            )
-        else:
-            # Text-based search: Name, email, username, order status, coupon, offer
-            orders = OrderDetails.objects.select_related('user', 'coupon', 'offer', 'address').filter(
-                Q(user__first_name__icontains=search_query) |       # User first name
-                Q(user__last_name__icontains=search_query) |        # User last name
-                Q(user__username__icontains=search_query) |         # User username
-                Q(user__email__icontains=search_query) |            # User email
-                Q(order_status__icontains=search_query) |           # Order status
-                Q(payment_method__icontains=search_query) |         # Payment method
-                Q(coupon__code__icontains=search_query) |           # Coupon code (if applicable)
-                Q(offer__name__icontains=search_query) |            # Offer name (if applicable)
-                Q(address__city__icontains=search_query) |          # Address city
-                Q(address__state__icontains=search_query)           # Address state
-            ).order_by('order_date')
+        orders = OrderDetails.objects.select_related('user', 'address').filter(
+            Q(order_id__icontains=search_query) |                    # Order ID
+            Q(user__first_name__icontains=search_query) |            # Customer first name
+            Q(user__last_name__icontains=search_query) |             # Customer last name
+            Q(order_date__date=search_query) |                       # Exact Order Date (e.g., '2024-11-17')
+            Q(payment_method__icontains=search_query) |              # Payment method (e.g., 'COD', 'ONLINE')
+            Q(order_status__icontains=search_query)                  # Order Status (e.g., 'Pending', 'Shipped')
+        ).order_by('-order_date')  # Order by most recent orders
     else:
-        # Fetch all orders when no search query is provided
-        orders = OrderDetails.objects.select_related('user', 'coupon', 'offer', 'address').all()
+    # Fetch all orders when no search query is provided
+        orders = OrderDetails.objects.select_related('user', 'address').all().order_by('-order_date')
     # implement pagination
 
     paginator = Paginator(orders, orders_per_page)
@@ -538,5 +524,25 @@ def admin_orders(request):
         'orders_per_page': orders_per_page,
     })
     
+
+############################################################################################################################
+@login_required(login_url='admin_login')
+def view_order(request,order_id):
+    order_detail = get_object_or_404(
+        OrderDetails.objects.select_related('address', 'user', 'coupon', 'offer'),
+        order_id=order_id
+    )
+    book_detail = OrderItem.objects.filter(order=order_detail).select_related('book')
+    return render(request,'view_order.html',{'order_detail':order_detail,'book_detail':book_detail})
+
+############################################################################################################################
+@login_required(login_url='admin_login')
+def update_order(request,order_id):
+    order_detail = get_object_or_404(
+        OrderDetails.objects.select_related('address', 'user', 'coupon', 'offer'),
+        order_id=order_id
+    )
+    book_detail = OrderItem.objects.filter(order=order_detail).select_related('book')
+    return render(request,'update_order.html',{'order_detail':order_detail,'book_detail':book_detail})
 
 ############################################################################################################################

@@ -139,7 +139,11 @@
                   </div>
                   <div class="info">
                     <span class="lbl">Shopping Cart</span>
-                    <span class="value">$4580</span>
+                    {% if grand_total %}
+                      <span class="value">₹{{ grand_total }}</span>
+                    {% else %}
+                      <span class="value">₹0</span>
+                    {% endif %}
                   </div>
                 </div></a>
                 <div class="wishlist">

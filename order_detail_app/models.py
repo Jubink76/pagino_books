@@ -64,7 +64,8 @@ class OrderDetails(models.Model):
     order_status = models.CharField(max_length=20, 
                                     choices=[('Pending', 'Pending'),
                                              ('Shipped', 'Shipped'),
-                                             ('Delivered', 'Delivered')], 
+                                             ('Delivered', 'Delivered'),
+                                             ('Canceled','Canceled')], 
                                              default='Pending')
     order_date = models.DateTimeField(auto_now_add=True)
     coupon_applied = models.BooleanField(default = False)

@@ -1,4 +1,4 @@
-from django.shortcuts import render,redirect
+from django.shortcuts import render,redirect,get_object_or_404
 from user_profile_app.models import AddressTable
 from django.contrib import messages
 from django.http import JsonResponse
@@ -6,6 +6,9 @@ from django.contrib.auth.decorators import login_required
 import re
 from log_reg_app.models import UserTable
 from django.contrib.auth import update_session_auth_hash
+from order_detail_app.models import OrderDetails,OrderItem
+from django.db.models import Count
+from django.db.models import Q
 # Create your views here.
 #######################################################################################################################
 def user_profile(request):
@@ -206,8 +209,42 @@ def user_password_reset(request):
     return render(request,'user_password_reset.html')
 
 #######################################################################################################################
-def user_orders(request):
-    return render(request,'user_orders.html')
+@login_required
+def user_orders(request, order_id=None):
+    order_stats = OrderDetails.objects.filter(user=request.user).aggregate(
+        total_orders=Count('order_id'),
+        delivered_orders=Count('order_id', filter=Q(order_status='Delivered')),
+        in_progress_orders=Count('order_id', filter=Q(order_status='Pending')),
+        shipped_orders=Count('order_id', filter=Q(order_status='Shipped')),
+        canceled_orders=Count('order_id', filter=Q(order_status='Canceled'))
+    )
+
+    if order_id:
+        # Ensure only valid related fields are used
+        selected_order = get_object_or_404(
+            OrderDetails.objects.select_related('user', 'address')  # Adjust this
+                                .prefetch_related('orderitem_set__book__images'),
+            order_id=order_id,
+            user=request.user
+        )
+        context = {
+            'selected_order': selected_order,
+            'order_stats': order_stats,
+        }
+    else:
+        user_orders = OrderDetails.objects.filter(
+            user=request.user
+        ).order_by('-order_date')
+
+        context = {
+            'orders': user_orders,
+            'order_stats': order_stats,
+        }
+
+    return render(request, 'user_orders.html', context)
 
 #######################################################################################################################
+
+
+########################################################################################################################
 

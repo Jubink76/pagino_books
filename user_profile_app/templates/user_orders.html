@@ -233,6 +233,248 @@
             grid-template-columns: 1fr;
         }
     }
+    .empty-orders {
+        @apply flex flex-col items-center justify-center p-8 text-center;
+    }
+
+    .empty-orders img {
+        @apply w-48 h-48 object-contain mb-4;
+    }
+
+    .empty-orders h2 {
+        @apply text-xl font-semibold text-gray-900 mb-2;
+    }
+
+    .empty-orders p {
+        @apply text-gray-600 mb-6;
+    }
+
+    .btn-browse {
+        @apply inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg 
+               hover:bg-blue-700 transition-colors;
+    }
+    .order-list {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .order-item {
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 16px;
+        transition: all 0.3s ease;
+    }
+
+    .order-item:hover {
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .order-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 12px;
+    }
+
+    .order-status {
+        padding: 4px 12px;
+        border-radius: 16px;
+        font-size: 12px;
+        font-weight: 500;
+    }
+
+    .status-progress {
+        background-color: #fff3e0;
+        color: #ed6c02;
+    }
+
+    .status-delivered {
+        background-color: #e8f5e9;
+        color: #2e7d32;
+    }
+
+    .order-date {
+        color: #6b7280;
+        font-size: 14px;
+    }
+
+    .order-content {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+    }
+
+    .order-image {
+        width: 80px;
+        height: 80px;
+        object-fit: cover;
+        border-radius: 4px;
+    }
+
+    .order-details {
+        flex: 1;
+    }
+
+    .order-id {
+        font-size: 14px;
+        color: #374151;
+        margin-bottom: 4px;
+    }
+
+    .order-products {
+        font-size: 14px;
+        color: #6b7280;
+    }
+
+    .order-price {
+        font-weight: 600;
+        color: #111827;
+    }
+
+    .order-arrow {
+        color: #9ca3af;
+    }
+
+    .empty-orders {
+        text-align: center;
+        padding: 48px 0;
+    }
+    .btn-cancel {
+        background-color: #ff4d4d; /* Default button color */
+        color: white;
+        border: none;
+        padding: 8px 12px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+        transition: background-color 0.3s ease; /* Smooth hover transition */
+    }
+    
+    .btn-cancel:hover {
+        background-color: red; /* Hover color changed to red */
+    }
+    .order-detail {
+        background: white;
+        border-radius: 8px;
+        padding: 24px;
+        margin-top: 20px;
+    }
+
+    .back-button {
+        display: inline-flex;
+        align-items: center;
+        color: #4a90e2;
+        text-decoration: none;
+        margin-bottom: 20px;
+        font-size: 16px;
+    }
+
+    .back-button svg {
+        width: 20px;
+        height: 20px;
+        margin-right: 8px;
+    }
+
+    .back-button:hover {
+        color: #357abd;
+    }
+
+    .order-detail-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 24px;
+        padding-bottom: 16px;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    .order-detail-info h2 {
+        font-size: 24px bold;
+
+        color: #333;
+        margin-bottom: 8px;
+    }
+
+    .order-detail-meta p {
+        color: #3366ff;
+        font-size: 18px;
+    }
+
+    .order-items {
+        margin-bottom: 24px;
+    }
+
+    .order-item-detail {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 16px;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        margin-bottom: 16px;
+    }
+
+    .item-image-info {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+    }
+
+    .item-image {
+        width: 100px;
+        height: 100px;
+        object-fit: cover;
+        border-radius: 4px;
+    }
+
+    .item-info h3 {
+        font-size: 16px;
+        color: #333;
+        margin-bottom: 4px;
+    }
+
+    .item-meta {
+        color: #666;
+        font-size: 14px;
+    }
+
+    .order-summary {
+        background: #f9fafb;
+        border-radius: 8px;
+        padding: 20px;
+    }
+
+    .summary-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 12px;
+        font-size: 14px;
+    }
+
+    .summary-row.total {
+        font-size: 18px;
+        font-weight: 600;
+        border-top: 1px solid #e5e7eb;
+        padding-top: 12px;
+        margin-top: 12px;
+    }
+    .cancel-link {
+        padding: 8px 16px;
+        background-color: #ef4444; /* Red background */
+        color: white;
+        text-decoration: none;
+        border-radius: 4px;
+        font-size: 14px;
+        font-weight: 500;
+        transition: background-color 0.3s ease;
+    }
+    
+    .cancel-link:hover {
+        background-color: #dc2626; /* Darker red on hover */
+    }
 </style>
 {% endblock %}
 
@@ -277,6 +519,75 @@
             </div>
 
             <div class="main-content">
+                {% if selected_order %}
+                <!-- Order Detail View -->
+                <div class="order-detail">
+                    <a href="{% url 'user_orders' %}" class="back-button">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M19 12H5M12 19l-7-7 7-7"/>
+                        </svg>
+                        Back to Orders
+                    </a>
+
+                    <div class="order-detail-header">
+                        <div class="order-detail-info">
+                            <h2>Order Details</h2>
+                            <div class="order-detail-meta">
+                                <p>Order ID: {{ selected_order.order_id }}</p>
+                                <p>Placed on {{ selected_order.order_date|date:"d M Y" }}</p>
+                            </div>
+                        </div>
+                        <span class="order-status {% if selected_order.order_status == 'In progress' %}status-progress{% else %}status-delivered{% endif %}">
+                            {{ selected_order.order_status }}
+                        </span>
+                    </div>
+
+                    <div class="order-items">
+                        {% for item in selected_order.orderitem_set.all %}
+                        <div class="order-item-detail">
+                            <div class="item-image-info">
+                                {% if item.book.images.first %}
+                                <img src="{{ item.book.images.first.image.url }}" alt="{{ item.book.book_name }}" class="item-image">
+                                {% endif %}
+                                <div class="item-info">
+                                    <h3>{{ item.book.book_name }}</h3>
+                                    <div class="item-meta">
+                                        <p>Quantity: {{ item.quantity }}</p>
+                                        <p>₹{{ item.book.offer_price }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="item-actions">
+                                {% if item.order.order_status == 'Pending' %}
+                                    <a href="" class="cancel-link">Cancel</a>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="order-summary">
+                        <div class="summary-row">
+                            <span>Subtotal</span>
+                            <span>₹{{ selected_order.total_amount }}</span>
+                        </div>
+                        {% if selected_order.discount %}
+                        <div class="summary-row">
+                            <span>Discount ({{ selected_order.discount.code }})</span>
+                            <span class="text-green-600">-₹{{ selected_order.discount.amount }}</span>
+                        </div>
+                        {% endif %}
+                        <div class="summary-row">
+                            <span>Shipping</span>
+                            <span>{% if selected_order.shipping_cost %}₹{{ selected_order.shipping_cost }}{% else %}Free{% endif %}</span>
+                        </div>
+                        <div class="summary-row total">
+                            <span>Total</span>
+                            <span>₹{{ selected_order.total_amount }}</span>
+                        </div>
+                    </div>
+                </div>
+                {% else %}
                 <div class="orders-header">
                     <h1>My Orders</h1>
                     <p>Track and manage your orders</p>
@@ -291,7 +602,7 @@
                         </div>
                         <div class="stat-info">
                             <h3>Total Orders</h3>
-                            <div class="number">0</div>
+                            <div class="number">{{ order_stats.total_orders }}</div>
                         </div>
                     </div>
 
@@ -304,7 +615,7 @@
                         </div>
                         <div class="stat-info">
                             <h3>Delivered</h3>
-                            <div class="number">0</div>
+                            <div class="number">{{ order_stats.delivered_orders }}</div>
                         </div>
                     </div>
 
@@ -317,7 +628,7 @@
                         </div>
                         <div class="stat-info">
                             <h3>In Progress</h3>
-                            <div class="number">0</div>
+                            <div class="number">{{ order_stats.in_progress_orders }}</div>
                         </div>
                     </div>
 
@@ -331,24 +642,75 @@
                         </div>
                         <div class="stat-info">
                             <h3>Cancelled</h3>
-                            <div class="number">0</div>
+                            <div class="number">{{ order_stats.canceled_orders }}</div>
                         </div>
                     </div>
                 </div>
 
-                <div class="empty-orders">
-                    <img src="{% static 'user/images/logo/empty.jpeg' %}" alt="No Orders" />
-                    <h2>No Orders Yet</h2>
-                    <p>Start shopping and your orders will appear here</p>
-                    <a href="{% url 'shop_page' %}" class="btn-browse">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <circle cx="9" cy="21" r="1"/>
-                            <circle cx="20" cy="21" r="1"/>
-                            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
-                        </svg>
-                        Browse Products
-                    </a>
-                </div>
+                {% if orders %}
+                    <div class="order-list">
+                        {% for order in orders %}
+                        <a href="{% url 'user_order_detail' order.order_id %}" class="order-item">
+                            <div class="order-header">
+                                <span class="order-status {% if order.order_status == 'In progress' %}status-progress{% else %}status-delivered{% endif %}">
+                                    {{ order.order_status }}
+                                </span>
+                                <span class="order-date">{{ order.order_date|date:"d M Y" }}</span>
+                            </div>
+                            <div class="order-content">
+                                {% with order.orderitem_set.first.book.images.first as first_image %}
+                                {% if first_image %}
+                                <img src="{{ first_image.image.url }}" alt="{{ order.orderitem_set.first.book.book_name }}" class="order-image">
+                                {% endif %}
+                                {% endwith %}
+                                
+                                <div class="order-details">
+                                    <div class="order-id">Order ID: {{ order.order_id }}</div>
+                                    <div class="order-products">
+                                        {% with first_item=order.orderitem_set.first %}
+                                        {{ first_item.book.book_name }}
+                                        {% with remaining=order.orderitem_set.count|add:"-1" %}
+                                        {% if remaining > 0 %}
+                                        & {{ remaining }} more item{{ remaining|pluralize }}
+                                        {% endif %}
+                                        {% endwith %}
+                                        {% endwith %}
+                                    </div>
+                                </div>
+                                {% if order.order_status != 'Canceled' %}
+                                    <form method="POST" action="{% url 'cancel_order' order.order_id %}">
+                                    {% csrf_token %}
+                                        <button type="submit" class="btn-cancel">Cancel Order</button>
+                                    </form>
+                                {% endif %}
+                                
+                                <div class="order-price">₹{{ order.total_amount }}</div>
+                                
+                                <div class="order-arrow">
+                                    <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                                    </svg>
+                                </div>
+                            </div>
+                        </a>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="empty-orders">
+                        <img src="{% static 'user/images/logo/empty.jpeg' %}" alt="No Orders" />
+                        <h2>No Orders Yet</h2>
+                        <p>Start shopping and your orders will appear here</p>
+                        <a href="{% url 'shop_page' %}" class="btn-browse">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="9" cy="21" r="1"/>
+                                <circle cx="20" cy="21" r="1"/>
+                                <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+                            </svg>
+                            Browse Products
+                        </a>
+                    </div>
+                {% endif %}
+                {% endif %}
             </div>
         </div>
     </div>
