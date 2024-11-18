@@ -87,7 +87,13 @@ class OrderItem(models.Model):
     book = models.ForeignKey(BookTable,on_delete=models.CASCADE, null=True, blank=True)
     quantity = models.PositiveIntegerField(default=1)
     price_per_item = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    total_price = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)  # price_per_item * quantity
-
+    total_price = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    is_canceled = models.BooleanField(default=False)  
+    order_status = models.CharField(max_length=20, 
+                                    choices=[('Pending', 'Pending'),
+                                             ('Shipped', 'Shipped'),
+                                             ('Delivered', 'Delivered'),
+                                             ('Canceled','Canceled')], 
+                                             default='Pending')
     def __str__(self):
         return f"{self.quantity} x {self.product.name} in Order {self.order.order_id}"

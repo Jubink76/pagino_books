@@ -546,3 +546,36 @@ def update_order(request,order_id):
     return render(request,'update_order.html',{'order_detail':order_detail,'book_detail':book_detail})
 
 ############################################################################################################################
+@login_required(login_url='admin_login')
+def admin_cancel_order(request,order_id):
+    if request.method == "POST":
+        order = get_object_or_404(OrderDetails, order_id=order_id)
+
+        if order.order_status != 'Canceled':
+            order.order_status = 'Canceled'
+            order.is_canceled = True
+            order.save()
+            messages.success(request, f"Order {order.order_id} has been canceled.")
+        else:
+            messages.warning(request, f"Order {order.order_id} is already canceled.")
+    return redirect('update_order')
+
+#############################################################################################################################
+
+@login_required(login_url='admin_login')
+def admin_single_item_cancel(request,order_id,order_item_id):
+    if request.method == "POST":
+        order_detail= get_object_or_404(OrderDetails, order_id=order_id)
+        order_item = get_object_or_404(OrderItem, order=order_detail, id=order_item_id)
+
+        order_item.is_canceled = True
+        order_item.order_status = 'Canceled'
+        order_item.save()
+
+        #update the order status if all items are canceled
+        if not OrderItem.objects.filter(order=order_detail, is_canceled=False).exists():
+            order_detail.order_status = 'Canceled'
+            order_detail.save()
+
+        messages.success(request, f"Item has been canceled in Order {order_detail.order_id}.")
+    return redirect('update_order',order_id=order_id)

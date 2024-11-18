@@ -20,13 +20,16 @@
                     <p class="text-gray-400">Order #{{ order_detail.order_id }}</p>
                 </div>
                 <div class="flex gap-4 mt-4 md:mt-0">
-                    <button class="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <line x1="18" y1="6" x2="6" y2="18"></line>
-                            <line x1="6" y1="6" x2="18" y2="18"></line>
-                        </svg>
-                        Cancel Order
-                    </button>
+                    <form method="POST" action="{% url 'admin_cancel_order' order_detail.order_id %}">
+                        {% csrf_token %}
+                        <button type="submit" class="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors" data-toggle="tooltip" title="Cancel all orders">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="18" y1="6" x2="6" y2="18"></line>
+                                <line x1="6" y1="6" x2="18" y2="18"></line>
+                            </svg>
+                            Cancel Order
+                        </button>
+                    </form>
                     
                     <!-- Back to Orders Button -->
                     <a href="{% url 'admin_orders' %}" class="flex items-center gap-2 bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition-colors">
@@ -49,9 +52,9 @@
                                 <p class="font-medium">{{ order_detail.order_date }}</p>
                             </div>
                             <div>
-                                <p class="text-gray-400">Payment Status</p>
+                                <p class="text-gray-400">Payment method</p>
                                 <span class="inline-block bg-green-900 text-green-400 px-3 py-1 rounded-full text-sm font-medium">
-                                    Pending
+                                    {{ order_detail.payment_method }}
                                 </span>
                             </div>
                         </div>
@@ -105,7 +108,9 @@
                                 <th class="px-6 py-4">Name</th>
                                 <th class="px-6 py-4">Quantity</th>
                                 <th class="px-6 py-4">Price</th>
-                                <th class="px-6 py-4">Total Price</th>
+                                <th class="px-6 py-4">Total price</th>
+                                <th class="px-6 py-4">Status</th>
+                                <th class="px-6 py-4">Action</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -136,9 +141,20 @@
                                 <!-- Price Per Item -->
                                 <td class="px-6 py-4 text-sm">₹{{ item.price_per_item }}</td>
                                 
-                                <!-- Total Price -->
+                                <!-- Status -->
                                 <td class="px-6 py-4 text-sm font-medium">₹{{ item.total_price }}</td>
-                            </tr>
+
+                                <td class="inline-block bg-green-900 text-green-400 px-3  py-1 rounded-full text-sm font-medium m-5">{{ item.order_status }}</td>
+
+                                <td class="px-6 py-4 text-sm">
+                                    <form method="POST" action="{% url 'admin_single_item_cancel' order_detail.order_id item.id %}">
+                                        {% csrf_token %}
+                                        <button type="submit" class="p-1 hover:text-red-500" data-toggle="tooltip" title="Cancel order">
+                                            ❌
+                                        </button>
+                                    </form>
+                                </td>
+                        
                             {% endfor %}
                         </tbody>
                     </table>

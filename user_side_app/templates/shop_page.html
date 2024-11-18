@@ -1,4 +1,6 @@
 {% extends 'base.html' %}
+{% load custom_tags %}
+
 {% load static %}
 {% block css_link %}
 {% comment %} <style>
@@ -57,9 +59,7 @@
               <!-- ============================================== SIDEBAR CATEGORY ============================================== -->
               <div class="sidebar-widget">
                 <h3 class="section-title">Shop by</h3>
-                <div class="widget-header">
-                  <h4 class="widget-title">Category</h4>
-                </div>
+                
                 <div class="sidebar-widget-body">
                   <div class="accordion">
                     <div class="accordion-group">
@@ -347,22 +347,40 @@
               <!-- /.col -->
               <div class="col col-sm-12 col-md-5 col-lg-5 hidden-sm">
                 <div class="col col-sm-6 col-md-6 no-padding">
-                  <div class="lbl-cnt"> <span class="lbl">Sort by</span>
-                    <div class="fld inline">
-                      <div class="dropdown dropdown-small dropdown-med dropdown-white inline">
-                        <button data-toggle="dropdown" type="button" class="btn dropdown-toggle"> Position <span class="caret"></span> </button>
-                        <ul role="menu" class="dropdown-menu">
-                          <li role="presentation"><a href="#">position</a></li>
-                          <li role="presentation"><a href="#">Price:Lowest first</a></li>
-                          <li role="presentation"><a href="#">Price:HIghest first</a></li>
-                          <li role="presentation"><a href="#">Product Name:A to Z</a></li>
-                        </ul>
+                  <div class="lbl-cnt">
+                      <span class="lbl">Sort by</span>
+                      <div class="fld inline">
+                        <div class="dropdown dropdown-small dropdown-med dropdown-white inline">
+                          <button data-toggle="dropdown" type="button" class="btn dropdown-toggle">
+                              {{ sort_option|default:"Position" }} <span class="caret"></span>
+                          </button>
+                          <ul role="menu" class="dropdown-menu">
+                              <li role="presentation">
+                                  <a href="{% query_string request sort='popularity' %}">Position</a>
+                              </li>
+                              <li role="presentation">
+                                  <a href="{% query_string request sort='price_low_to_high' %}">Price: Lowest first</a>
+                              </li>
+                              <li role="presentation">
+                                  <a href="{% query_string request sort='price_high_to_low' %}">Price: Highest first</a>
+                              </li>
+                              <li role="presentation">
+                                  <a href="{% query_string request sort='a_to_z' %}">Product Name: A to Z</a>
+                              </li>
+                              <li role="presentation">
+                                  <a href="{% query_string request sort='z_to_a' %}">Product Name: Z to A</a>
+                              </li>
+                              <li role="presentation">
+                                  <a href="{% query_string request sort='new_arrivals' %}">New Arrivals</a>
+                              </li>
+                              <li role="presentation">
+                                  <a href="{% query_string request sort='average_ratings' %}">Average Ratings</a>
+                              </li>
+                          </ul>
+                        </div>
                       </div>
-                    </div>
-                    <!-- /.fld --> 
                   </div>
-                  <!-- /.lbl-cnt --> 
-                </div>
+              </div>
                 <!-- /.col -->
                 <div class="col col-sm-6 col-md-6 no-padding hidden-sm hidden-md">
                   <div class="lbl-cnt"> <span class="lbl">Show</span>

@@ -14,13 +14,59 @@ from order_detail_app.models import OrderDetails,OrderItem
 ##########################################################################################################
 
 def shop_page(request):
-    books = BookTable.objects.prefetch_related('images').all()
+    # Get filters and sorting options from the request
+    search_query = request.GET.get('search', '').strip()  # Search text
+    sort_option = request.GET.get('sort', 'popularity')  # Default sort
+    filter_category = request.GET.get('category', '')  
+    filter_author = request.GET.get('author', '')  
+    price_min = request.GET.get('price_min', 0)  
+    price_max = request.GET.get('price_max', 10000)  
 
-    # Set up pagination
-    paginator = Paginator(books, 16)  # Display 16 books per page
+    books = BookTable.objects.prefetch_related('images').filter(is_available=True, is_deleted=False)
+
+    # search filter (search in book name and description)
+    if search_query:
+        books = books.filter(Q(book_name__icontains=search_query) | Q(description__icontains=search_query))
+
+    #  category filter
+    if filter_category:
+        books = books.filter(category__name__iexact=filter_category)
+
+    #  author filter
+    if filter_author:
+        books = books.filter(author__name__iexact=filter_author)
+
+    #  price range filter
+    books = books.filter(offer_price__gte=price_min, offer_price__lte=price_max)
+
+    # Apply sorting
+    
+    if sort_option == 'price_low_to_high':
+        books = books.order_by('offer_price')
+    elif sort_option == 'price_high_to_low':
+        books = books.order_by('-offer_price')
+    elif sort_option == 'new_arrivals':
+        books = books.order_by('-publication_date')
+    elif sort_option == 'a_to_z':
+        books = books.order_by('book_name')
+    elif sort_option == 'z_to_a':
+        books = books.order_by('-book_name')
+
+    # Set up pagination (16 books per page)
+    paginator = Paginator(books, 16)
     page_number = request.GET.get('page')
     books = paginator.get_page(page_number)
-    return render(request,'shop_page.html',{'books':books})
+
+    # Render the template with the filtered, sorted, and paginated books
+    return render(request, 'shop_page.html', {
+        'books': books,
+        'search_query': search_query,
+        'sort_option': sort_option,
+        'filter_category': filter_category,
+        'filter_author': filter_author,
+        'price_min': price_min,
+        'price_max': price_max,
+    })
 
 ##########################################################################################################
 
