@@ -20,7 +20,8 @@ document.addEventListener('DOMContentLoaded', function() {
     let state = {
         isAddingNewAddress: false,
         selectedAddress: null,
-        selectedPayment: null
+        selectedPayment: null,
+        isSubmitting: false  // Add this line
     };
 
     // Address Form Toggle Functions
@@ -47,7 +48,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Update delivery address in the order summary
     function updateDeliveryAddress(addressElement) {
         if (!addressElement || !elements.deliveryAddressPanel) return;
-
+    
         const addressDetails = addressElement.querySelector('.address-details');
         const addressType = addressElement.querySelector('.address-type .type-label')?.textContent || 'Home';
         
@@ -57,20 +58,24 @@ document.addEventListener('DOMContentLoaded', function() {
         const areaText = addressDetails.querySelector('.area')?.textContent || '';
         const cityStateText = addressDetails.querySelector('.city-state')?.textContent || '';
         const phoneText = addressDetails.querySelector('.phone')?.textContent || '';
-
+    
         // Update the delivery address panel
         elements.deliveryAddressPanel.innerHTML = `
-            <h4 class="mt-4">Delivery Address</h4>
-            <div class="selected-address bg-light p-3 rounded">
-                <div class="address-type mb-2">
-                    <span class="badge bg-secondary">${addressType}</span>
+            <h4 class="delivery-title">Delivery Address</h4>
+            <div class="selected-address">
+                <div class="address-type-label">
+                    <span class="label label-default">${addressType}</span>
                 </div>
-                <p class="mb-1"><strong>${nameText}</strong></p>
-                <p class="mb-1">${streetText}</p>
-                ${areaText ? `<p class="mb-1">${areaText}</p>` : ''}
-                <p class="mb-1">${cityStateText}</p>
-                <p class="mb-1">${phoneText}</p>
-                <button class="btn btn-link btn-sm p-0 mt-2" onclick="changeAddress()">Change</button>
+                <div class="address-info">
+                    <p class="name"><strong>${nameText}</strong></p>
+                    <p class="street">${streetText}</p>
+                    ${areaText ? `<p class="area">${areaText}</p>` : ''}
+                    <p class="city-state">${cityStateText}</p>
+                    <p class="phone">${phoneText}</p>
+                </div>
+                <button type="button" class="btn btn-link change-address" onclick="changeAddress()">
+                    Change
+                </button>
             </div>
         `;
     }
@@ -88,38 +93,54 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Handle order placement
-    async function handlePlaceOrder(e) {
-        e.preventDefault();
-        
-        if (!state.selectedAddress || !state.selectedPayment) {
-            Swal.fire({
-                icon: 'error',
-                title: 'Oops...',
-                text: 'Please select both delivery address and payment method!'
-            });
-            return;
-        }
-
-        try {
-            // Get the selected address ID
-            const addressId = state.selectedAddress.querySelector('input[name="savedAddress"]').value;
-
-            // Add hidden inputs to the form
-            const formData = new FormData(elements.placeOrderForm);
-            formData.append('savedAddress', addressId);
-            formData.append('payment', state.selectedPayment);
-
-            // Submit the form
-            elements.placeOrderForm.submit();
-        } catch (error) {
-            console.error('Error placing order:', error);
-            Swal.fire({
-                icon: 'error',
-                title: 'Oops...',
-                text: 'Failed to place order. Please try again.'
-            });
-        }
-    }
+    // async function handlePlaceOrder(e) {
+    //     e.preventDefault();
+    
+    //     // Ensure the form exists in the DOM
+    //     if (!elements.placeOrderForm) {
+    //         console.error("Place order form not found.");
+    //         return;
+    //     }
+    
+    //     // Create a FormData object
+    //     const formData = new FormData(elements.placeOrderForm);
+    
+    //     try {
+    //         const response = await fetch(elements.placeOrderForm.action, {
+    //             method: 'POST',
+    //             body: formData,
+    //             headers: {
+    //                 'X-CSRFToken': formData.get('csrfmiddlewaretoken'),
+    //                 'X-Requested-With': 'XMLHttpRequest'
+    //             }
+    //         });
+    
+    //         // Process server response
+    //         const responseText = await response.text();
+    //         let data;
+    
+    //         try {
+    //             data = JSON.parse(responseText); // Parse response JSON
+    //         } catch (err) {
+    //             console.error('Invalid JSON response:', responseText);
+    //             throw new Error('Server returned invalid JSON');
+    //         }
+    
+    //         if (response.ok && data.success) {
+    //             // Redirect or handle success
+    //             window.location.href = data.redirect_url || '/order-confirmation';
+    //         } else {
+    //             throw new Error(data.message || 'Failed to place order');
+    //         }
+    //     } catch (error) {
+    //         console.error('Error placing order:', error);
+    //         Swal.fire({
+    //             icon: 'error',
+    //             title: 'Oops...',
+    //             text: error.message || 'Failed to place order. Please try again.'
+    //         });
+    //     }
+    // }
 
     // Initialize event listeners
     function initializeEventListeners() {

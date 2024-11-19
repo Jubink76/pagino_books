@@ -4,8 +4,10 @@
 {% block css_link %}
 <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet">
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
-<link href="{% static 'user/css/checkout_page.css' %}" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/assets/owl.carousel.min.css" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/assets/owl.theme.default.min.css" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
+<link href="{% static 'user/css/checkout_page.css' %}" rel="stylesheet">
 {% endblock %}
 
 {% block content %}
@@ -135,77 +137,7 @@
         <!-- Right Column - Order Summary -->
             {% if cart_items %}
             <div class="col-md-4">
-                <form id="placeOrderForm" action="{% url 'create_order' %}" method="post">
-                    {% csrf_token %}
-                    <div class="order-summary">
-                        <h4>Order Summary</h4>
-                        {% for item in cart_items %}
-                        <div class="product-item">
-                            <img src="{{ item.book.images.first.image.url }}" alt="{{ item.book.book_name }}" class="product-img">
-                            <div class="product-details">
-                                <div>{{ item.book.book_name }}</div>
-                                <small>Qty: {{ item.quantity }}</small>
-                            </div>
-                            <div class="price">₹{{ item.total_price }}</div>
-                        </div>
-                    
-                        {% endfor %}
-                        <hr>
-                        <div class="d-flex justify-content-between">
-                            <div>Subtotal:</div>
-                            <div class="price">₹ {{ grand_total }}</div>
-                        </div>
-                        <div class="d-flex justify-content-between">
-                            <div>Coupon Discount:</div>
-                            <div class="text-success">- ₹ 0</div>
-                        </div>
-                        <div class="d-flex justify-content-between">
-                            <div>Shipping:</div>
-                            <div class="text-success">+ ₹ Free</div>
-                        </div>
-                        <hr>
-                        <div class="d-flex justify-content-between">
-                            <div><strong>Total:</strong></div>
-                            <div class="price">₹ {{ grand_total }}</div>
-                        </div>
-                        
-                        <div class="delivery-address">
-                            <h4 class="mt-4">Delivery Address</h4>
-                            <p class="text-muted">Please select a delivery address</p>
-                        </div>
-
-                        <div class="payment-method">
-                            <h4>Payment Method</h4> 
-                            <div class="payment-option">
-                                <input type="radio" name="payment" id="cod"  value="COD" required>
-                                <label for="cod">Cash on Delivery</label>
-                                <div class="text-muted small">Pay when you receive your order</div>
-                            </div>
-                            <div class="payment-option">
-                                <input type="radio" name="payment" id="online" value="ONLINE">
-                                <label for="online">Pay Online (Card/UPI/Netbanking)</label>
-                                <div class="text-muted small">Pay securely with Razorpay</div>
-                            </div>
-                            <div class="payment-option">
-                                <input type="radio" name="payment" id="online" value="WALLET">
-                                <label for="online">Pay Wallet</label>
-                                <div class="text-muted small">Pay through wallet amount</div>
-                            </div>
-
-
-                            <div class="input-group mt-3">
-                                <input type="text" class="form-control" placeholder="Enter coupon code">
-                                <span class="input-group-btn">
-                                    <button class="btn btn-danger" type="button">Apply</button>
-                                </span>
-                            </div>
-
-                            <button type="submit" class="btn-place-order disabled" disabled>
-                                Place Order <i class="fa fa-arrow-right"></i>
-                            </button>
-                        </div>
-                    </div>
-                </form> 
+                  
             </div>
             {% endif %}
         </div>
@@ -215,8 +147,10 @@
 {% block script %}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/owl.carousel.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jquery.rateit@1.1.5/scripts/jquery.rateit.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script src="https://cdn.jsdelivr.net/npm/jquery.rateit@1.1.0/min/jquery.rateit.min.js"></script>
+<!-- Your custom scripts last -->
 <script src="{% static 'user/js/checkout_page.js' %}"></script>
 
 {% endblock %}
