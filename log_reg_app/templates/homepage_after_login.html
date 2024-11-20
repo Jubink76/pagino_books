@@ -227,16 +227,15 @@
                                 <button class="text-gray-600 hover:text-gray-900">THRILLING</button>
                             </div>
                         </div>
-
                         <!-- Product Grid - Modified for 5 cards -->
                         <div class="flex space-x-3">
-                            {% for book in books %}
+                            {% for book in books|slice:":5" %}
                             {% if book.is_available %}
                             <!-- Product Card 1 -->
                             <div class="w-1/5 bg-white rounded-lg shadow-md overflow-hidden">
                                 <div class="relative">
                                     <a href="{% url 'single_detail' book.id %}">
-                                    <img src="{{ book.images.first.image.url }}" alt="The Hunter" class="w-full h-72 object-cover"/>
+                                    <img src="{{ book.images.first.image.url }}" alt="The Hunter" class="w-full h-96 object-cover"/>
                                     <span class="absolute top-2 right-2 bg-blue-400 text-white px-2 py-1 rounded-full text-sm">NEW</span>
                                     </a>
                                 </div>
@@ -256,46 +255,30 @@
                             </div>
                             {% endif %}
                             {% endfor %}
-
                         </div>
                     </div>
                 <!-----------------------authors list and banners ------------------------------------------------>
                 <div class="flex space-x-4 px-8 mb-8">
                     <div class="w-1/3 h-32 relative rounded-lg overflow-hidden bg-cyan-100">
                         <img 
-                            src="{% static '/api/placeholder/400/128' %}" 
+                            src="{% static 'user/images/logo/slider1.jpeg' %}" 
                             alt="Reading Banner 1" 
                             class="w-full h-full object-cover"
                         />
-                        <div class="absolute inset-0 flex items-center p-4">
-                            <div class="flex items-start h-full">
-                                <img src="{% static '/api/placeholder/48/48' %}" alt="Book Icon" class="w-12 h-12" />
-                            </div>
-                        </div>
                     </div>
                     <div class="w-1/3 h-32 relative rounded-lg overflow-hidden bg-emerald-100">
                         <img 
-                            src="{% static '/api/placeholder/400/128' %}" 
-                            alt="Reading Banner 2" 
-                            class="w-full h-full object-cover"
+                        src="{% static 'user/images/logo/slider2.jpeg' %}" 
+                        alt="Reading Banner 1" 
+                        class="w-full h-full object-cover"
                         />
-                        <div class="absolute inset-0 flex items-center p-4">
-                            <div class="flex items-start h-full">
-                                <img src="{% static '/api/placeholder/48/48' %}" alt="Book Icon" class="w-12 h-12" />
-                            </div>
-                        </div>
                     </div>
                     <div class="w-1/3 h-32 relative rounded-lg overflow-hidden bg-blue-100">
                         <img 
-                            src="{% static '/api/placeholder/400/128' %}" 
-                            alt="Reading Banner 3" 
-                            class="w-full h-full object-cover"
+                        src="{% static 'user/images/logo/slider3.jpeg' %}" 
+                        alt="Reading Banner 1" 
+                        class="w-full h-full object-cover"
                         />
-                        <div class="absolute inset-0 flex items-center p-4">
-                            <div class="flex items-start h-full">
-                                <img src="{% static '/api/placeholder/48/48' %}" alt="Book Icon" class="w-12 h-12" />
-                            </div>
-                        </div>
                     </div>
                 </div>
                 
@@ -305,7 +288,7 @@
                         <!-- Authors List Section -->
                         <div class="w-64">
                             <div class="bg-white rounded-lg shadow-md p-4">
-                                <div class="flex items-center justify-between mb-4">
+                                <div class="flex items-center justify-between mb-4 sticky top-0 bg-white z-10">
                                     <h2 class="text-xl font-semibold">Book by Authors</h2>
                                     <div class="flex space-x-1">
                                         <button class="p-1 bg-gray-200 rounded-full hover:bg-gray-300">
@@ -320,111 +303,78 @@
                                         </button>
                                     </div>
                                 </div>
-                                <ul class="space-y-3">
-                                    {% for author in books %}
-                                        <li class="text-gray-600 hover:text-gray-900 cursor-pointer">{{ author.author }}</li>
-                                    {% endfor %}
-                                    <li class="text-gray-600 hover:text-gray-900 cursor-pointer">apj</li>
-                                    <li class="text-gray-600 hover:text-gray-900 cursor-pointer">Héctor Garcia and Francesc Miralle</li>
-                                    <li class="text-gray-600 hover:text-gray-900 cursor-pointer">Patricia Gussin</li>
-                                    <li class="text-gray-600 hover:text-gray-900 cursor-pointer">Robert T. Kiyosaki</li>
-                                    <li class="text-gray-600 hover:text-gray-900 cursor-pointer">paulo kohelo</li>
-                                </ul>
+                                <div class="h-[448px] overflow-y-auto">
+                                    <!-- h-[448px] matches product card height (h-96 image + p-4 padding + content height) -->
+                                    <ul class="space-y-3">
+                                        {% for author in books %}
+                                                <li class="text-gray-600 hover:text-gray-900 cursor-pointer transition-colors duration-200 p-2 hover:bg-gray-50 rounded">
+                                                    {{ author.author }}
+                                                </li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
                             </div>
                         </div>
                 
                         <!-- Products Grid -->
                         <div class="flex-1">
                             <div class="grid grid-cols-4 gap-4">
-                                <!-- Product Card 1 -->
+                                {% for book in books|slice:"5:9" %}
+                                {% if book.is_available %}
+                                <!-- Product Card -->
                                 <div class="bg-white rounded-lg shadow-md overflow-hidden">
                                     <div class="relative">
-                                        <img src="{% static '/api/placeholder/240/320' %}" alt="Product" class="w-full h-80 object-cover"/>
-                                        <span class="absolute top-2 right-2 bg-red-400 text-white px-2 py-1 rounded-full text-sm">HOT</span>
+                                        <a href="{% url 'single_detail' book.id %}">
+                                            <img src="{{ book.images.first.image.url }}" alt="{{ book.book_name }}" class="w-full h-96 object-cover"/>
+                                            {% if forloop.counter == 1 %}
+                                                <span class="absolute top-2 right-2 bg-red-400 text-white px-2 py-1 rounded-full text-sm">HOT</span>
+                                            {% elif forloop.counter == 2 %}
+                                                <span class="absolute top-2 right-2 bg-blue-400 text-white px-2 py-1 rounded-full text-sm">NEW</span>
+                                            {% elif forloop.counter == 3 %}
+                                                <span class="absolute top-2 right-2 bg-yellow-400 text-white px-2 py-1 rounded-full text-sm">SALE</span>
+                                            {% else %}
+                                                <span class="absolute top-2 right-2 bg-red-400 text-white px-2 py-1 rounded-full text-sm">HOT</span>
+                                            {% endif %}
+                                        </a>
                                     </div>
                                     <div class="p-4">
-                                        <h3 class="font-semibold text-lg mb-2">Floral Print Buttoned</h3>
+                                        <h3 class="font-semibold text-lg mb-2">{{ book.book_name }}</h3>
+                                        <p class="text-gray-600 mb-2">{{ book.author }}</p>
                                         <div class="flex text-yellow-400 mb-2">★★★★☆</div>
                                         <div class="flex justify-between items-center">
-                                            <span class="text-green-600 font-bold">$450.99</span>
-                                            <span class="text-gray-400 line-through">$800</span>
+                                            <span class="text-green-600 font-bold">₹{{ book.offer_price }}</span>
+                                            <span class="text-gray-400 line-through">₹{{ book.base_price }}</span>
                                         </div>
                                     </div>
                                 </div>
-                
-                                <!-- Product Card 2 -->
-                                <div class="bg-white rounded-lg shadow-md overflow-hidden">
-                                    <div class="relative">
-                                        <img src="{% static '/api/placeholder/240/320' %}" alt="Product" class="w-full h-80 object-cover"/>
-                                        <span class="absolute top-2 right-2 bg-blue-400 text-white px-2 py-1 rounded-full text-sm">NEW</span>
-                                    </div>
-                                    <div class="p-4">
-                                        <h3 class="font-semibold text-lg mb-2">Floral Print Buttoned</h3>
-                                        <div class="flex text-yellow-400 mb-2">★★★★☆</div>
-                                        <div class="flex justify-between items-center">
-                                            <span class="text-green-600 font-bold">$450.99</span>
-                                            <span class="text-gray-400 line-through">$800</span>
-                                        </div>
-                                    </div>
-                                </div>
-                
-                                <!-- Product Card 3 -->
-                                <div class="bg-white rounded-lg shadow-md overflow-hidden">
-                                    <div class="relative">
-                                        <img src="{% static '/api/placeholder/240/320' %}" alt="Product" class="w-full h-80 object-cover"/>
-                                        <span class="absolute top-2 right-2 bg-yellow-400 text-white px-2 py-1 rounded-full text-sm">SALE</span>
-                                    </div>
-                                    <div class="p-4">
-                                        <h3 class="font-semibold text-lg mb-2">Floral Print Buttoned</h3>
-                                        <div class="flex text-yellow-400 mb-2">★★★★☆</div>
-                                        <div class="flex justify-between items-center">
-                                            <span class="text-green-600 font-bold">$450.99</span>
-                                            <span class="text-gray-400 line-through">$800</span>
-                                        </div>
-                                    </div>
-                                </div>
-                
-                                <!-- Product Card 4 -->
-                                <div class="bg-white rounded-lg shadow-md overflow-hidden">
-                                    <div class="relative">
-                                        <img src="{% static '/api/placeholder/240/320' %}" alt="Product" class="w-full h-80 object-cover"/>
-                                        <span class="absolute top-2 right-2 bg-red-400 text-white px-2 py-1 rounded-full text-sm">HOT</span>
-                                    </div>
-                                    <div class="p-4">
-                                        <h3 class="font-semibold text-lg mb-2">Floral Print Buttoned</h3>
-                                        <div class="flex text-yellow-400 mb-2">★★★★☆</div>
-                                        <div class="flex justify-between items-center">
-                                            <span class="text-green-600 font-bold">$450.99</span>
-                                            <span class="text-gray-400 line-through">$800</span>
-                                        </div>
-                                    </div>
-                                </div>
+                                {% endif %}
+                                {% endfor %}
                             </div>
                         </div>
                     </div>
                 </div>
                 <!--------------------------------blog section -------------------------------------->
-                <div class="flex gap-4 w-full mt-4 ">
+                <div class="flex gap-4 w-full mt-4">
                     <!-- Large Banner -->
                     <div class="w-2/3 bg-blue-100 rounded-lg p-6 relative overflow-hidden">
-                        <div class="absolute top-0 left-0 bg-red-500 text-white px-4 py-1 rounded-br-lg">NEW</div>
-                        <div class="max-w-md">
-                            <h2 class="text-3xl font-bold mb-4">Reading Book</h2>
-                            <p class="text-gray-600">Lorem ipsum dolor sit amet, consectetur adipiscing elit sed diam nonummy nisl euismod tincidunt.</p>
-                        </div>
-                        <div class="absolute right-0 top-1/2 -translate-y-1/2">
-                            <img src="{% static '/book-illustration.svg' %}" alt="Book illustration" class="w-48 h-48"/>
+                        <div class="w-full h-full">
+                            <img 
+                                src="{% static 'user/images/logo/badge.jpg' %}" 
+                                alt="Book illustration" 
+                                class="w-full h-full object-cover rounded-lg"
+                            />
                         </div>
                     </div>
                     
                     <!-- Small Banner -->
-                    <div class="w-1/3 bg-purple-600 rounded-lg p-6 text-white relative overflow-hidden mr-4">
-                        <div class="max-w-xs">
-                            <h2 class="text-2xl font-bold mb-4">Happy World Book Day</h2>
-                            <p class="text-purple-100">Lorem ipsum dolor sit amet, consectetur.</p>
-                        </div>
-                        <div class="absolute right-4 top-1/2 -translate-y-1/2">
-                            <img src="{% static '/rocket-book.svg' %}" alt="Rocket book illustration" class="w-24 h-24"/>
+                    <div class="w-1/3 bg-purple-600 rounded-lg p-6 relative overflow-hidden"> <!-- Removed h-48 -->
+                        <div class="absolute top-0 left-0 bg-red-500 text-white px-4 py-1 rounded-br-lg">NEW</div>
+                        <div class="w-full h-full">
+                            <img 
+                                src="{% static 'user/images/logo/badge2.jpeg' %}" 
+                                alt="Rocket book illustration" 
+                                class="w-full h-full object-cover rounded-lg"
+                            />
                         </div>
                     </div>
                 </div>
@@ -435,7 +385,7 @@
                     <div class="grid grid-cols-3 gap-6">
                         <!-- Blog Card 1 -->
                         <div class="bg-white rounded-lg shadow-md overflow-hidden">
-                            <img src="{% static '/tattoo-image.jpg' %}" alt="Blog post image" class="w-full h-48 object-cover"/>
+                            <img src="{% static 'user/images/logo/blog1.jpg' %}" alt="Blog post image" class="w-full h-48 object-cover"/>
                             <div class="p-4">
                                 <h3 class="text-xl font-semibold mb-2">Voluptatem accusantium doloremque laudantium</h3>
                                 <div class="text-gray-500 text-sm mb-2">By Jone Doe | 21 March 2016</div>
@@ -445,7 +395,7 @@
             
                         <!-- Blog Card 2 -->
                         <div class="bg-white rounded-lg shadow-md overflow-hidden">
-                            <img src="{% static '/book-image.jpg' %}" alt="Blog post image" class="w-full h-48 object-cover"/>
+                            <img src="{% static 'user/images/logo/blog2.png' %}" alt="Blog post image" class="w-full h-48 object-cover"/>
                             <div class="p-4">
                                 <h3 class="text-xl font-semibold mb-2">Dolorem eum fugiat quo voluptas nulla pariatur</h3>
                                 <div class="text-gray-500 text-sm mb-2">By Saraha Smith | 21 March 2016</div>
@@ -455,7 +405,7 @@
             
                         <!-- Blog Card 3 -->
                         <div class="bg-white rounded-lg shadow-md overflow-hidden">
-                            <img src="{% static '/beach-book.jpg' %}" alt="Blog post image" class="w-full h-48 object-cover"/>
+                            <img src="{% static 'user/images/logo/blog3.png' %}" alt="Blog post image" class="w-full h-48 object-cover"/>
                             <div class="p-4">
                                 <h3 class="text-xl font-semibold mb-2">Dolorem eum fugiat quo voluptas nulla pariatur</h3>
                                 <div class="text-gray-500 text-sm mb-2">By Saraha Smith | 21 March 2016</div>

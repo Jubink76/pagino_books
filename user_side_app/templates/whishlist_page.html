@@ -2,230 +2,127 @@
 {% load static %}
 
 {% block css_link %}
-<style>
-	.empty-whishlist {
-        text-align: center;
-        padding: 60px 20px;
-    }
 
-    .empty-whishlist img {
-		max-width: 200px;  /* Limit maximum width */
-		width: 100%;       /* Make image responsive */
-		height: 200px;      /* Maintain aspect ratio */
-		object-fit: contain; /* Ensure image isn't stretched */
-		margin-bottom: 1.5rem;
-	}
-
-    .empty-whishlist h2 {
-        font-size: 24px;
-        color: #333;
-        margin-bottom: 15px;
-    }
-
-    .empty-whishlist p {
-        color: #6c757d;
-        font-size: 16px;
-        margin-bottom: 30px;
-    }
-	.btn-explore {
-		background-color: #ffc107;
-		color: #000000;
-		padding: 12px 30px;
-		border-radius: 6px;
-		text-decoration: none;
-		display: inline-block;
-		font-size: 16px;
-	}
-</style>
 {% endblock %}
 
 {% block content %}
-<div class="breadcrumb">
-	<div class="container">
-		<div class="breadcrumb-inner">
-			<ul class="list-inline list-unstyled">
-				{% if user is user.is_authenticated %}
-					<li><a href="{% url 'homepage_after_login' %}">Home</a></li>
-				{% else %}
-					<li><a href="{% url 'homepage_before_login' %}">Home</a></li>
-				{% endif %}
-				<li class='active'>Wishlist</li>
-			</ul>
-		</div><!-- /.breadcrumb-inner -->
-	</div><!-- /.container -->
-</div><!-- /.breadcrumb -->
-
-<div class="body-content">
-	<div class="container">
-		<div class="my-wishlist-page">
-			<div class="row">
-				<div class="col-md-12 my-wishlist">
-	<div class="table-responsive">
-		{% if whishlist_items %}
-		<table class="table">
-			<thead>
-				<tr>
-					<th colspan="4" class="heading-title">My Wishlist</th>
-				</tr>
-			</thead>
-			<tbody>
-				
-				{% for item in whishlist_items %}
-				<tr>
-					<td class="col-md-2 col-sm-6 col-xs-6"><img src="{{ item.book.images.first.image.url }}" alt="{{ item.book.book_name }}"></td>
-					<td class="col-md-7 col-sm-6 col-xs-6">
-						<div class="product-name"><a href="">{{ item.book.book_name }}</a></div>
-						<div class="rating">
-							<i class="fa fa-star rate"></i>
-							<i class="fa fa-star rate"></i>
-							<i class="fa fa-star rate"></i>
-							<i class="fa fa-star rate"></i>
-							<i class="fa fa-star non-rate"></i>
-							<span class="review">( 06 Reviews )</span>
-						</div>
-						<div class="cart-product-info">
-							<span class="product-color " style="color: #2b8c18;" >Author:<span>{{ item.book.author }}</span></span>
-						</div>
-						<div class="price">
-							₹{{ item.book.offer_price }}
-							<span>₹{{ item.book.base_price }}</span>
-						</div>
-					</td>
-					<td class="col-md-2 ">
-						{% if item.book and item.book.id %}
-    						<a href="{% url 'add_to_cart' item.book.id %}" class="btn-upper btn btn-primary">Add to cart</a>
-						{% else %}
-    						<p>Book is unavailable.</p>
-						{% endif %}
-					</td>
-					<td class="col-md-1 close-btn">
-						{% if item.book and item.book.id %}
-							<a href="{% url 'delete_whishlist_item' item.book.id %}" data-toggle="tooltip" title="Remove"><i class="fa fa-times"></i></a>
-						{% endif %}
-					</td>
-				</tr>
-			{% endfor %}
-			</tbody>
-			{% else %}
-				<div class="empty-whishlist">
-					<img src="{% static 'user/images/logo/empty.jpeg' %}" alt="Empty Whishlist" />
-					<h2>Your Whishlist is Empty</h2>
-					<p>Add products to Whishlist</p>
-					<a href="{% url 'shop_page' %}" class="btn-explore">Explore Products</a>
-				</div>
-			{% endif %}
-		</table>
-	</div>
-</div>			</div><!-- /.row -->
-		</div><!-- /.sigin-in-->
-		<!-- ============================================== BRANDS CAROUSEL ============================================== -->
-<div id="brands-carousel" class="logo-slider wow fadeInUp">
-
-		<div class="logo-slider-inner">	
-			<div id="brand-slider" class="owl-carousel brand-slider custom-carousel owl-theme">
-				<div class="item m-t-15">
-					<a href="#" class="image">
-						<img data-echo="user/images/brands/brand1.png" src="{% static 'user/images/blank.gif' %}" alt="">
-					</a>	
-				</div><!--/.item-->
-
-				<div class="item m-t-10">
-					<a href="#" class="image">
-						<img data-echo="user/images/brands/brand2.png" src="{% static 'user/images/blank.gif' %}" alt="">
-					</a>	
-				</div><!--/.item-->
-
-				<div class="item">
-					<a href="#" class="image">
-						<img data-echo="user/images/brands/brand3.png" src="{% static 'user/images/blank.gif' %}" alt="">
-					</a>	
-				</div><!--/.item-->
-
-				<div class="item">
-					<a href="#" class="image">
-						<img data-echo="user/images/brands/brand4.png" src="{% static 'user/images/blank.gif' %}" alt="">
-					</a>	
-				</div><!--/.item-->
-
-				<div class="item">
-					<a href="#" class="image">
-						<img data-echo="user/images/brands/brand5.png" src="{% static 'user/images/blank.gif' %}" alt="">
-					</a>	
-				</div><!--/.item-->
-
-				<div class="item">
-					<a href="#" class="image">
-						<img data-echo="user/images/brands/brand6.png" src="{% static 'user/images/blank.gif' %}" alt="">
-					</a>	
-				</div><!--/.item-->
-
-				<div class="item">
-					<a href="#" class="image">
-						<img data-echo="user/images/brands/brand2.png" src="{% static 'user/images/blank.gif' %}" alt="">
-					</a>	
-				</div><!--/.item-->
-
-				<div class="item">
-					<a href="#" class="image">
-						<img data-echo="user/images/brands/brand4.png" src="{% static 'user/images/blank.gif' %}" alt="">
-					</a>	
-				</div><!--/.item-->
-
-				<div class="item">
-					<a href="#" class="image">
-						<img data-echo="user/images/brands/brand1.png" src="{% static 'user/images/blank.gif' %}" alt="">
-					</a>	
-				</div><!--/.item-->
-
-				<div class="item">
-					<a href="#" class="image">
-						<img data-echo="user/images/brands/brand5.png" src="{% static 'user/images/blank.gif' %}" alt="">
-					</a>	
-				</div><!--/.item-->
-		    </div><!-- /.owl-carousel #logo-slider -->
-		</div><!-- /.logo-slider-inner -->
-	
-</div><!-- /.logo-slider -->
-<!-- ============================================== BRANDS CAROUSEL : END ============================================== -->	</div><!-- /.container -->
-</div><!-- /.body-content -->
-<!-- ============================================================= FOOTER ============================================================= -->
-
-        <!-- ============================================== INFO BOXES ============================================== -->
-        <div class="row our-features-box">
-     <div class="container">
-      <ul>
-        <li>
-          <div class="feature-box">
-            <div class="icon-truck"></div>
-            <div class="content-blocks">We ship worldwide</div>
-          </div>
-        </li>
-        <li>
-          <div class="feature-box">
-            <div class="icon-support"></div>
-            <div class="content-blocks">call 
-              +1 800 789 0000</div>
-          </div>
-        </li>
-        <li>
-          <div class="feature-box">
-            <div class="icon-money"></div>
-            <div class="content-blocks">Money Back Guarantee</div>
-          </div>
-        </li>
-        <li>
-          <div class="feature-box">
-            <div class="icon-return"></div>
-            <div class="content">30 days return</div>
-          </div>
-        </li>
-        
-      </ul>
+<div class="bg-gray-100 py-2">
+    <div class="container mx-auto px-4">
+        <ul class="flex items-center space-x-2 text-sm">
+            {% if user.is_authenticated %}
+                <li><a href="{% url 'homepage_after_login' %}" class="text-blue-600 hover:text-blue-800">Home</a></li>
+            {% else %}
+                <li><a href="{% url 'homepage_before_login' %}" class="text-blue-600 hover:text-blue-800">Home</a></li>
+            {% endif %}
+            <li class="text-gray-500">/</li>
+            <li class="text-gray-700">Wishlist</li>
+        </ul>
     </div>
-  </div>
-        <!-- /.info-boxes --> 
-        <!-- ============================================== INFO BOXES : END ============================================== --> 
+</div>
 
+<!-- Main Content -->
+<div class="container mx-auto px-4 py-8">
+    <div class="max-w-7xl mx-auto">
+        {% if whishlist_items %}
+            <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                <!-- Wishlist Header -->
+                <div class="bg-gray-50 px-6 py-4 border-b border-gray-200">
+                    <h2 class="text-xl font-semibold text-gray-800">My Wishlist</h2>
+                </div>
+
+                <!-- Wishlist Items -->
+                <div class="divide-y divide-gray-200">
+                    {% for item in whishlist_items %}
+                    <div class="flex items-center p-6 hover:bg-gray-50">
+                        <!-- Product Image -->
+                        <div class="w-20 h-30 flex-shrink-0">
+                            <img src="{{ item.book.images.first.image.url }}" 
+                                 alt="{{ item.book.book_name }}"
+                                 class="w-full h-full object-cover rounded">
+                        </div>
+
+                        <!-- Product Details -->
+                        <div class="ml-6 flex-grow">
+                            <h3 class="text-lg font-medium text-gray-900">{{ item.book.book_name }}</h3>
+                            
+                            <!-- Rating -->
+                            <div class="flex items-center mt-1">
+                                <div class="flex text-yellow-400">
+                                    <svg class="w-4 h-4 fill-current" viewBox="0 0 20 20">
+                                        <path d="M10 15.27L16.18 19L14.54 11.97L20 7.24L12.81 6.63L10 0L7.19 6.63L0 7.24L5.46 11.97L3.82 19L10 15.27Z"/>
+                                    </svg>
+                                    <svg class="w-4 h-4 fill-current" viewBox="0 0 20 20">
+                                        <path d="M10 15.27L16.18 19L14.54 11.97L20 7.24L12.81 6.63L10 0L7.19 6.63L0 7.24L5.46 11.97L3.82 19L10 15.27Z"/>
+                                    </svg>
+                                    <svg class="w-4 h-4 fill-current" viewBox="0 0 20 20">
+                                        <path d="M10 15.27L16.18 19L14.54 11.97L20 7.24L12.81 6.63L10 0L7.19 6.63L0 7.24L5.46 11.97L3.82 19L10 15.27Z"/>
+                                    </svg>
+                                    <svg class="w-4 h-4 fill-current" viewBox="0 0 20 20">
+                                        <path d="M10 15.27L16.18 19L14.54 11.97L20 7.24L12.81 6.63L10 0L7.19 6.63L0 7.24L5.46 11.97L3.82 19L10 15.27Z"/>
+                                    </svg>
+                                    <svg class="w-4 h-4 text-gray-300 fill-current" viewBox="0 0 20 20">
+                                        <path d="M10 15.27L16.18 19L14.54 11.97L20 7.24L12.81 6.63L10 0L7.19 6.63L0 7.24L5.46 11.97L3.82 19L10 15.27Z"/>
+                                    </svg>
+                                </div>
+                                <span class="ml-2 text-sm text-gray-500">( 06 Reviews )</span>
+                            </div>
+
+                            <!-- Author -->
+                            <div class="mt-1 text-sm">
+                                <span class="text-green-700">Author: </span>
+                                <span class="text-gray-700">{{ item.book.author }}</span>
+                            </div>
+
+                            <!-- Price -->
+                            <div class="mt-2 flex items-baseline">
+                                <span class="text-lg font-bold text-gray-900">₹{{ item.book.offer_price }}</span>
+                                <span class="ml-2 text-sm text-gray-500 line-through">₹{{ item.book.base_price }}</span>
+                            </div>
+                        </div>
+
+                        <!-- Add to Cart Button -->
+                        <div class="ml-6">
+                            {% if item.book and item.book.id %}
+                                <a href="{% url 'add_to_cart' item.book.id %}" 
+                                   class="inline-block px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                                    Add to cart
+                                </a>
+                            {% else %}
+                                <p class="text-gray-500">Book is unavailable.</p>
+                            {% endif %}
+                        </div>
+
+                        <!-- Remove Button -->
+                        <div class="ml-6">
+                            {% if item.book and item.book.id %}
+                                <a href="{% url 'delete_whishlist_item' item.book.id %}" 
+                                   class="inline-flex items-center justify-center w-8 h-8 rounded-full text-red-500 hover:bg-red-50 transition-colors">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                    </svg>
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% else %}
+            <!-- Empty Wishlist -->
+            <div class="text-center py-16">
+                <img src="{% static 'user/images/logo/empty.jpeg' %}" 
+                     alt="Empty Wishlist" 
+                     class="mx-auto max-w-xs mb-6">
+                <h2 class="text-2xl font-bold text-gray-900 mb-2">Your Wishlist is Empty</h2>
+                <p class="text-gray-600 mb-6">Add products to Wishlist</p>
+                <a href="{% url 'shop_page' %}" 
+                   class="inline-block px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                    Explore Products
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
 
 {% endblock %}
 

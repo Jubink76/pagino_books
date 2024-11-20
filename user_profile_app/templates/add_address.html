@@ -2,389 +2,137 @@
 {% load static %}
 
 {% block css_link %}
-<style>
-    /* Keeping existing account-management styles */
-    .account-management {
-        font-family: Arial, sans-serif;
-    }
 
-    /* Previous styles remain the same until .main-content */
-    .account-management .container {
-        max-width: 1400px;
-        margin: 0 auto;
-        padding: 40px 20px;
-    }
-
-    .account-management .breadcrumb {
-        margin-bottom: 30px;
-        font-size: 16px;
-    }
-
-    .account-management .breadcrumb a {
-        color: #007bff;
-        text-decoration: none;
-    }
-
-    .account-management .breadcrumb span {
-        color: #6c757d;
-        margin: 0 10px;
-    }
-
-    .account-management .content-wrapper {
-        display: flex;
-        gap: 30px;
-        background: white;
-        border-radius: 12px;
-        padding: 30px;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-    }
-
-    .account-management .sidebar {
-        width: 300px;
-        background: #f8f9fa;
-        border-radius: 8px;
-        padding: 25px;
-    }
-
-    .account-management .sidebar h2 {
-        font-size: 24px;
-        margin-bottom: 25px;
-        color: #333;
-    }
-
-    .account-management .nav-list {
-        list-style: none;
-        padding: 0;
-    }
-
-    .account-management .nav-item {
-        margin-bottom: 15px;
-    }
-
-    .account-management .nav-link {
-        display: flex;
-        align-items: center;
-        padding: 12px 20px;
-        text-decoration: none;
-        color: #495057;
-        border-radius: 6px;
-        font-size: 16px;
-    }
-
-    .account-management .nav-link.active {
-        background-color: #007bff;
-        color: white;
-    }
-
-    .account-management .nav-link:hover:not(.active) {
-        background-color: #e9ecef;
-    }
-
-    .account-management .nav-icon {
-        margin-right: 12px;
-        width: 24px;
-        font-size: 20px;
-    }
-
-    .account-management .main-content {
-        flex: 1;
-        padding: 0 20px;
-    }
-
-    /* New styles for address book */
-    .address-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 40px;
-    }
-
-    .address-header h1 {
-        font-size: 28px;
-        color: #333;
-        margin: 0;
-    }
-
-    .btn-add-address {
-        background-color: #dc3545;
-        color: white;
-        padding: 12px 24px;
-        border-radius: 6px;
-        border: none;
-        font-size: 16px;
-        cursor: pointer;
-        text-decoration: none;
-    }
-
-    .empty-address {
-        text-align: center;
-        padding: 60px 20px;
-    }
-
-    .empty-address img {
-        width: 200px;
-        height: 200px;
-        margin-bottom: 30px;
-    }
-
-    .empty-address h2 {
-        font-size: 24px;
-        color: #333;
-        margin-bottom: 15px;
-    }
-
-    .empty-address p {
-        color: #6c757d;
-        font-size: 16px;
-        margin-bottom: 30px;
-    }
-
-    .btn-explore {
-        background-color: #dc3545;
-        color: white;
-        padding: 12px 30px;
-        border-radius: 6px;
-        text-decoration: none;
-        display: inline-block;
-        font-size: 16px;
-    }
-
-    @media (max-width: 992px) {
-        .account-management .content-wrapper {
-            flex-direction: column;
-        }
-
-        .account-management .sidebar {
-            width: 100%;
-        }
-
-        .address-header {
-            flex-direction: column;
-            gap: 20px;
-            text-align: center;
-        }
-    }
-    .form-header {
-        margin-bottom: 30px;
-    }
-
-    .form-header h1 {
-        font-size: 24px;
-        color: #333;
-        margin: 0;
-    }
-
-    .address-type-selector {
-        display: flex;
-        gap: 20px;
-        margin-bottom: 30px;
-    }
-
-    .type-option {
-        flex: 1;
-        padding: 15px;
-        border: 1px solid #dee2e6;
-        border-radius: 8px;
-        text-align: center;
-        cursor: pointer;
-        background: white;
-        transition: all 0.3s ease;
-    }
-
-    .type-option.active {
-        border-color: #dc3545;
-        background-color: #fff1f2;
-    }
-
-    .type-option i {
-        font-size: 24px;
-        margin-bottom: 8px;
-        display: block;
-    }
-
-    .address-form {
-        display: flex;
-        flex-direction: column;
-        gap: 20px;
-    }
-
-    .form-row {
-        display: flex;
-        gap: 20px;
-    }
-
-    .form-group {
-        flex: 1;
-    }
-
-    .form-group label {
-        display: block;
-        margin-bottom: 8px;
-        color: #666;
-        font-size: 14px;
-    }
-
-    .form-group input {
-        width: 100%;
-        padding: 12px;
-        border: 1px solid #dee2e6;
-        border-radius: 6px;
-        font-size: 16px;
-    }
-
-    .form-group input:focus {
-        outline: none;
-        border-color: #dc3545;
-    }
-
-    .form-actions {
-        display: flex;
-        justify-content: flex-end;
-        gap: 15px;
-        margin-top: 20px;
-    }
-
-    .btn-cancel {
-        padding: 12px 24px;
-        border: 1px solid #dee2e6;
-        border-radius: 6px;
-        background: white;
-        color: #666;
-        cursor: pointer;
-    }
-
-    .btn-save {
-        padding: 12px 24px;
-        border: none;
-        border-radius: 6px;
-        background: #ffc107;
-        color: #000000;
-        cursor: pointer;
-    }
-
-    .btn-save:hover {
-        background: #c82333;
-    }
-
-    @media (max-width: 768px) {
-        .form-row {
-            flex-direction: column;
-            gap: 15px;
-        }
-    }
-    .is-invalid {
-        border-color: #dc3545 !important;
-        background-color: #fff8f8 !important;
-    }
-    
-    .form-group {
-        margin-bottom: 1rem;
-    }
-</style>
 {% endblock %}
 
 {% block content %}
-<div class="account-management">
-    <div class="container">
-        <div class="breadcrumb">
-            <a href="{% url 'homepage_after_login' %}">Home</a>
-            <span>/</span>
-            <span>My Account</span>
+<div class="bg-gray-50 font-sans">
+    <div class="max-w-7xl mx-auto px-5 py-10">
+        <!-- Breadcrumb -->
+        <div class="mb-8">
+            <nav class="text-base">
+                <a href="{% url 'homepage_after_login' %}" class="text-blue-600 hover:text-blue-800">Home</a>
+                <span class="text-gray-500 mx-2">/</span>
+                <span class="text-gray-500">My Account</span>
+            </nav>
         </div>
 
-        <div class="content-wrapper">
-            <div class="sidebar">
-                <h2>Manage Account</h2>
-                <ul class="nav-list">
-                    <li class="nav-item">
-                        <a href="{% url 'user_profile' %}" class="nav-link">
-                            <span class="nav-icon">👤</span>
+        <!-- Main Content Container -->
+        <div class="flex gap-8 bg-white rounded-xl p-8 shadow-sm">
+            <!-- Sidebar -->
+            <div class="w-72 bg-gray-50 rounded-lg p-6">
+                <h2 class="text-2xl font-semibold text-gray-800 mb-6">Manage Account</h2>
+                <ul class="space-y-4">
+                    <li>
+                        <a href="{% url 'user_profile' %}" class="flex items-center px-5 py-3 rounded-lg text-gray-700 hover:bg-gray-200 transition-colors">
+                            <span class="mr-3 text-xl">👤</span>
                             My Profile
                         </a>
                     </li>
-                    <li class="nav-item">
-                        <a href="{% url 'user_address' %}" class="nav-link active">
-                            <span class="nav-icon">📖</span>
+                    <li>
+                        <a href="{% url 'user_address' %}" class="flex items-center px-5 py-3 rounded-lg text-white bg-blue-600">
+                            <span class="mr-3 text-xl">📖</span>
                             Address Book
                         </a>
                     </li>
-                    <li class="nav-item">
-                        <a href="{% url 'user_orders' %}" class="nav-link">
-                            <span class="nav-icon">🛍️</span>
+                    <li>
+                        <a href="{% url 'user_orders' %}" class="flex items-center px-5 py-3 rounded-lg text-gray-700 hover:bg-gray-200 transition-colors">
+                            <span class="mr-3 text-xl">🛍️</span>
                             My Orders
                         </a>
                     </li>
-                    <li class="nav-item">
-                        <a href="#" class="nav-link">
-                            <span class="nav-icon">💳</span>
+                    <li>
+                        <a href="/payment" class="flex items-center px-5 py-3 rounded-lg text-gray-700 hover:bg-gray-200 transition-colors">
+                            <span class="mr-3 text-xl">💳</span>
                             Payment Options
                         </a>
                     </li>
                 </ul>
             </div>
 
-            <div class="main-content">
-                <div class="form-header">
-                    <h1>Add New Address</h1>
+            <!-- Main Content -->
+            <div class="flex-1 px-5">
+                <div class="mb-8">
+                    <h1 class="text-2xl font-bold text-gray-800">Add New Address</h1>
                 </div>
 
-                <form onsubmit="return validateForm()" action="" method="post" class="address-form">
+                <form onsubmit="return validateForm()" action="" method="post" id="addressForm" class="space-y-6">
                     {% csrf_token %}
-                    <div class="address-type-selector">
-                        <div class="type-option active">
-                            <i>🏠</i>
+                    <!-- Address Type Selector -->
+                    <div class="flex gap-5 mb-8">
+                        <div class="flex-1 p-4 border rounded-lg text-center cursor-pointer transition-all type-option active" data-type="home">
+                            <span class="block text-2xl mb-2">🏠</span>
                             <div>Home</div>
                         </div>
-                        <div class="type-option">
-                            <i>🏢</i>
+                        <div class="flex-1 p-4 border rounded-lg text-center cursor-pointer transition-all type-option" data-type="office">
+                            <span class="block text-2xl mb-2">🏢</span>
                             <div>Office</div>
                         </div>
                     </div>
 
-                    <div class="form-group">
-                        <label>Full Name</label>
-                        <input type="text" placeholder="Enter your full name" name='address_name'>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Street Address</label>
-                        <input type="text" placeholder="Enter your street address" name="street_name">
-                    </div>
-
-                    <div class="form-row">
+                    <!-- Form Fields -->
+                    <div class="space-y-4">
                         <div class="form-group">
-                            <label>Apartment/Suite</label>
-                            <input type="text" placeholder="Enter apartment or suite number" name="building_no">
+                            <label class="block text-gray-600 text-sm mb-2">Full Name</label>
+                            <input type="text" name="address_name" placeholder="Enter your full name"
+                                class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-red-500 focus:border-red-500">
                         </div>
-                        <div class="form-group">
-                            <label>Landmark</label>
-                            <input type="text" placeholder="Enter nearby landmark" name="landmark">
-                        </div>
-                    </div>
 
-                    <div class="form-row">
                         <div class="form-group">
-                            <label>City</label>
-                            <input type="text" placeholder="Enter city" name="city">
+                            <label class="block text-gray-600 text-sm mb-2">Street Address</label>
+                            <input type="text" name="street_name" placeholder="Enter your street address"
+                                class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-red-500 focus:border-red-500">
                         </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="form-group">
+                                <label class="block text-gray-600 text-sm mb-2">Apartment/Suite</label>
+                                <input type="text" name="building_no" placeholder="Enter apartment or suite number"
+                                    class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-red-500 focus:border-red-500">
+                            </div>
+                            <div class="form-group">
+                                <label class="block text-gray-600 text-sm mb-2">Landmark</label>
+                                <input type="text" name="landmark" placeholder="Enter nearby landmark"
+                                    class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-red-500 focus:border-red-500">
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="form-group">
+                                <label class="block text-gray-600 text-sm mb-2">City</label>
+                                <input type="text" name="city" placeholder="Enter city"
+                                    class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-red-500 focus:border-red-500">
+                            </div>
+                            <div class="form-group">
+                                <label class="block text-gray-600 text-sm mb-2">Postal Code</label>
+                                <input type="text" name="pincode" placeholder="Enter postal code"
+                                    class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-red-500 focus:border-red-500">
+                            </div>
+                        </div>
+
                         <div class="form-group">
-                            <label>Postal Code</label>
-                            <input type="text" placeholder="Enter postal code" name="pincode">
+                            <label class="block text-gray-600 text-sm mb-2">Phone Number</label>
+                            <input type="tel" name="address_phone" placeholder="Enter phone number"
+                                class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-red-500 focus:border-red-500">
                         </div>
-                    </div>
 
-                    <div class="form-group">
-                        <label>Phone Number</label>
-                        <input type="tel" placeholder="Enter phone number" name="address_phone">
-                    </div>
-                    <div class="form-group">
-                        <label>State</label>
-                        <input type="text" placeholder="Enter your state" name="state">
-                    </div>
+                        <div class="form-group">
+                            <label class="block text-gray-600 text-sm mb-2">State</label>
+                            <input type="text" name="state" placeholder="Enter your state"
+                                class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-red-500 focus:border-red-500">
+                        </div>
 
-                    <div class="form-actions">
-                        <a href="{% url 'user_address' %}"><button type="button" class="btn-cancel">Cancel</button></a>
-                        <button type="submit" class="btn-save">Save Address</button>
+                        <!-- Form Actions -->
+                        <div class="flex justify-end gap-4 mt-8">
+                            <a href="{% url 'user_address' %}"><button type="button" onclick="window.history.back()"
+                                class="px-6 py-3 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors">
+                                Cancel
+                            </button></a>
+                            <button type="submit"
+                                class="px-6 py-3 rounded-lg bg-yellow-500 text-black hover:bg-yellow-600 transition-colors">
+                                Save Address
+                            </button>
+                        </div>
                     </div>
                 </form>
             </div>
@@ -392,111 +140,127 @@
     </div>
 </div>
 {% endblock %}
-
 {% block script %}
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script>
-    // Add click handlers for address type selection
-    document.querySelectorAll('.type-option').forEach(option => {
-        option.addEventListener('click', () => {
-            document.querySelectorAll('.type-option').forEach(opt => opt.classList.remove('active'));
-            option.classList.add('active');
-        });
-    });
-</script>
-<script>
-    function validateForm() {
-        let isValid = true;
-        const errorMessages = [];
-    
-        // Full Name validation
-        const addressName = document.getElementsByName('address_name')[0];
-        if (!addressName.value.trim()) {
-            errorMessages.push("Full name is required");
-            addressName.classList.add('is-invalid');
-            isValid = false;
-        } else if (!/^[A-Za-z\s]+$/.test(addressName.value.trim())) {
-            errorMessages.push("Name should only contain letters and spaces");
-            addressName.classList.add('is-invalid');
-            isValid = false;
-        }
-    
-        // Street Address validation
-        const streetName = document.getElementsByName('street_name')[0];
-        if (!streetName.value.trim()) {
-            errorMessages.push("Street address is required");
-            streetName.classList.add('is-invalid');
-            isValid = false;
-        }
-    
-        // City validation
-        const city = document.getElementsByName('city')[0];
-        if (!city.value.trim()) {
-            errorMessages.push("City is required");
-            city.classList.add('is-invalid');
-            isValid = false;
-        } else if (!/^[A-Za-z\s]+$/.test(city.value.trim())) {
-            errorMessages.push("City should only contain letters and spaces");
-            city.classList.add('is-invalid');
-            isValid = false;
-        }
-    
-        // Pincode validation
-        const pincode = document.getElementsByName('pincode')[0];
-        if (!pincode.value.trim()) {
-            errorMessages.push("Postal code is required");
-            pincode.classList.add('is-invalid');
-            isValid = false;
-        } else if (!/^\d{6}$/.test(pincode.value.trim())) {
-            errorMessages.push("Please enter a valid 6-digit postal code");
-            pincode.classList.add('is-invalid');
-            isValid = false;
-        }
-    
-        // Phone number validation
-        const phone = document.getElementsByName('address_phone')[0];
-        if (!phone.value.trim()) {
-            errorMessages.push("Phone number is required");
-            phone.classList.add('is-invalid');
-            isValid = false;
-        } else if (!/^[6-9]\d{9}$/.test(phone.value.trim())) {
-            errorMessages.push("Please enter a valid 10-digit Indian phone number");
-            phone.classList.add('is-invalid');
-            isValid = false;
-        }
-    
-        // State validation
-        const state = document.getElementsByName('state')[0];
-        if (!state.value.trim()) {
-            errorMessages.push("State is required");
-            state.classList.add('is-invalid');
-            isValid = false;
-        } else if (!/^[A-Za-z\s]+$/.test(state.value.trim())) {
-            errorMessages.push("State should only contain letters and spaces");
-            state.classList.add('is-invalid');
-            isValid = false;
-        }
-    
-        // If there are errors, show them using SweetAlert
-        if (!isValid) {
-            Swal.fire({
-                title: 'Validation Error',
-                html: errorMessages.join('<br>'),
-                icon: 'error',
-                confirmButtonText: 'OK'
+    <script>
+        // Address type selection
+        const typeOptions = document.querySelectorAll('.type-option');
+        typeOptions.forEach(option => {
+            option.addEventListener('click', () => {
+                typeOptions.forEach(opt => {
+                    opt.classList.remove('active', 'border-red-500', 'bg-red-50');
+                    opt.classList.add('border-gray-300');
+                });
+                option.classList.add('active', 'border-red-500', 'bg-red-50');
+                option.classList.remove('border-gray-300');
             });
-            return false;
-        }
-    
-        return true;
-    }
-    
-    // Add this to your form inputs for real-time validation
-    document.querySelectorAll('input').forEach(input => {
-        input.addEventListener('input', function() {
-            this.classList.remove('is-invalid');
         });
-    });
+
+        // Form validation
+        function validateForm() {
+            let isValid = true;
+            const errorMessages = [];
+            
+            // Reset all fields' styles
+            document.querySelectorAll('input').forEach(input => {
+                input.classList.remove('border-red-500', 'bg-red-50');
+            });
+
+            // Full Name validation
+            const addressName = document.getElementsByName('address_name')[0];
+            if (!addressName.value.trim()) {
+                errorMessages.push("Full name is required");
+                addressName.classList.add('border-red-500', 'bg-red-50');
+                isValid = false;
+            } else if (!/^[A-Za-z\s]+$/.test(addressName.value.trim())) {
+                errorMessages.push("Name should only contain letters and spaces");
+                addressName.classList.add('border-red-500', 'bg-red-50');
+                isValid = false;
+            }
+
+            // Street Address validation
+            const streetName = document.getElementsByName('street_name')[0];
+            if (!streetName.value.trim()) {
+                errorMessages.push("Street address is required");
+                streetName.classList.add('border-red-500', 'bg-red-50');
+                isValid = false;
+            }
+
+            // City validation
+            const city = document.getElementsByName('city')[0];
+            if (!city.value.trim()) {
+                errorMessages.push("City is required");
+                city.classList.add('border-red-500', 'bg-red-50');
+                isValid = false;
+            } else if (!/^[A-Za-z\s]+$/.test(city.value.trim())) {
+                errorMessages.push("City should only contain letters and spaces");
+                city.classList.add('border-red-500', 'bg-red-50');
+                isValid = false;
+            }
+
+            // Pincode validation
+            const pincode = document.getElementsByName('pincode')[0];
+            if (!pincode.value.trim()) {
+                errorMessages.push("Postal code is required");
+                pincode.classList.add('border-red-500', 'bg-red-50');
+                isValid = false;
+            } else if (!/^\d{6}$/.test(pincode.value.trim())) {
+                errorMessages.push("Please enter a valid 6-digit postal code");
+                pincode.classList.add('border-red-500', 'bg-red-50');
+                isValid = false;
+            }
+
+            // Phone number validation
+            const phone = document.getElementsByName('address_phone')[0];
+            if (!phone.value.trim()) {
+                errorMessages.push("Phone number is required");
+                phone.classList.add('border-red-500', 'bg-red-50');
+                isValid = false;
+            } else if (!/^[6-9]\d{9}$/.test(phone.value.trim())) {
+                errorMessages.push("Please enter a valid 10-digit Indian phone number");
+                phone.classList.add('border-red-500', 'bg-red-50');
+                isValid = false;
+            }
+
+            // State validation
+            const state = document.getElementsByName('state')[0];
+            if (!state.value.trim()) {
+                errorMessages.push("State is required");
+                state.classList.add('border-red-500', 'bg-red-50');
+                isValid = false;
+            } else if (!/^[A-Za-z\s]+$/.test(state.value.trim())) {
+                errorMessages.push("State should only contain letters and spaces");
+                state.classList.add('border-red-500', 'bg-red-50');
+                isValid = false;
+            }
+
+            // Show errors using SweetAlert if validation fails
+            if (!isValid) {
+                Swal.fire({
+                    title: 'Validation Error',
+                    html: errorMessages.join('<br>'),
+                    icon: 'error',
+                    confirmButtonText: 'OK'
+                });
+                return false;
+            }
+
+            return true;
+        }
+
+        // Form submission handler
+        document.getElementById('addressForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            if (validateForm()) {
+                // Handle form submission here
+                console.log('Form submitted successfully');
+            }
+        });
+
+        // Real-time validation feedback
+        document.querySelectorAll('input').forEach(input => {
+            input.addEventListener('input', function() {
+                this.classList.remove('border-red-500', 'bg-red-50');
+            });
+        });
     </script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 {% endblock %}

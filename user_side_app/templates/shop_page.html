@@ -1,573 +1,335 @@
 {% extends 'base.html' %}
 {% load custom_tags %}
-
 {% load static %}
+
 {% block css_link %}
-{% comment %} <style>
-  .image{
-    width: 100%;
-    height: 100%;
-    object-fit: cover; /* This ensures the image fills the container without distortion */
-    display: block;
-}
-</style> {% endcomment %}
 
 {% endblock %}
 
 {% block content %}
-<div class="breadcrumb">
-    <div class="container">
-      <div class="breadcrumb-inner">
-        <ul class="list-inline list-unstyled">
-        {% if user is user.is_authenticated %}
-					<li><a href="{% url 'homepage_after_login' %}">Home</a></li>
-				{% else %}
-					<li><a href="{% url 'homepage_before_login' %}">Home</a></li>
-				{% endif %}
-          <li class='active'>Shop</li>
-        </ul>
-      </div>
-      <!-- /.breadcrumb-inner --> 
-    </div>
-    <!-- /.container --> 
-  </div>
-  <!-- /.breadcrumb -->
-  <div class="body-content outer-top-xs">
-    <div class='container'>
-      <div class='row'>
-        <div class='col-xs-12 col-sm-12 col-md-3 sidebar'> 
-          <!-- ================================== TOP NAVIGATION ================================== -->
-          <div class="side-menu animate-dropdown outer-bottom-xs">
-            <div class="head"><i class="icon fa fa-align-justify fa-fw"></i> Categories</div>
-            <nav class="yamm megamenu-horizontal">
-              <ul class="nav">
-              {% for category in categories %}
-                {% if category.is_available %}
-                  <li class="dropdown menu-item"> <a href="{% url 'single_category' category.id %}"><i class="icon fa fa-shopping-bag" aria-hidden="true"></i>{{ category.category_name }}</a></li>
-                {% endif %}
-              {% endfor %}
-      
-              </ul>
-              <!-- /.nav --> 
-            </nav>
-            <!-- /.megamenu-horizontal --> 
-          </div>
-          <!-- /.side-menu --> 
-          <!-- ================================== TOP NAVIGATION : END ================================== -->
-          <div class="sidebar-module-container">
-            <div class="sidebar-filter"> 
-              <!-- ============================================== SIDEBAR CATEGORY ============================================== -->
-              <div class="sidebar-widget">
-                <h3 class="section-title">Shop by</h3>
-                
-                <div class="sidebar-widget-body">
-                  <div class="accordion">
-                    <div class="accordion-group">
-                      <div class="accordion-heading"> <a href="#collapseOne" data-toggle="collapse" class="accordion-toggle collapsed"> Camera </a> </div>
-                      <!-- /.accordion-heading -->
-                      <div class="accordion-body collapse" id="collapseOne" style="height: 0px;">
-                        <div class="accordion-inner">
-                          <ul>
-                            <li><a href="#">gaming</a></li>
-                            <li><a href="#">office</a></li>
-                            <li><a href="#">kids</a></li>
-                            <li><a href="#">for women</a></li>
-                          </ul>
-                        </div>
-                        <!-- /.accordion-inner --> 
-                      </div>
-                      <!-- /.accordion-body --> 
-                    </div>
-                    <!-- /.accordion-group -->
-                    
-                    <div class="accordion-group">
-                      <div class="accordion-heading"> <a href="#collapseTwo" data-toggle="collapse" class="accordion-toggle collapsed"> Desktops </a> </div>
-                      <!-- /.accordion-heading -->
-                      <div class="accordion-body collapse" id="collapseTwo" style="height: 0px;">
-                        <div class="accordion-inner">
-                          <ul>
-                            <li><a href="#">gaming</a></li>
-                            <li><a href="#">office</a></li>
-                            <li><a href="#">kids</a></li>
-                            <li><a href="#">for women</a></li>
-                          </ul>
-                        </div>
-                        <!-- /.accordion-inner --> 
-                      </div>
-                      <!-- /.accordion-body --> 
-                    </div>
-                    <!-- /.accordion-group -->
-                    
-                    <div class="accordion-group">
-                      <div class="accordion-heading"> <a href="#collapseThree" data-toggle="collapse" class="accordion-toggle collapsed"> Pants </a> </div>
-                      <!-- /.accordion-heading -->
-                      <div class="accordion-body collapse" id="collapseThree" style="height: 0px;">
-                        <div class="accordion-inner">
-                          <ul>
-                            <li><a href="#">gaming</a></li>
-                            <li><a href="#">office</a></li>
-                            <li><a href="#">kids</a></li>
-                            <li><a href="#">for women</a></li>
-                          </ul>
-                        </div>
-                        <!-- /.accordion-inner --> 
-                      </div>
-                      <!-- /.accordion-body --> 
-                    </div>
-                    <!-- /.accordion-group -->
-                    
-                    <div class="accordion-group">
-                      <div class="accordion-heading"> <a href="#collapseFour" data-toggle="collapse" class="accordion-toggle collapsed"> Bags </a> </div>
-                      <!-- /.accordion-heading -->
-                      <div class="accordion-body collapse" id="collapseFour" style="height: 0px;">
-                        <div class="accordion-inner">
-                          <ul>
-                            <li><a href="#">gaming</a></li>
-                            <li><a href="#">office</a></li>
-                            <li><a href="#">kids</a></li>
-                            <li><a href="#">for women</a></li>
-                          </ul>
-                        </div>
-                        <!-- /.accordion-inner --> 
-                      </div>
-                      <!-- /.accordion-body --> 
-                    </div>
-                    <!-- /.accordion-group -->
-                    
-                    <div class="accordion-group">
-                      <div class="accordion-heading"> <a href="#collapseFive" data-toggle="collapse" class="accordion-toggle collapsed"> Hats </a> </div>
-                      <!-- /.accordion-heading -->
-                      <div class="accordion-body collapse" id="collapseFive" style="height: 0px;">
-                        <div class="accordion-inner">
-                          <ul>
-                            <li><a href="#">gaming</a></li>
-                            <li><a href="#">office</a></li>
-                            <li><a href="#">kids</a></li>
-                            <li><a href="#">for women</a></li>
-                          </ul>
-                        </div>
-                        <!-- /.accordion-inner --> 
-                      </div>
-                      <!-- /.accordion-body --> 
-                    </div>
-                    <!-- /.accordion-group -->
-                    
-                    <div class="accordion-group">
-                      <div class="accordion-heading"> <a href="#collapseSix" data-toggle="collapse" class="accordion-toggle collapsed"> Accessories </a> </div>
-                      <!-- /.accordion-heading -->
-                      <div class="accordion-body collapse" id="collapseSix" style="height: 0px;">
-                        <div class="accordion-inner">
-                          <ul>
-                            <li><a href="#">gaming</a></li>
-                            <li><a href="#">office</a></li>
-                            <li><a href="#">kids</a></li>
-                            <li><a href="#">for women</a></li>
-                          </ul>
-                        </div>
-                        <!-- /.accordion-inner --> 
-                      </div>
-                      <!-- /.accordion-body --> 
-                    </div>
-                    <!-- /.accordion-group --> 
-                    
-                  </div>
-                  <!-- /.accordion --> 
-                </div>
-                <!-- /.sidebar-widget-body --> 
+<main>
+  <div class="flex">
+<!-------------------------------Side bar  section ------------------------>
+      <div class="w-64 flex-shrink-0 mt-4 mx-4">
+          <!-- Categories Section -->
+          <div class="bg-yellow-400 p-4 rounded-t-lg">
+              <div class="flex items-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                  </svg>
+                  <h2 class="text-lg font-semibold">Categories</h2>
               </div>
-              <!-- /.sidebar-widget --> 
-              <!-- ============================================== SIDEBAR CATEGORY : END ============================================== --> 
-              
-              <!-- ============================================== PRICE SILDER============================================== -->
-              <div class="sidebar-widget">
-                <div class="widget-header">
-                  <h4 class="widget-title">Price Slider</h4>
-                </div>
-                <div class="sidebar-widget-body m-t-10">
-                  <div class="price-range-holder"> <span class="min-max"> <span class="pull-left">$200.00</span> <span class="pull-right">$800.00</span> </span>
-                    <input type="text" id="amount" style="border:0; color:#666666; font-weight:bold;text-align:center;">
-                    <input type="text" class="price-slider" value="" >
-                  </div>
-                  <!-- /.price-range-holder --> 
-                  <a href="#" class="lnk btn btn-primary">Show Now</a> </div>
-                <!-- /.sidebar-widget-body --> 
-              </div>
-              <!-- /.sidebar-widget --> 
-              <!-- ============================================== PRICE SILDER : END ============================================== --> 
-              <!-- ============================================== MANUFACTURES============================================== -->
-              <div class="sidebar-widget">
-                <div class="widget-header">
-                  <h4 class="widget-title">Manufactures</h4>
-                </div>
-                <div class="sidebar-widget-body">
-                  <ul class="list">
-                    <li><a href="#">Forever 18</a></li>
-                    <li><a href="#">Nike</a></li>
-                    <li><a href="#">Dolce & Gabbana</a></li>
-                    <li><a href="#">Alluare</a></li>
-                    <li><a href="#">Chanel</a></li>
-                    <li><a href="#">Other Brand</a></li>
-                  </ul>
-                  <!--<a href="#" class="lnk btn btn-primary">Show Now</a>--> 
-                </div>
-                <!-- /.sidebar-widget-body --> 
-              </div>
-              <!-- /.sidebar-widget --> 
-              <!-- ============================================== MANUFACTURES: END ============================================== --> 
-              <!-- ============================================== COLOR============================================== -->
-              <div class="sidebar-widget">
-                <div class="widget-header">
-                  <h4 class="widget-title">Colors</h4>
-                </div>
-                <div class="sidebar-widget-body">
-                  <ul class="list">
-                    <li><a href="#">Red</a></li>
-                    <li><a href="#">Blue</a></li>
-                    <li><a href="#">Yellow</a></li>
-                    <li><a href="#">Pink</a></li>
-                    <li><a href="#">Brown</a></li>
-                    <li><a href="#">Teal</a></li>
-                  </ul>
-                </div>
-                <!-- /.sidebar-widget-body --> 
-              </div>
-              <!-- /.sidebar-widget --> 
-              <!-- ============================================== COLOR: END ============================================== --> 
-              <!-- ============================================== COMPARE============================================== -->
-              <div class="sidebar-widget outer-top-vs">
-                <h3 class="section-title">Compare products</h3>
-                <div class="sidebar-widget-body">
-                  <div class="compare-report">
-                    <p>You have no <span>item(s)</span> to compare</p>
-                  </div>
-                  <!-- /.compare-report --> 
-                </div>
-                <!-- /.sidebar-widget-body --> 
-              </div>
-              <!-- /.sidebar-widget --> 
-              <!-- ============================================== COMPARE: END ============================================== --> 
-              <!-- ============================================== PRODUCT TAGS ============================================== -->
-              <div class="sidebar-widget product-tag outer-top-vs">
-                <h3 class="section-title">Product tags</h3>
-                <div class="sidebar-widget-body outer-top-xs">
-                  <div class="tag-list"> <a class="item" title="Phone" href="category.html">Phone</a> <a class="item active" title="Vest" href="category.html">Vest</a> <a class="item" title="Smartphone" href="category.html">Smartphone</a> <a class="item" title="Furniture" href="category.html">Furniture</a> <a class="item" title="T-shirt" href="category.html">T-shirt</a> <a class="item" title="Sweatpants" href="category.html">Sweatpants</a> <a class="item" title="Sneaker" href="category.html">Sneaker</a> <a class="item" title="Toys" href="category.html">Toys</a> <a class="item" title="Rose" href="category.html">Rose</a> </div>
-                  <!-- /.tag-list --> 
-                </div>
-                <!-- /.sidebar-widget-body --> 
-              </div>
-              <!-- /.sidebar-widget --> 
-            <!-- /.Testimonials -->
-              <div class="sidebar-widget  outer-top-vs ">
-                <div id="advertisement" class="advertisement">
-                  <div class="item">
-                    <div class="avatar"><img src="{% static 'user/images/testimonials/member1.png' %}" alt="Image"></div>
-                    <div class="testimonials"><em>"</em> Vtae sodales aliq uam morbi non sem lacus port mollis. Nunc condime tum metus eud molest sed consectetuer. Sed quia non numquam eius modi tempora incidunt ut labore et dolore.<em>"</em></div>
-                    <div class="clients_author">John Doe <span>Abc Company</span> </div>
-                    <!-- /.container-fluid --> 
-                  </div>
-                  <!-- /.item -->
-                  
-                  <div class="item">
-                    <div class="avatar"><img src="{% static 'user/images/testimonials/member3.png' %}" alt="Image"></div>
-                    <div class="testimonials"><em>"</em>Vtae sodales aliq uam morbi non sem lacus port mollis. Nunc condime tum metus eud molest sed consectetuer. Sed quia non numquam eius modi tempora incidunt ut labore et dolore.<em>"</em></div>
-                    <div class="clients_author">Stephen Doe <span>Xperia Designs</span> </div>
-                  </div>
-                  <!-- /.item -->
-                  
-                  <div class="item">
-                    <div class="avatar"><img src="{% static 'user/images/testimonials/member2.png' %}" alt="Image"></div>
-                    <div class="testimonials"><em>"</em> Vtae sodales aliq uam morbi non sem lacus port mollis. Nunc condime tum metus eud molest sed consectetuer. Sed quia non numquam eius modi tempora incidunt ut labore et dolore.<em>"</em></div>
-                    <div class="clients_author">Saraha Smith <span>Datsun &amp; Co</span> </div>
-                    <!-- /.container-fluid --> 
-                  </div>
-                  <!-- /.item --> 
-                  
-                </div>
-                <!-- /.owl-carousel --> 
-              </div>
-              
-              <!-- ============================================== Testimonials: END ============================================== -->
-              
-               <!-- ============================================== NEWSLETTER ============================================== -->
-          <div class="sidebar-widget newsletter outer-bottom-small  outer-top-vs">
-            <h3 class="section-title">Newsletters</h3>
-            <div class="sidebar-widget-body outer-top-xs">
-              <p>Sign Up for Our Newsletter!</p>
-              <form>
-                <div class="form-group">
-                  <label class="sr-only" for="exampleInputEmail1">Email address</label>
-                  <input type="email" class="form-control" id="exampleInputEmail1" placeholder="Subscribe to our newsletter">
-                </div>
-                <button class="btn btn-primary">Subscribe</button>
-              </form>
-            </div>
-            <!-- /.sidebar-widget-body --> 
-          </div>
-          <!-- /.sidebar-widget --> 
-          <!-- ============================================== NEWSLETTER: END ============================================== --> 
-              
-             
-            </div>
-            <!-- /.sidebar-filter --> 
-          </div>
-          <!-- /.sidebar-module-container --> 
-        </div>
-        <!-- /.sidebar -->
-        <div class="col-xs-12 col-sm-12 col-md-9 rht-col"> 
-          <!-- ========================================== SECTION – HERO ========================================= -->
-          
-          <div id="category" class="category-carousel hidden-xs">
-            <div class="item">
-              <div class="image"> <img src="{% static 'user/images/banners/cat-banner-1.jpg' %}" alt="" class="img-responsive"> </div>
-              <div class="container-fluid">
-                <div class="caption vertical-top text-left">
-                  <div class="big-text"> Big Sale </div>
-                  <div class="excerpt hidden-sm hidden-md"> Save up to 49% off </div>
-                  <div class="excerpt-normal hidden-sm hidden-md"> Lorem ipsum dolor sit amet, consectetur adipiscing elit </div>
-                  <div class="buy-btn"><a href="#" class="lnk btn btn-primary">Show Now</a></div>
-                </div>
-                <!-- /.caption --> 
-              </div>
-              <!-- /.container-fluid --> 
-            </div>
           </div>
           
-       
-          <div class="clearfix filters-container m-t-10">
-            <div class="row">
-              <div class="col col-sm-6 col-md-3 col-lg-3 col-xs-6">
-                <div class="filter-tabs">
-                  <ul id="filter-tabs" class="nav nav-tabs nav-tab-box nav-tab-fa-icon">
-                    <li class="active"> <a data-toggle="tab" href="#grid-container"><i class="icon fa fa-th-large"></i>Grid</a> </li>
-                    <li><a data-toggle="tab" href="#list-container"><i class="icon fa fa-bars"></i>List</a></li>
-                  </ul>
-                </div>
-                <!-- /.filter-tabs --> 
+          <div class="bg-white shadow-md">
+          {% for category in categories %}
+              {% if category.is_available %}
+              <a href="#" class="flex items-center p-4 border-b hover:bg-gray-50">
+                  <svg class="w-5 h-5 text-gray-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                  </svg>
+                  <span class="text-gray-700">{{ category.category_name }}</span>
+                  <svg class="w-4 h-4 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path d="M9 5l7 7-7 7"/>
+                  </svg>
+              </a>
+              {% endif %}
+          {% endfor %}
+          </div>
+          <!-- Deal of the day Section -->
+          <div class="mt-8">
+              <div class="flex items-center justify-between mb-4">
+                  <h2 class="text-lg font-semibold">Deal of the day</h2>
+                  <div class="flex space-x-2">
+                      <button class="p-1 bg-gray-200 rounded-full">
+                          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path d="M15 19l-7-7 7-7"/>
+                          </svg>
+                      </button>
+                      <button class="p-1 bg-gray-200 rounded-full">
+                          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path d="M9 5l7 7-7 7"/>
+                          </svg>
+                      </button>
+                  </div>
               </div>
-              <!-- /.col -->
-              <div class="col col-sm-12 col-md-5 col-lg-5 hidden-sm">
-                <div class="col col-sm-6 col-md-6 no-padding">
-                  <div class="lbl-cnt">
-                      <span class="lbl">Sort by</span>
-                      <div class="fld inline">
-                        <div class="dropdown dropdown-small dropdown-med dropdown-white inline">
-                          <button data-toggle="dropdown" type="button" class="btn dropdown-toggle">
-                              {{ sort_option|default:"Position" }} <span class="caret"></span>
+              <div class="bg-white rounded-lg shadow-md w-64">
+                  <div class="relative">
+                      <img src="{% static '/api/placeholder/240/240' %}" alt="Deal Product" class="w-full h-96 object-cover rounded-t-lg">
+                      <div class="absolute top-2 right-2 bg-red-500 text-white rounded-full px-2 py-0.5 text-xs">
+                          49% OFF
+                      </div>
+                  </div>
+                  <div class="p-3">
+                      <!-- Timer Section -->
+                      <div class="flex justify-between space-x-2 mb-2">
+                          <div class="text-center px-1.5 py-0.5 bg-gray-100 rounded">
+                              <div class="font-semibold text-sm">120</div>
+                              <div class="text-xs text-gray-600">DAYS</div>
+                          </div>
+                          <div class="text-center px-1.5 py-0.5 bg-gray-100 rounded">
+                              <div class="font-semibold text-sm">20</div>
+                              <div class="text-xs text-gray-600">HRS</div>
+                          </div>
+                          <div class="text-center px-1.5 py-0.5 bg-gray-100 rounded">
+                              <div class="font-semibold text-sm">36</div>
+                              <div class="text-xs text-gray-600">MINS</div>
+                          </div>
+                          <div class="text-center px-1.5 py-0.5 bg-gray-100 rounded">
+                              <div class="font-semibold text-sm">60</div>
+                              <div class="text-xs text-gray-600">SEC</div>
+                          </div>
+                      </div>
+              
+                      <!-- Product Title -->
+                      <h3 class="font-semibold text-sm mb-1">Floral Print Buttoned</h3>
+              
+                      <!-- Star Rating -->
+                      <div class="flex items-center mb-1">
+                          <svg class="w-3 h-3 text-yellow-400 fill-current" viewBox="0 0 20 20">
+                              <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/>
+                          </svg>
+                          <svg class="w-3 h-3 text-yellow-400 fill-current" viewBox="0 0 20 20">
+                              <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/>
+                          </svg>
+                          <svg class="w-3 h-3 text-yellow-400 fill-current" viewBox="0 0 20 20">
+                              <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/>
+                          </svg>
+                          <svg class="w-3 h-3 text-yellow-400 fill-current" viewBox="0 0 20 20">
+                              <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/>
+                          </svg>
+                          <svg class="w-3 h-3 text-gray-300 fill-current" viewBox="0 0 20 20">
+                              <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/>
+                          </svg>
+                      </div>
+              
+                      <!-- Price -->
+                      <div class="flex items-center justify-between mb-2">
+                          <span class="text-blue-600 font-bold text-sm">$600.00</span>
+                          <span class="text-gray-500 line-through text-xs">$800.00</span>
+                      </div>
+              
+                      <!-- Buttons -->
+                      <div class="flex space-x-2">
+                          <button class="w-8 h-8 bg-yellow-400 text-white p-1.5 rounded">
+                              <svg class="w-full h-full" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+                              </svg>
                           </button>
-                          <ul role="menu" class="dropdown-menu">
-                              <li role="presentation">
-                                  <a href="{% query_string request sort='popularity' %}">Position</a>
-                              </li>
-                              <li role="presentation">
-                                  <a href="{% query_string request sort='price_low_to_high' %}">Price: Lowest first</a>
-                              </li>
-                              <li role="presentation">
-                                  <a href="{% query_string request sort='price_high_to_low' %}">Price: Highest first</a>
-                              </li>
-                              <li role="presentation">
-                                  <a href="{% query_string request sort='a_to_z' %}">Product Name: A to Z</a>
-                              </li>
-                              <li role="presentation">
-                                  <a href="{% query_string request sort='z_to_a' %}">Product Name: Z to A</a>
-                              </li>
-                              <li role="presentation">
-                                  <a href="{% query_string request sort='new_arrivals' %}">New Arrivals</a>
-                              </li>
-                              <li role="presentation">
-                                  <a href="{% query_string request sort='average_ratings' %}">Average Ratings</a>
-                              </li>
-                          </ul>
-                        </div>
+                          <button class="flex-1 bg-blue-600 text-white py-1.5 px-3 rounded text-sm">ADD TO CART</button>
                       </div>
                   </div>
               </div>
-                <!-- /.col -->
-                <div class="col col-sm-6 col-md-6 no-padding hidden-sm hidden-md">
-                  <div class="lbl-cnt"> <span class="lbl">Show</span>
-                    <div class="fld inline">
-                      <div class="dropdown dropdown-small dropdown-med dropdown-white inline">
-                        <button data-toggle="dropdown" type="button" class="btn dropdown-toggle"> 1 <span class="caret"></span> </button>
-                        <ul role="menu" class="dropdown-menu">
-                          <li role="presentation"><a href="#">1</a></li>
-                          <li role="presentation"><a href="#">2</a></li>
-                          <li role="presentation"><a href="#">3</a></li>
-                          <li role="presentation"><a href="#">4</a></li>
-                          <li role="presentation"><a href="#">5</a></li>
-                          <li role="presentation"><a href="#">6</a></li>
-                          <li role="presentation"><a href="#">7</a></li>
-                          <li role="presentation"><a href="#">8</a></li>
-                          <li role="presentation"><a href="#">9</a></li>
-                          <li role="presentation"><a href="#">10</a></li>
-                        </ul>
-                      </div>
-                    </div>
-                    <!-- /.fld --> 
-                  </div>
-                  <!-- /.lbl-cnt --> 
-                </div>
-                <!-- /.col --> 
+          </div>
+      
+          <!-- Filters Section -->
+          <div class="mt-8">
+              <h2 class="text-lg font-semibold mb-4">Filters</h2>
+              <div class="flex flex-wrap gap-2 mb-6">
+                  <button class="px-4 py-2 bg-gray-100 rounded-md hover:bg-gray-200">Language</button>
+                  <button class="px-4 py-2 bg-blue-600 text-white rounded-md">Authors</button>
+                  <button class="px-4 py-2 bg-gray-100 rounded-md hover:bg-gray-200">Category</button>
+                  <button class="px-4 py-2 bg-gray-100 rounded-md hover:bg-gray-200">Price</button>
               </div>
-              <!-- /.col -->
-              <div class="col col-sm-6 col-md-4 col-xs-6 col-lg-4 text-right">
-                <div class="pagination-container">
-                  <ul class="list-inline list-unstyled">
-                    {% if books.has_previous %}
-                    <li class="prev"><a href="?page={{ books.previous_page_number }}"><i class="fa fa-angle-left"></i></a></li>
-                    {% else %}
-                        <li class="page-item disabled">
-                            <span class="page-link" aria-label="Previous">&laquo;</span>
-                        </li>
-                    {% endif %}
-                    {% for page_num in books.paginator.page_range %}
-                        {% if books.number == page_num %}
-                            <li><a href="#">{{ page_num }}</a></li>
-                        {% else %}
-                            <li class="page-item">
-                                <a class="page-link" href="?page={{ page_num }}">{{ page_num }}</a>
-                            </li>
-                        {% endif %}
-                    {% endfor %}
-                    {% if books.has_next %}
-                        <li class="next"><a href="?page={{ books.next_page_number }}"><i class="fa fa-angle-right"></i></a></li>
-                    {% else %}
-                        <li class="page-item disabled">
-                            <span class="page-link" aria-label="Next">&raquo;</span>
-                        </li>
-                    {% endif %}
-                  </ul>
-                  <!-- /.list-inline --> 
-                </div>
-                <!-- /.pagination-container --> </div>
-              <!-- /.col --> 
-            </div>
-            <!-- /.row --> 
           </div>
-          <div class="search-result-container ">
-            <div id="myTabContent" class="tab-content category-list">
-              <div class="tab-pane active " id="grid-container">
-                <div class="category-product">
-                    <div class="row">
-                      {% for book in books %}
-                        <div class="col-sm-6 col-md-4 col-lg-3">
-                            <div class="item">
-                                <div class="products">
-                                    <div class="product">
-                                        <div class="product-image">
-                                            <div class="image"> 
-                                                <a href="{% url 'single_detail' book.id %}">
-                                                  <img src="{{ book.images.first.image.url }}" alt="{{ book.book_name }}">  
-                                                </a> 
-                                            </div>
-                                            <div class="tag new"><span>new</span></div>
-                                        </div>
-                                        <div class="product-info text-left">
-                                            <h3 class="name"><a href="">{{ book.book_name }}</a></h3>
-                                            <div class="description">{{ book.author }}</div>
-                                            <div class="product-price"> <span class="price">₹{{ book.offer_price }}</span>{% if book.base_price %} <span class="price-before-discount">${{ book.base_price }}</span>{% endif %}</div>
-                                        </div>
-                                        <div class="cart clearfix animate-effect">
-                                            <div class="action">
-                                              <ul class="list-unstyled">
-                                                <li class="add-cart-button btn-group">
-                                                  <a href="{% url 'add_to_cart' book.id %}"><button data-toggle="tooltip" class="btn btn-primary icon" type="button" title="Add Cart"> <i class="fa fa-shopping-cart"></i> </button></a>
-                                                  <button class="btn btn-primary cart-btn" type="button">Add to cart</button>
-                                                </li>
-                                                <li class="lnk wishlist"> <a class="add-to-cart" href="detail.html" title="Buy now"> <i class="fa fa-arrow-circle-right"></i> </a> </li>
-                                                <li class="add-cart-button btn-group">
-                                                  <a href="{% url 'add_to_whishlist' book.id %}"><button data-toggle="tooltip" class="btn btn-primary icon" type="button" title="Add whishlist "> <i class="icon fa fa-heart"></i> </button>
-                                                  <button class="btn btn-primary cart-btn" type="button">Add to Whishlist</button></a>
-                                                </li>
-                                              </ul>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                      {% endfor %}
-                    </div>
-                
-      <!-- ============================================== BRANDS CAROUSEL ============================================== -->
-      <div id="brands-carousel" class="logo-slider">
-        <div class="logo-slider-inner">
-          <div id="brand-slider" class="owl-carousel brand-slider custom-carousel owl-theme">
-            <div class="item m-t-15"> <a href="#" class="image"> <img data-echo="{% static 'user/images/brands/brand1.png' %}" src="{% static 'user/images/blank.gif' %}" alt=""> </a> </div>
-            <!--/.item-->
-            
-            <div class="item m-t-10"> <a href="#" class="image"> <img data-echo="{% static 'user/images/brands/brand1.png' %}"  src="{% static 'user/images/blank.gif' %}" alt=""> </a> </div>
-            <!--/.item-->
-            
-            <div class="item"> <a href="#" class="image"> <img data-echo="{% static 'user/images/brands/brand1.png' %}"  src="{% static 'user/images/blank.gif' %}" alt=""> </a> </div>
-            <!--/.item-->
-            
-            <div class="item"> <a href="#" class="image"> <img data-echo="{% static 'user/images/brands/brand1.png' %}"  src="{% static 'user/images/blank.gif' %}" alt=""> </a> </div>
-            <!--/.item-->
-            
-            <div class="item"> <a href="#" class="image"> <img data-echo="{% static 'user/images/brands/brand1.png' %}"  src="{% static 'user/images/blank.gif' %}" alt=""> </a> </div>
-            <!--/.item-->
-            
-            <div class="item"> <a href="#" class="image"> <img data-echo="{% static 'user/images/brands/brand1.png' %}"  src="{% static 'user/images/blank.gif' %}" alt=""> </a> </div>
-            <!--/.item-->
-            
-            <div class="item"> <a href="#" class="image"> <img data-echo="{% static 'user/images/brands/brand1.png' %}"  src="{% static 'user/images/blank.gif' %}" alt=""> </a> </div>
-            <!--/.item-->
-            
-            <div class="item"> <a href="#" class="image"> <img data-echo="{% static 'user/images/brands/brand1.png' %}"  src="{% static 'user/images/blank.gif' %}" alt=""> </a> </div>
-            <!--/.item-->
-            
-            <div class="item"> <a href="#" class="image"> <img data-echo="{% static 'user/images/brands/brand1.png' %}"  src="{% static 'user/images/blank.gif' %}" alt=""> </a> </div>
-            <!--/.item-->
-            
-            <div class="item"> <a href="#" class="image"> <img data-echo="{% static 'user/images/brands/brand1.png' %}"  src="{% static 'user/images/blank.gif' %}" alt=""> </a> </div>
-            <!--/.item--> 
+      
+          <!-- Special Deals Section -->
+          <div class="mt-8">
+              <div class="flex items-center justify-between mb-4">
+                  <h2 class="text-lg font-semibold">Special Deals</h2>
+                  <div class="flex space-x-2">
+                      <button class="p-1 bg-gray-200 rounded-full">
+                          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path d="M15 19l-7-7 7-7"/>
+                          </svg>
+                      </button>
+                      <button class="p-1 bg-gray-200 rounded-full">
+                          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path d="M9 5l7 7-7 7"/>
+                          </svg>
+                      </button>
+                  </div>
+              </div>
+              <div class="space-y-4">
+                  <a href="#" class="flex items-center space-x-4 bg-white p-2 rounded-lg shadow-md">
+                      <img src="{% static '/api/placeholder/120/160' %}" alt="Product" class="w-[120px] h-[160px] object-cover rounded">
+                      <div>
+                          <h3 class="font-semibold">Floral Print Shirt</h3>
+                          <div class="flex items-center">
+                              <svg class="w-4 h-4 text-yellow-400 fill-current" viewBox="0 0 20 20">
+                                  <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/>
+                              </svg>
+                              <svg class="w-4 h-4 text-yellow-400 fill-current" viewBox="0 0 20 20">
+                                  <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/>
+                              </svg>
+                              <svg class="w-4 h-4 text-yellow-400 fill-current" viewBox="0 0 20 20">
+                                  <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/>
+                              </svg>
+                              <svg class="w-4 h-4 text-yellow-400 fill-current" viewBox="0 0 20 20">
+                                  <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/>
+                              </svg>
+                              <svg class="w-4 h-4 text-gray-300 fill-current" viewBox="0 0 20 20">
+                                  <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/>
+                              </svg>
+                          </div>
+                          <span class="text-green-600 font-bold">$450.99</span>
+                      </div>
+                  </a>
+              </div>
           </div>
-          <!-- /.owl-carousel #logo-slider --> 
-        </div>
-        <!-- /.logo-slider-inner --> 
-        
-      </div>
-      <!-- /.logo-slider --> 
-      <!-- ============================================== BRANDS CAROUSEL : END ============================================== --> </div>
-    <!-- /.container --> 
-    
-  </div>
-  <!-- /.body-content --> 
-  <!-- ============================================================= FOOTER ============================================================= -->
-  
-          <!-- ============================================== INFO BOXES ============================================== -->
-          <div class="row our-features-box">
-       <div class="container">
-        <ul>
-          <li>
-            <div class="feature-box">
-              <div class="icon-truck"></div>
-              <div class="content-blocks">We ship worldwide</div>
-            </div>
-          </li>
-          <li>
-            <div class="feature-box">
-              <div class="icon-support"></div>
-              <div class="content-blocks">call 
-                +1 800 789 0000</div>
-            </div>
-          </li>
-          <li>
-            <div class="feature-box">
-              <div class="icon-money"></div>
-              <div class="content-blocks">Money Back Guarantee</div>
-            </div>
-          </li>
-          <li>
-            <div class="feature-box">
-              <div class="icon-return"></div>
-              <div class="content">30 days return</div>
-            </div>
-          </li>
+      
+          <!-- Testimonial -->
+          <div class="mt-8 bg-white rounded-lg shadow-md p-6 text-center">
+              <img src="{% static '/api/placeholder/100/100' %}" alt="John Doe" class="w-20 h-20 rounded-full mx-auto mb-4">
+              <p class="text-gray-600 mb-4">"Vtae sodales aliq uam morbi non sem lacus port mollis. Nunc condime tum metus eud molest sed consectetuer sed quia non numquam eius modi tempora incidunt ut labore et dolore magnam aliquam quaerat."</p>
+              <h3 class="font-semibold">John Doe</h3>
+              <p class="text-gray-600 text-sm">Abc Company</p>
+              <div class="flex justify-center space-x-2 mt-4">
+                  <div class="w-2 h-2 rounded-full bg-blue-600"></div>
+                  <div class="w-2 h-2 rounded-full bg-gray-300"></div>
+                  <div class="w-2 h-2 rounded-full bg-gray-300"></div>
+              </div>
+          </div>
           
-        </ul>
       </div>
-    </div>
-          <!-- /.info-boxes --> 
-          <!-- ============================================== INFO BOXES : END ============================================== --> 
+
+      <div class = "flex-1">
+          <div class="flex flex-wrap items-center justify-between border-b pb-4">
+              <!-- Grid/List Toggle -->
+              <div class="w-full sm:w-auto mb-4 sm:mb-0 flex items-center space-x-4">
+                <div class="flex space-x-2">
+                  <button class="flex items-center px-4 py-2 text-gray-700 hover:text-yellow-500 border rounded-md focus:outline-none">
+                    <i class="fa fa-th-large mr-2"></i> Grid
+                  </button>
+                  <button class="flex items-center px-4 py-2 text-gray-700 hover:text-yellow-500 border rounded-md focus:outline-none">
+                    <i class="fa fa-bars mr-2"></i> List
+                  </button>
+                </div>
+              </div>
+            
+              <!-- Sort By Dropdown -->
+              <div class="flex-1 flex justify-center space-x-4">
+                <div>
+                  <label class="text-gray-600 font-medium">Sort by</label>
+                  <div class="relative">
+                    <button class="flex items-center px-4 py-2 border rounded-md text-gray-700 hover:text-yellow-500 focus:outline-none">
+                      Position <i class="fa fa-caret-down ml-2"></i>
+                    </button>
+                    <ul class="absolute mt-2 w-48 bg-white border rounded-md shadow-lg hidden group-hover:block">
+                      <li><a href="#" class="block px-4 py-2 hover:bg-gray-100">Position</a></li>
+                      <li><a href="#" class="block px-4 py-2 hover:bg-gray-100">Price: Lowest first</a></li>
+                      <li><a href="#" class="block px-4 py-2 hover:bg-gray-100">Price: Highest first</a></li>
+                      <li><a href="#" class="block px-4 py-2 hover:bg-gray-100">Product Name: A to Z</a></li>
+                    </ul>
+                  </div>
+                </div>
+            
+                <!-- Show Dropdown -->
+                <div>
+                  <label class="text-gray-600 font-medium">Show</label>
+                  <div class="relative">
+                    <button class="flex items-center px-4 py-2 border rounded-md text-gray-700 hover:text-yellow-500 focus:outline-none">
+                      1 <i class="fa fa-caret-down ml-2"></i>
+                    </button>
+                    <ul class="absolute mt-2 w-20 bg-white border rounded-md shadow-lg hidden group-hover:block">
+        
+                      <li><a href="#" class="block px-4 py-2 hover:bg-gray-100"></a></li>
+                      
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            
+              <!-- Pagination -->
+              <div class="w-full sm:w-auto flex justify-end">
+                <ul class="flex space-x-2">
+                  {% if books.has_previous %}
+                  <li>
+                    <a href="?page={{ books.previous_page_number }}" class="px-4 py-2 border rounded-md text-gray-700 hover:bg-yellow-100">
+                      <i class="fa fa-angle-left"></i>
+                    </a>
+                  </li>
+                  {% else %}
+                  <li class="px-4 py-2 border rounded-md text-gray-300">
+                    <i class="fa fa-angle-left"></i>
+                  </li>
+                  {% endif %}
+            
+                  {% for page_num in books.paginator.page_range %}
+                  {% if books.number == page_num %}
+                  <li class="px-4 py-2 border rounded-md bg-yellow-100 text-yellow-500">{{ page_num }}</li>
+                  {% else %}
+                  <li>
+                    <a href="?page={{ page_num }}" class="px-4 py-2 border rounded-md text-gray-700 hover:bg-yellow-100">{{ page_num }}</a>
+                  </li>
+                  {% endif %}
+                  {% endfor %}
+            
+                  {% if books.has_next %}
+                  <li>
+                    <a href="?page={{ books.next_page_number }}" class="px-4 py-2 border rounded-md text-gray-700 hover:bg-yellow-100">
+                      <i class="fa fa-angle-right"></i>
+                    </a>
+                  </li>
+                  {% else %}
+                  <li class="px-4 py-2 border rounded-md text-gray-300">
+                    <i class="fa fa-angle-right"></i>
+                  </li>
+                  {% endif %}
+                </ul>
+              </div>
+            </div>
+          <div class=" mx-4 mt-4">
+              <div class="relative overflow-hidden rounded-lg h-[300px]">
+                  <!-- Gradient overlay -->
+                  <div class="absolute inset-0 bg-gradient-to-r from-orange-400/60 to-cyan-500/30"></div>
+                  
+                  <!-- Banner image -->
+                  <img 
+                      src="{% static 'user/images/logo/banner1.jpg' %}" 
+                      alt="New Collections Banner" 
+                      class="w-full h-full object-cover"
+                  />
+                  
+                  <!-- Content overlay -->
+                  <div class="absolute inset-0 flex flex-col justify-center px-8">
+                      <span class="text-gray-100 text-lg mb-2">MUST READ</span>
+                      <h1 class="text-black text-5xl font-bold mb-2">New Collections</h1>
+                      <p class="text-gray-800 text-xl mb-6">From our great authors</p>
+                      <button class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-md w-fit transition-colors">
+                          SHOP NOW
+                      </button>
+                  </div>
+              </div>
+          </div>
+          <div class="p-8">
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+              {% for book in books %}
+                  <div class="bg-white rounded-lg shadow-md overflow-hidden transform hover:scale-105 transition-transform duration-300">
+                      <div class="relative aspect-[3/4]">
+                          <img 
+                              src="{{ book.images.first.image.url }}" 
+                              alt="{{ book.book_name }}" 
+                              class="w-full h-full object-contain"
+                          />
+                          <span class="absolute top-2 right-2 bg-blue-400 text-white px-2 py-1 rounded-full text-sm">NEW</span>
+                      </div>
+                      <div class="p-4">
+                          <h3 class="font-semibold text-lg mb-2">{{ book.book_name }}</h3>
+                          <p class="text-gray-600 mb-2">{{ book.author }}</p>
+                          <div class="flex text-yellow-400 mb-2">★★★★☆</div>
+                          <div class="flex justify-between items-center">
+                              <span class="text-green-600 font-bold">₹{{ book.offer_price }}</span>
+                              <span class="text-gray-400 line-through">₹{{ book.base_price }}</span>                       
+                          </div>
+                      </div>
+                  </div>
+              {% endfor %}
+            </div>
+          </div>
+      </div>
+  </div>
+</main>
+
   
 {% endblock %}
