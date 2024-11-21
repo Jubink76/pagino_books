@@ -3,170 +3,214 @@
 
 {% block csslink %}
 <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
-<link rel="stylesheet" href="{% static 'admin/css/admin_user.css' %}">
 {% endblock %}
 
 {% block content %}
-<div class="col-md-9 ms-sm-auto col-lg-10 offset-md-3 offset-lg-2">
-    <div class="card">
-        <div class="card-body">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h1 class="text-white mb-0">Products</h1>
-                <nav aria-label="breadcrumb">
-                    <ol class="breadcrumb mb-0">
-                        <li class="breadcrumb-item"><a href="{% url 'admin_dashboard' %}" class="text-secondary">Admin</a></li>
-                        <li class="breadcrumb-item active" aria-current="page">Products</li>
-                    </ol>
-                </nav>
-            </div>
+<div class="col-md-9 ms-sm-auto col-lg-10 offset-md-3 offset-lg-2 bg-gray-800 rounded-lg shadow-lg p-6 ">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-white text-2xl font-medium">Products</h1>
+        <nav aria-label="breadcrumb" class="flex space-x-2 items-center text-gray-400">
+            <!-- Breadcrumb Items -->
+            <a href="{% url 'admin_dashboard' %}" class="hover:text-gray-300">Admin</a>
+            <span>/</span>
+            <span class="text-gray-300 font-semibold">Products</span>
+        </nav>
+    </div>
 
-            <!-- Search and Actions Bar -->
-            <div class="row mb-4 align-items-center">
-                <div class="col">
-                    <form method="GET" action="{% url 'admin_products' %}">
-                        <div class="search-container">
-                            <div class="input-group">
-                                <input type="searh" class="form-control search-input" name="search" placeholder="Search" value="{{search_query}}">
-                                <button class="btn btn-primary" type="submit">Search
-                                    <i class="bi bi-search"></i>
-                                </button>
+    <!-- Search and Actions Bar -->
+    <div class="flex flex-wrap justify-between items-center gap-4 mb-6">
+        <!-- Search Form -->
+        <form method="GET" action="{% url 'admin_products' %}" class="flex-1 max-w-lg">
+            <div class="relative">
+                <input 
+                    type="search" 
+                    class="bg-gray-700 text-gray-300 rounded-md px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                    name="search" 
+                    placeholder="Search" 
+                    value="{{search_query}}">
+                <button 
+                    type="submit" 
+                    class="absolute inset-y-0 right-0 px-3 bg-yellow-400 hover:bg-yellow-500 text-black rounded-r-md focus:outline-none focus:ring-2 focus:ring-yellow-300">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
+                        <path fill-rule="evenodd" d="M11 4a7 7 0 100 14 7 7 0 000-14zm-9 7a9 9 0 1116.32 5.906l4.387 4.387a1 1 0 11-1.414 1.414l-4.387-4.387A9 9 0 012 11z" clip-rule="evenodd"/>
+                    </svg>
+                </button>
+                
+            </div>
+        </form>
+        
+        <!-- Action Buttons -->
+        <div class="flex items-center space-x-4">
+            <a href="{% url 'add_category' %}" class="inline-flex items-center px-4 py-2 bg-blue-500 text-white rounded-md shadow-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors">
+                <svg class="-ml-1 mr-2 h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"></path>
+                </svg>
+                Add Product
+            </a>
+
+            <div class="relative">
+                <!-- Button -->
+                <button id="filter-button" class="inline-flex items-center px-4 py-2 bg-gray-700 border border-gray-600 text-gray-300 rounded-md shadow-sm hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors">
+                    <svg class="-ml-1 mr-2 h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V3z" clip-rule="evenodd"></path>
+                    </svg>
+                    Filter
+                </button>
+            
+                <!-- Dropdown Menu -->
+                <ul id="filter-dropdown" class="absolute right-0 mt-2 w-48 bg-gray-800 border border-gray-600 rounded-md shadow-lg z-10 hidden">
+                    <li><a href="?status=active" class="block px-4 py-2 text-gray-300 hover:bg-gray-700">Active</a></li>
+                    <li><a href="?status=inactive" class="block px-4 py-2 text-gray-300 hover:bg-gray-700">Inactive</a></li>
+                    <li><a href="?status=pending" class="block px-4 py-2 text-gray-300 hover:bg-gray-700">Pending</a></li>
+                    <li><a href="?status=blocked" class="block px-4 py-2 text-gray-300 hover:bg-gray-700">Blocked</a></li>
+                </ul>
+            </div>
+            
+        </div>
+    </div>
+
+
+    <!-- Table -->
+    <div class="overflow-x-hidde">
+        <table class="w-full table-auto text-gray-400">
+            <thead>
+                <tr class="border-b border-gray-700">
+                    <th class="px-2 py-2 text-center">Sl No</th>
+                    <th class="px-2 py-2 text-center">Book Image</th>
+                    <th class="px-2 py-2 text-center">Name</th>
+                    <th class="px-2 py-2 text-center">Category</th>
+                    <th class="px-2 py-2 text-center">Author</th>
+                    <th class="px-2 py-2 text-center">Language</th>
+                    <th class="px-2 py-2 text-center">Stock</th>
+                    <th class="px-2 py-2 text-center">Base price</th>
+                    <th class="px-2 py-2 text-center">Discount(%)</th>
+                    <th class="px-2 py-2 text-center">Offer price</th>
+                    <th class="px-2 py-2 text-center">Added date</th>
+                    <th class="px-2 py-2 text-center">Availability</th>
+                    <th class="px-2 py-2 text-center">Action</th>
+                </tr>
+            </thead>
+            <tbody id="product-table-body">
+                {% for book in books %}
+                    <tr class="transition-colors duration-200 hover:bg-gray-700 group">
+                        <td class="px-2 py-2 text-sm">{{ forloop.counter }}</td>
+                        <td class="px-2 py-2 text-sm">
+                            {% with book.images.first as image %}
+                                {% if image %}
+                                    <img src="{{ image.image.url }}" alt="{{ book.book_name }}">
+                                {% else %}
+                                    <span>No Image</span>
+                                {% endif %}
+                            {% endwith %}
+                        </td>
+                        <td class="px-2 py-2 text-sm text-gray-400 group-hover:text-white">{{ book.book_name }}</td>
+                        <td class="px-2 py-2 text-sm text-gray-400 group-hover:text-white">{{ book.category }}</td>
+                        <td class="px-2 py-2 text-sm text-gray-400 group-hover:text-white">{{ book.author }}</td>
+                        <td class="px-2 py-2 text-sm text-gray-400 group-hover:text-white">{{ book.language }}</td>
+                        <td class="px-2 py-2 text-sm text-gray-400 group-hover:text-white">{{ book.stock_quantity }}</td>
+                        <td class="px-2 py-2 text-sm text-gray-400 group-hover:text-white">{{ book.base_price }}</td>
+                        <td class="px-2 py-2 text-sm text-gray-400 group-hover:text-white">{{ book.discount_percentage }}</td>
+                        <td class="px-2 py-2 text-sm text-gray-400 group-hover:text-white">{{ book.offer_price }}</td>
+                        <td class="px-2 py-2 text-sm text-gray-400 group-hover:text-white">{{ book.publication_date }}</td>
+                        <td class="px-2 py-2 text-sm text-gray-400 group-hover:text-white">
+                            <span class="{% if book.is_available %}text-green-500{% else %}text-red-500{% endif %}">
+                                {% if book.is_available %}Available{% else %}Not Available{% endif %}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 text-sm">
+                            <div class="flex gap-2">
+                                <a href="{% url 'view_product' book.id %}">
+                                    <button class="p-1 hover:text-blue-500">👁️</button>
+                                </a>
+                                <a href="{% url 'edit_product' book.id %}">
+                                    <button class="p-1 hover:text-green-500">✏️</button>
+                                </a>
+                                <a href="{% url 'delete_product' book.pk %}">
+                                    <button class="p-1 hover:text-red-500">🗑️</button>
+                                </a>
                             </div>
-                        </div>
-                    </form>
-                </div>
-                <div class="col-auto">
-                    <a href="{% url 'add_products' %}"><button class="btn btn-primary me-2">
-                        <i class="bi bi-plus-lg me-2"></i>Add new products
-                    </button></a>
-                    <button class="btn btn-secondary">
-                        <i class="bi bi-funnel me-2"></i>Filter
-                    </button>
-                </div>
-            </div>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 
-            <!-- Table -->
-            <div class="table-responsive">
-                <table class="table text-white">
-                    <thead>
-                        <tr>
-                            <th>Sl No</th>
-                            <th>Book Image</th>
-                            <th>Name</th>
-                            <th>Category</th>
-                            <th>Author</th>
-                            <th>Language</th>
-                            <th>Stock</th>
-                            <th>Base price</th>
-                            <th>Discount(%)</th>
-                            <th>Offer price</th>
-                            <th>Added date</th>
-                            <th>Availability</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody id="product-table-body">
-                        {% for book in books %}
-                                <tr class="table-row">
-                                    <td class="px-6 py-4 text-sm">{{ forloop.counter }}</td>
-                                    <td class="px-6 py-4 text-sm">
-                                        {% with book.images.first as image %}
-                                            {% if image %}
-                                            <img src="{{ image.image.url }}" alt="{{ book.book_name }}" style="width: 70px; height: 100px; object-fit: cover; border-radius: 0;">
-                                            {% else %}
-                                                <span>No Image</span>
-                                            {% endif %}
-                                        {% endwith %}
-                                    </td>
-                                    <td class="px-6 py-4 text-sm">{{ book.book_name }}</td>
-                                    <td class="px-6 py-4 text-sm">{{ book.category }}</td>
-                                    <td class="px-6 py-4 text-sm">{{ book.author }}</td>
-                                    <td class="px-6 py-4 text-sm">{{ book.language }}</td>
-                                    <td class="px-6 py-4 text-sm">{{ book.stock_quantity }}</td>
-                                    <td class="px-6 py-4 text-sm">{{ book.base_price }}</td>
-                                    <td class="px-6 py-4 text-sm">{{ book.discount_percentage }}</td>
-                                    <td class="px-6 py-4 text-sm">{{ book.offer_price }}</td>
-                                    <td class="px-6 py-4 text-sm">{{ book.publication_date }}</td>
-                                    <td class="px-6 py-4 text-sm">
-                                        {% if book.is_available %}
-                                            <span class="status-active text-green-500">Available</span>
-                                        {% else %}
-                                            <span class="status-inactive text-red-500">Not Available</span>
-                                        {% endif %}
-                                    </td>
-                                    <td class="px-6 py-4 text-sm">
-                                        <div class="flex gap-2">
-                                            <a href="{% url 'view_product' book.id %}"><button class="p-1 hover:text-blue-500">👁️</button></a>
-                                            <a href="{% url 'edit_product' book.id %}"><button class="p-1 hover:text-green-500">✏️</button></a>
-                                            <a href="{% url 'delete_product' book.pk %}"><button class="p-1 hover:text-red-500">🗑️</button></a>
-                                        </div>
-                                    </td>
-                                </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-
-            <!-- Pagination -->
-            <div class="row align-items-center mt-4">
-                <!-- Records per page selector -->
-                <div class="col-auto">
-                    <div class="d-flex align-items-center">
-                        <span class="me-2">Showing</span>
-                        <select id="product_per_page" class="form-select form-select-sm" style="width: auto;">
-                            <option value="5" {% if products.paginator.per_page == 5 %}selected{% endif %}>5</option>
-                            <option value="10" {% if products.paginator.per_page == 10 %}selected{% endif %}>10</option>
-                            <option value="15" {% if products.paginator.per_page == 15 %}selected{% endif %}>15</option>
-                        </select>
-                        
-                    </div>
-                </div>
-                <div class="col text-center">
-                    <span class="text-muted">Showing {{ books.start_index }}  to {{ books.end_index }} out of {{ books.paginator.count }} records</span>
-                </div>
-                <div class="col-auto">
-                    <ul class="pagination mb-0">
-                        <!-- Previous Page Button -->
-                        {% if books.has_previous %}
-                            <li class="page-item ml-3">
-                                <a class="page-link" href="?page={{ books.previous_page_number }}" aria-label="Previous">
-                                    &laquo;
-                                </a>
-                            </li>
-                        {% else %}
-                            <li class="page-item disabled ml-3">
-                                <span class="page-link" aria-label="Previous">&laquo;</span>
-                            </li>
-                        {% endif %}
+    <!-- Pagination -->
+    <div class="bg-gradient-to-br from-gray-700 to-gray-800 px-6 py-4 flex items-center justify-between border-t border-gray-600 rounded-b-xl shadow-sm">
+        <!-- Records per page selector -->
+        <div class="flex items-center space-x-3">
+            <span class="text-gray-400 mr-2">Showing</span>
+            <select id="product-table-body" class="form-select bg-gray-800 border-2 border-blue-500 text-gray-300 rounded-md px-3 py-1.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-300 ease-in-out hover:border-blue-400 hover:shadow-md" style="width: auto;">
+                <option value="5" {% if products.paginator.per_page == 5 %}selected{% endif %}>5</option>
+                <option value="10" {% if products.paginator.per_page == 10 %}selected{% endif %}>10</option>
+                <option value="15" {% if products.paginator.per_page == 15 %}selected{% endif %}>15</option>
+            </select>
+            <span class="text-sm font-medium">per page</span>
+        </div>
+        <div class="text-sm bg-gray-800/70 px-4 py-2 rounded-md shadow-sm">Showing {{ books.start_index }} to <span class="font-semibold text-blue-600"> {{ books.end_index }}</span> out of<span class="font-semibold text-blue-600"> {{ books.paginator.count }}</span> records</div>
+        <div>
+            <ul class="pagination mb-0 flex space-x-2">
+                <!-- Previous Page Button -->
+                {% if books.has_previous %}
+                    <a href="?page={{ books.previous_page_number }}" class="px-4 py-2 rounded-md 
+                        bg-gradient-to-r from-blue-500 to-blue-600 
+                        text-white font-semibold 
+                        hover:from-blue-600 hover:to-blue-700 
+                        transition duration-300 ease-in-out 
+                        transform hover:-translate-y-0.5 
+                        shadow-md hover:shadow-lg">
+                        Previous
+                    </a>
+                {% else %}
+                    <span class="px-4 py-2 rounded-md 
+                        bg-gray-300 text-gray-500 
+                        cursor-not-allowed opacity-70">
+                        Previous
+                    </span>
+                {% endif %}
         
-                        <!-- Page Numbers -->
-                        {% for page_num in books.paginator.page_range %}
-                            {% if books.number == page_num %}
-                                <li class="page-item active ml-3">
-                                    <span class="page-link">{{ page_num }}</span>
-                                </li>
-                            {% else %}
-                                <li class="page-item ml-3">
-                                    <a class="page-link" href="?page={{ page_num }}">{{ page_num }}</a>
-                                </li>
-                            {% endif %}
-                        {% endfor %}
+                {% for page_num in books.paginator.page_range %}
+                    {% if books.number == page_num %}
+                        <span class="px-4 py-2 rounded-md 
+                            bg-gradient-to-r from-blue-600 to-blue-700 
+                            text-white font-bold 
+                            shadow-md">
+                            {{ page_num }}
+                        </span>
+                    {% else %}
+                        <a href="?page={{ page_num }}&product_per_page={{ books.paginator.per_page }}" 
+                            class="px-4 py-2 rounded-md 
+                            bg-white border border-gray-300 
+                            text-gray-700 font-semibold 
+                            hover:bg-blue-50 hover:text-blue-700 
+                            hover:border-blue-300 
+                            transition duration-300 ease-in-out 
+                            transform hover:-translate-y-0.5 
+                            shadow-sm hover:shadow-md">
+                            {{ page_num }}
+                        </a>
+                    {% endif %}
+                {% endfor %}
         
-                        <!-- Next Page Button -->
-                        {% if books.has_next %}
-                            <li class="page-item ml-3">
-                                <a class="page-link" href="?page={{ books.next_page_number }}" aria-label="Next">
-                                    &raquo;
-                                </a>
-                            </li>
-                        {% else %}
-                            <li class="page-item disabled ml-3">
-                                <span class="page-link" aria-label="Next">&raquo;</span>
-                            </li>
-                        {% endif %}
-                    </ul>
-                </nav>
-                </div>
-            </div>
+                {% if books.has_next %}
+                    <a href="?page={{ books.next_page_number }}" class="px-4 py-2 rounded-md 
+                        bg-gradient-to-r from-blue-500 to-blue-600 
+                        text-white font-semibold 
+                        hover:from-blue-600 hover:to-blue-700 
+                        transition duration-300 ease-in-out 
+                        transform hover:-translate-y-0.5 
+                        shadow-md hover:shadow-lg">
+                        Next
+                    </a>
+                {% else %}
+                    <span class="px-4 py-2 rounded-md 
+                        bg-gray-300 text-gray-500 
+                        cursor-not-allowed opacity-70">
+                        Next
+                    </span>
+                {% endif %}
+            </ul>
         </div>
     </div>
 </div>
@@ -206,7 +250,7 @@
                         <td class="px-6 py-4 text-sm">${product.description}</td>
                         <td class="px-6 py-4 text-sm">${product.publication_date}</td>
                         <td class="px-6 py-4 text-sm">
-                            <span class="${product.is_available ? 'status-active text-green-500' : 'status-inactive text-red-500'}">
+                            <span class="${product.is_available ? 'text-green-500' : 'text-red-500'}">
                                 ${product.is_available ? 'Available' : 'Not Available'}
                             </span>
                         </td>
@@ -226,6 +270,22 @@
         // Update URL to reflect current settings without reloading the page
         window.history.pushState({}, '', currentUrl.toString());
     });
-    
+</script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const filterButton = document.getElementById('filter-button');
+        const filterDropdown = document.getElementById('filter-dropdown');
+
+        filterButton.addEventListener('click', () => {
+            filterDropdown.classList.toggle('hidden');
+        });
+
+        // Optional: Close the dropdown when clicking outside
+        document.addEventListener('click', (event) => {
+            if (!filterButton.contains(event.target) && !filterDropdown.contains(event.target)) {
+                filterDropdown.classList.add('hidden');
+            }
+        });
+    });
 </script>
 {% endblock %}

@@ -3,80 +3,90 @@
 
 {% block csslink %}
 <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
-<link rel="stylesheet" href="{% static 'admin/css/add_users.css' %}">
 {% endblock %}
-
 
 {% block content %}
 <div class="col-md-9 ms-sm-auto col-lg-10 offset-md-3 offset-lg-2">
-    <div class="card">
-        <div class="card-body">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h1 class="text-white mb-0">View User</h1>
-                <nav aria-label="breadcrumb">
-                    <ol class="breadcrumb mb-0">
-                        <li class="breadcrumb-item"><a href="#" class="text-secondary">Admin</a></li>
-                        <li class="breadcrumb-item"><a href="{% url 'admin_users' %}" class="text-secondary">Users</a></li>
-                        <li class="breadcrumb-item active" aria-current="page">View User</li>
-                    </ol>
-                </nav>
-            </div>
+    <div class="bg-gray-800 rounded-lg shadow-lg p-6">
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-white text-2xl font-medium">View User</h1>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0">
+                    <li class="breadcrumb-item"><a href="#" class="text-gray-400 hover:text-gray-300">Admin</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'admin_users' %}" class="text-gray-400 hover:text-gray-300">Users</a></li>
+                    <li class="breadcrumb-item active text-gray-300" aria-current="page">View User</li>
+                </ol>
+            </nav>
+        </div>
 
-            <form method="POST" action="{% url 'view_users' record.id  %}" enctype="multipart/form-data">
-                {% csrf_token %}
-                <div class="row">
-                    <!-- Left Column -->
-                    <div class="col-md-6">
-                        <div class="mb-4">
-                            <label class="form-label text-gray-400">First Name</label>
-                            <input type="text" name="first_name" class="form-control bg-dark border border-light rounded text-white" value="{{record.first_name}}">
-                        </div>
-                        
-                        <div class="mb-4">
-                            <label class="form-label text-gray-400">Username</label>
-                            <input type="text" name="username" class="form-control bg-dark border border-light rounded text-white" value="{{record.username}}">
-                        </div>
-                        
-                        <div class="mb-4">
-                            <label class="block text-gray-400 text-sm mb-2">Gender</label>
-                            <input type="text" class="form-control bg-dark border border-light rounded text-white" name="gender" value="{{record.gender}}">
-                        </div>
+        <form method="POST" action="{% url 'view_users' record.id  %}" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="grid md:grid-cols-2 gap-6">
+                <!-- Left Column -->
+                <div>
+                    <div class="mb-6">
+                        <label class="block text-gray-300 font-medium mb-2">First Name</label>
+                        <input type="text" name="first_name" 
+                               class="bg-gray-700 text-gray-300 rounded-md px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                               value="{{record.first_name}}">
                     </div>
-            
-                    <!-- Right Column -->
-                    <div class="col-md-6">
-                        <div class="mb-4">
-                            <label class="form-label text-gray-400">Last Name</label>
-                            <input type="text" name="last_name" class="form-control bg-dark border border-light rounded text-white" value="{{record.last_name}}">
-                        </div>
-            
-                        <div class="mb-4">
-                            <label class="form-label text-gray-400">Email</label>
-                            <input type="email" name="email" class="form-control bg-dark border border-light rounded text-white" value="{{record.email}}">
-                        </div>
-            
                     
-            
-                        <div class="mb-4">
-                            <label class="form-label text-gray-400">Phone Number</label>
-                            <input type="tel" name="phone_number" class="form-control bg-dark border border-light rounded text-white" value="{{record.phone_number}}">
-                        </div>
+                    <div class="mb-6">
+                        <label class="block text-gray-300 font-medium mb-2">Username</label>
+                        <input type="text" name="username" 
+                               class="bg-gray-700 text-gray-300 rounded-md px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                               value="{{record.username}}">
                     </div>
-            
-                    <!-- Action Buttons -->
-                    <div class="col-span-2 flex justify-end gap-4 mt-6">
-                        <a href="{% url 'admin_users' %}"><button type="button" class="btn-secondary">Back</button></a>
-                        <button type="submit" class="btn-danger">
-                            {% if record.is_blocked %}
-                                Unblock
-                            {% else %}
-                                Block
-                            {% endif %}
-                        </button>
+                    
+                    <div class="mb-6">
+                        <label class="block text-gray-300 font-medium mb-2">Gender</label>
+                        <input type="text" name="gender" 
+                               class="bg-gray-700 text-gray-300 rounded-md px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                               value="{{record.gender}}">
                     </div>
                 </div>
-            </form>
-        </div>
+        
+                <!-- Right Column -->
+                <div>
+                    <div class="mb-6">
+                        <label class="block text-gray-300 font-medium mb-2">Last Name</label>
+                        <input type="text" name="last_name" 
+                               class="bg-gray-700 text-gray-300 rounded-md px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                               value="{{record.last_name}}">
+                    </div>
+        
+                    <div class="mb-6">
+                        <label class="block text-gray-300 font-medium mb-2">Email</label>
+                        <input type="email" name="email" 
+                               class="bg-gray-700 text-gray-300 rounded-md px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                               value="{{record.email}}">
+                    </div>
+        
+                    <div class="mb-6">
+                        <label class="block text-gray-300 font-medium mb-2">Phone Number</label>
+                        <input type="tel" name="phone_number" 
+                               class="bg-gray-700 text-gray-300 rounded-md px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                               value="{{record.phone_number}}">
+                    </div>
+                </div>
+            </div>
+    
+            <!-- Action Buttons -->
+            <div class="flex justify-end space-x-4 mt-6">
+                <a href="{% url 'admin_users' %}">
+                    <button type="button" class="bg-gray-600 hover:bg-gray-700 text-white font-medium py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500">
+                        Back
+                    </button>
+                </a>
+                <button type="submit" class="{% if record.is_blocked %}bg-green-500 hover:bg-green-600{% else %}bg-red-500 hover:bg-red-600{% endif %} text-white font-medium py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500">
+                    {% if record.is_blocked %}
+                        Unblock
+                    {% else %}
+                        Block
+                    {% endif %}
+                </button>
+            </div>
+        </form>
     </div>
 </div>
 

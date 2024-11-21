@@ -1,6 +1,9 @@
 from adminside_app.models import CategoryTable
 from adminside_app.models import BookTable
 from user_side_app.models import CartTable,WhishlistTable
+import random
+from datetime import datetime, timedelta
+from django.shortcuts import render
 # Create your views here.
 def list_items(request):
     categories = CategoryTable.objects.filter(is_available=True, is_deleted=False)
@@ -19,4 +22,14 @@ def list_items(request):
         cart_items = CartTable.objects.filter(session_id=session_id)
         whishlist_items = WhishlistTable.objects.filter(session_id = session_id)
     grand_total = sum(item.total_price for item in cart_items)
-    return {'categories':categories,'books':books,'cart_items':cart_items,'whishlist_items':whishlist_items,'grand_total':grand_total}
+
+    products = list(BookTable.objects.filter(is_available=True).prefetch_related('images'))
+    current_product = random.choice(products)
+
+    return {'categories':categories,
+            'books':books,
+            'cart_items':cart_items,
+            'whishlist_items':whishlist_items,
+            'grand_total':grand_total,
+            'product':current_product,
+            'timer_end_time': (datetime.now() + timedelta(hours=24)).isoformat(),}

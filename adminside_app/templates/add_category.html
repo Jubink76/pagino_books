@@ -6,43 +6,37 @@
 <link rel="stylesheet" href="{% static 'admin/css/add_category.css' %}">
 {% endblock %}
 
-
 {% block content %}
 <div class="col-md-9 ms-sm-auto col-lg-10 offset-md-3 offset-lg-2">
-    <div class="card">
-        <div class="card-body">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h1 class="text-white mb-0">Add New Category</h1>
-                <nav aria-label="breadcrumb">
-                    <ol class="breadcrumb mb-0">
-                        <li class="breadcrumb-item"><a href="{% url 'admin_dashboard' %}" class="text-secondary">Admin</a></li>
-                        <li class="breadcrumb-item"><a href="{% url 'admin_category' %}" class="text-secondary">Category</a></li>
-                        <li class="breadcrumb-item active" aria-current="page">Add Category</li>
-                    </ol>
-                </nav>
+    <div class="bg-gray-800 rounded-lg shadow-lg p-6">
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-white text-2xl font-medium">Add New Category</h1>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0">
+                    <li class="breadcrumb-item"><a href="{% url 'admin_dashboard' %}" class="text-gray-400 hover:text-gray-300">Admin</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'admin_category' %}" class="text-gray-400 hover:text-gray-300">Category</a></li>
+                    <li class="breadcrumb-item active text-gray-300" aria-current="page">Add Category</li>
+                </ol>
+            </nav>
+        </div>
+
+        <form method="POST" action="{% url 'add_category' %}">
+            {% csrf_token %}
+            <div class="mb-6">
+                <label class="block text-gray-300 font-medium mb-2" for="category_name">Category Name</label>
+                <input type="text" name="category_name" id="category_name" class="bg-gray-700 text-gray-300 rounded-md px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Enter category name" required>
             </div>
 
-            <form method="POST" action="{% url 'add_category' %}">
-                <!-- Category Name -->
-                {% csrf_token %}
-                <div class="mb-4">
-                    <label class="form-label">Category Name</label>
-                    <input type="text" name="category_name" class="form-control" placeholder="Enter category name" required>
-                </div>
-                
-                <!-- Description -->
-                <div class="mb-4">
-                    <label class="form-label">Description</label>
-                    <textarea name="description" class="form-control" rows="4" placeholder="Enter category description" required></textarea>
-                </div>
-                
-                <!-- Action Buttons -->
-                <div class="d-flex justify-content-end gap-3 mt-4">
-                    <a href="{% url 'admin_category' %}" class="btn btn-secondary px-4 py-2">Cancel</a>
-                    <button type="submit" class="btn btn-primary px-4 py-2">Add Category</button>
-                </div>
-            </form>
-        </div>
+            <div class="mb-6">
+                <label class="block text-gray-300 font-medium mb-2" for="description">Description</label>
+                <textarea name="description" id="description" rows="4" class="bg-gray-700 text-gray-300 rounded-md px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Enter category description" required></textarea>
+            </div>
+
+            <div class="flex justify-end space-x-4">
+                <a href="{% url 'admin_category' %}" class="bg-gray-600 hover:bg-gray-700 text-white font-medium py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-600">Cancel</a>
+                <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">Add Category</button>
+            </div>
+        </form>
     </div>
 </div>
 

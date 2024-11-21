@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://cdn.tailwindcss.com"></script>
+
     <title>Pagino</title>
     {% block css_link %}
     {% endblock %}
@@ -57,14 +58,19 @@
                             <!-- Categories Dropdown Container -->
                             <div class="relative inline-block">
                                 <!-- Category Button -->
-                                <button type="button" class="peer h-full px-6 flex items-center bg-gray-50 text-gray-700 border-r border-gray-200 font-medium hover:bg-gray-100 transition-colors duration-300">
-                                    Categories 
+                                <button 
+                                    type="button" 
+                                    class="peer h-full px-6 flex items-center bg-gray-50 text-gray-700 border-r border-gray-200 font-medium hover:bg-gray-100 transition-colors duration-300"
+                                    onclick="toggleDropdown()"
+                                >
+                                    Categories
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-2 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                                     </svg>
                                 </button>
+
                                 <!-- Dropdown Menu -->
-                                <div class="hidden peer-hover:block hover:block absolute left-0 top-full mt-1 w-56 bg-white rounded-lg shadow-lg z-50 border border-gray-100">
+                                <div id="dropdown" class="hidden absolute left-0 top-full mt-1 w-56 bg-white rounded-lg shadow-lg z-50 border border-gray-100">
                                     {% for category in categories %}
                                         {% if category.is_available %}
                                             <a href="#" class="block px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-500 transition-colors duration-300">
@@ -90,26 +96,39 @@
 
                 <!-- Cart and Wishlist -->
                 <div class="flex items-center space-x-8">
-                    <!-- Cart -->
-                    <a href="" class="group flex flex-col items-center transform hover:-translate-y-1 transition-all duration-300">
+                    <!-- Cart -->  
+                    <a href="{% url 'cart_page' %}" class="group flex flex-col items-center transform hover:-translate-y-1 transition-all duration-300">
                         <div class="relative">
                             <img src="{% static 'user/images/logo/cart_logo.png' %}" alt="Cart" class="w-12 h-12">
+                            {% if cart_items %}
+                            <span class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium">
+                                {{ cart_items.count }}
+                            </span>
+                            {% else %}
                             <span class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium">
                                 0
                             </span>
+                            {% endif %}
                         </div>
                         <div class="mt-1 text-sm group-hover:text-yellow-300 transition-colors duration-300">
                             <div class="font-medium">Shopping Cart</div>
-                                <div>₹</div>
+                                <div>₹{{ grand_total }}</div>
                         </div>
                     </a>
+                    
                     <!-- Wishlist -->
                     <a href="{% url 'whishlist_page' %}" class="group flex flex-col items-center transform hover:-translate-y-1 transition-all duration-300">
                         <div class="relative">
                             <img src="{% static 'user/images/logo/whishlist.png' %}" alt="Wishlist" class="w-12 h-12">
+                            {% if whishlist_items %}
                             <span class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium">
-                                2
+                                {{ whishlist_items.count }}
                             </span>
+                            {% else %}
+                            <span class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium">
+                                0
+                            </span>
+                            {% endif %}
                         </div>
                         <div class="mt-1 text-sm group-hover:text-yellow-300 transition-colors duration-300">
                             <div class="font-medium">Wishlist</div>
@@ -124,11 +143,17 @@
         <div class="bg-blue-500 text-white border-t border-blue-400 shadow-md">
             <div class="container mx-auto flex items-center justify-between px-4">
                 <nav class="flex space-x-8 py-4">
-                    <a href="" class="hover:text-yellow-300 transition-colors duration-300 relative group">
+                    {% if user.is_authenticated %}
+                    <a href="{% url 'homepage_after_login' %}" class="hover:text-yellow-300 transition-colors duration-300 relative group">
                         <span>Home</span>
                         <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-yellow-300 group-hover:w-full transition-all duration-300"></span>
                     </a>
-
+                    {% else %}
+                    <a href="{% url 'homoepage_before_login' %}" class="hover:text-yellow-300 transition-colors duration-300 relative group">
+                        <span>Home</span>
+                        <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-yellow-300 group-hover:w-full transition-all duration-300"></span>
+                    </a>
+                    {% endif %}
                     <a href="{% url 'shop_page' %}" class="hover:text-yellow-300 transition-colors duration-300 relative group">
                         <span>Shop</span>
                         <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-yellow-300 group-hover:w-full transition-all duration-300"></span>
@@ -162,20 +187,19 @@
                         <div class="hidden group-hover:block absolute left-0 mt-2 bg-white text-gray-800 rounded-md shadow-lg w-48">
                             <a href="{% url 'homepage_after_login' %}" class="block px-4 py-2 hover:bg-gray-100">Home</a>
                             <a href="{% url 'shop_page' %}" class="block px-4 py-2 hover:bg-gray-100">Shop</a>
-                            <a href="" class="block px-4 py-2 hover:bg-gray-100">Authors</a>
-                            <a href="" class="block px-4 py-2 hover:bg-gray-100">Blogs</a>
+                            <a href="#" class="block px-4 py-2 hover:bg-gray-100">Authors</a>
+                            <a href="#" class="block px-4 py-2 hover:bg-gray-100">Blogs</a>
                             <a href="{% url 'user_signup' %}" class="block px-4 py-2 hover:bg-gray-100">SignUp</a>
                             <a href="{% url 'user_login' %}" class="block px-4 py-2 hover:bg-gray-100">LogIn</a>
-                            <a href="{% url 'cart_page' %}" class="block px-4 py-2 hover:bg-gray-100">Shoping Cart</a>
-                            <a href="{% url 'whishlist_page' %}" class="block px-4 py-2 hover:bg-gray-100">Whishlist</a>
-                            <a href="" class="block px-4 py-2 hover:bg-gray-100">About Us</a>
-
-                            <a href="" class="block px-4 py-2 hover:bg-gray-100">My profile</a>
-                    
-                            <a href="" class="block px-4 py-2 hover:bg-gray-100">T & C </a>
-                            <a href="" class="block px-4 py-2 hover:bg-gray-100">404</a>
+                            <a href="{% url 'cart_page' %}" class="block px-4 py-2 hover:bg-gray-100">Shopping Cart</a>
+                            <a href="{% url 'whishlist_page' %}" class="block px-4 py-2 hover:bg-gray-100">Wishlist</a>
+                            <a href="#" class="block px-4 py-2 hover:bg-gray-100">About Us</a>
+                            <a href="#" class="block px-4 py-2 hover:bg-gray-100">My Profile</a>
+                            <a href="#" class="block px-4 py-2 hover:bg-gray-100">T & C</a>
+                            <a href="#" class="block px-4 py-2 hover:bg-gray-100">404</a>
                         </div>
                     </a>
+                    
                     
                 </nav>
                 <div class="text-yellow-400 font-medium hover:text-yellow-300 transition-colors duration-300 cursor-pointer">
@@ -327,11 +351,11 @@
         
                         <!-- Payment Methods -->
                         <div class="flex space-x-3">
-                            <img src="/path-to-paypal-icon.png" alt="PayPal" class="h-6">
-                            <img src="/path-to-visa-icon.png" alt="Visa" class="h-6">
-                            <img src="/path-to-amex-icon.png" alt="American Express" class="h-6">
-                            <img src="/path-to-mastercard-icon.png" alt="Mastercard" class="h-6">
-                            <img src="/path-to-discover-icon.png" alt="Discover" class="h-6">
+                            <img src="{% static 'user/images/payment/1.png' %}" alt="PayPal" class="h-6">
+                            <img src="{% static 'user/images/payment/2.png' %}" alt="Visa" class="h-6">
+                            <img src="{% static 'user/images/payment/3.png' %}" alt="American Express" class="h-6">
+                            <img src="{% static 'user/images/payment/4.png' %}" alt="Mastercard" class="h-6">
+                            <img src="{% static 'user/images/payment/5.png' %}" alt="Discover" class="h-6">
                         </div>
                     </div>
         
@@ -347,7 +371,11 @@
     
     {% endblock %}
     <script>
-        lucide.createIcons();
+        function toggleDropdown() {
+            const dropdown = document.getElementById('dropdown');
+            dropdown.classList.toggle('hidden'); // Show or hide the dropdown
+        }
     </script>
+    <script src="{% static 'user/js/deal_of_the_day_timer.js' %}"></script>
 </body>
 </html>

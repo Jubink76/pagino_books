@@ -6,47 +6,49 @@
 <link rel="stylesheet" href="{% static 'admin/css/add_category.css' %}">
 {% endblock %}
 
-
 {% block content %}
 <div class="col-md-9 ms-sm-auto col-lg-10 offset-md-3 offset-lg-2">
-    <div class="card">
-        <div class="card-body">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h1 class="text-white mb-0">Edit Category</h1>
-                <nav aria-label="breadcrumb">
-                    <ol class="breadcrumb mb-0">
-                        <li class="breadcrumb-item"><a href="{% url 'admin_dashboard' %}" class="text-secondary">Admin</a></li>
-                        <li class="breadcrumb-item"><a href="{% url 'admin_category' %}" class="text-secondary">Category</a></li>
-                        <li class="breadcrumb-item active" aria-current="page">View Category</li>
-                    </ol>
-                </nav>
+    <div class="bg-gray-800 rounded-lg shadow-lg p-6">
+        <div class="flex justify-between items-center mb-6">
+            <!-- Heading -->
+            <h1 class="text-white text-2xl font-medium">Edit Category</h1>
+        
+            <!-- Breadcrumb -->
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0 flex items-center space-x-2">
+                    <li class="breadcrumb-item">
+                        <a href="{% url 'admin_dashboard' %}" class="text-gray-400 hover:text-gray-300">Admin /</a>
+                    </li>
+                    <li class="breadcrumb-item">
+                        <a href="{% url 'admin_category' %}" class="text-gray-400 hover:text-gray-300">Category /</a>
+                    </li>
+                    <li class="breadcrumb-item active text-gray-300" aria-current="page">View Category</li>
+                </ol>
+            </nav>
+        </div>
+        
+
+        <form method="POST" action="">
+            {% csrf_token %}
+            <div class="mb-6">
+                <label class="block text-gray-300 font-medium mb-2" for="category_name">Category Name</label>
+                <input type="text" name="category_name" id="category_name" class="bg-gray-700 text-gray-300 rounded-md px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500" value="{{ category.category_name }}">
             </div>
 
-            <form method="POST" action="">
-                <!-- Category Name -->
-                {% csrf_token %}
-                <div class="mb-4">
-                    <label class="form-label">Category Name</label>
-                    <input type="text" name="category_name" class="form-control"  value="{{category.category_name}}">
-                </div>
-                
-                <!-- Description -->
-                <div class="mb-4">
-                    <label class="form-label">Description</label>
-                    <textarea name="description" class="form-control" rows="4">{{category.description}}</textarea>
-                </div>
-                
-                <div class="mt-6">
-                    {% if category.is_available %}
-                        <button type="submit" class="btn-primary" name="delete_category">Delete Category</button>
-                    {% else %}
-                        <button type="submit" class="btn-primary" name="readd_category">Add to List Again</button>
-                    {% endif %}
-                    <!-- Save Button -->
-                    <button type="submit" class="btn-primary">Update Category</button>
-                </div>
-            </form>
-        </div>
+            <div class="mb-6">
+                <label class="block text-gray-300 font-medium mb-2" for="description">Description</label>
+                <textarea name="description" id="description" rows="4" class="bg-gray-700 text-gray-300 rounded-md px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500">{{ category.description }}</textarea>
+            </div>
+
+            <div class="flex justify-end space-x-4">
+                {% if category.is_available %}
+                    <button type="submit" name="delete_category" class="bg-red-500 hover:bg-red-600 text-white font-medium py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500">Delete Category</button>
+                {% else %}
+                    <button type="submit" name="readd_category" class="bg-green-500 hover:bg-green-600 text-white font-medium py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500">Add to List Again</button>
+                {% endif %}
+                <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">Update Category</button>
+            </div>
+        </form>
     </div>
 </div>
 

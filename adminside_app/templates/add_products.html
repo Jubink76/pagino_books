@@ -2,90 +2,106 @@
 {% load static %}
 
 {% block csslink %}
-<link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 {% endblock %}
 
 
 {% block content %}
-<div class="col-md-9 ms-sm-auto col-lg-10 offset-md-3 offset-lg-2">
-    <div class="card">
-        <div class="card-body">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h1 class="text-white mb-0">Add New Product</h1>
+<div class="bg-gray-900 text-white">
+    <div class="container mx-auto px-4 py-8">
+        <div class="bg-gray-800 rounded-lg shadow-lg p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h1 class="text-2xl font-bold">Add New Product</h1>
                 <nav aria-label="breadcrumb">
-                    <ol class="breadcrumb mb-0">
-                        <li class="breadcrumb-item"><a href="{% url 'admin_dashboard' %}" class="text-secondary">Admin</a></li>
-                        <li class="breadcrumb-item"><a href="{% url 'admin_products' %}" class="text-secondary">Products</a></li>
-                        <li class="breadcrumb-item active" aria-current="page">Add Product</li>
+                    <ol class="flex space-x-2 text-sm text-gray-400">
+                        <li><a href="{% url 'admin_dashboard' %}" class="hover:text-white">Admin</a></li>
+                        <li>/</li>
+                        <li><a href="{% url 'admin_products' %}" class="hover:text-white">Products</a></li>
+                        <li>/</li>
+                        <li class="text-white">Add Product</li>
                     </ol>
                 </nav>
             </div>
-            <form method="POST" action="{% url 'add_products' %}" enctype="multipart/form-data">
+
+            <form method="POST" action="{% url 'add_products' %}" enctype="multipart/form-data" class="space-y-6">
                 {% csrf_token %}
+                
                 <!-- General Information -->
-                <div class="section mb-4">
-                    <h2 class="section-title mb-3">General Information</h2>
-                    
-                        <div class="col-md-4 mb-3">
-                            <label class="form-label">Book Name</label>
-                            <input type="text" name="book_name" class="form-control" placeholder="Type product name here...">
+                <div class="bg-gray-700 rounded-lg p-4">
+                    <h2 class="text-xl font-semibold mb-4">General Information</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block mb-2">Book Name</label>
+                            <input type="text" name="book_name" 
+                                   class="w-full px-3 py-2 bg-gray-600 border border-gray-500 rounded focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                                   placeholder="Type product name here...">
                         </div>
-                        <div class="col-md-12 mb-3">
-                            <label class="form-label">Description</label>
-                            <textarea class="form-control" name="description" rows="4" placeholder="Type product description here..."></textarea>
+                        <div class="col-span-2">
+                            <label class="block mb-2">Description</label>
+                            <textarea name="description" 
+                                      class="w-full px-3 py-2 bg-gray-600 border border-gray-500 rounded focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                                      rows="4" 
+                                      placeholder="Type product description here..."></textarea>
                         </div>
-                        <div class="col-md-4 mb-3">
-                            <label class="form-label">Stock Quantity</label>
-                            <input type="number" name="stock_quantity" class="form-control" placeholder="Type Stock Quantity here...">
-                        </div>
-                    
-                </div>
-            
-                <!-- Pricing -->
-                <div class="section mb-4">
-                    <h2 class="section-title mb-3">Pricing</h2>
-                    <div class="row">
-                        <div class="col-md-4 mb-3">
-                            <label class="form-label">Base Price</label>
-                            <input type="text" name="base_price" class="form-control" placeholder="Type base price here...">
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <label class="form-label">Discount Percentage (%)</label>
-                            <input type="text" name="discount_percentage" class="form-control" placeholder="Type discount percentage...">
+                        <div>
+                            <label class="block mb-2">Stock Quantity</label>
+                            <input type="number" name="stock_quantity" 
+                                   class="w-full px-3 py-2 bg-gray-600 border border-gray-500 rounded focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                                   placeholder="Type Stock Quantity here...">
                         </div>
                     </div>
                 </div>
-            
+
+                <!-- Pricing -->
+                <div class="bg-gray-700 rounded-lg p-4">
+                    <h2 class="text-xl font-semibold mb-4">Pricing</h2>
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block mb-2">Base Price</label>
+                            <input type="text" name="base_price" 
+                                   class="w-full px-3 py-2 bg-gray-600 border border-gray-500 rounded focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                                   placeholder="Type base price here...">
+                        </div>
+                        <div>
+                            <label class="block mb-2">Discount Percentage (%)</label>
+                            <input type="text" name="discount_percentage" 
+                                   class="w-full px-3 py-2 bg-gray-600 border border-gray-500 rounded focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                                   placeholder="Type discount percentage...">
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Category, Author, Language -->
-                <div class="section mb-4">
-                    <div class="row">
-                        <div class="col-md-4 mb-3">
-                            <label class="form-label">Category</label>
-                            <!-- Input field with dropdown suggestions -->
-                            <input list="categories" name="category" class="form-control" placeholder="Select or type category">
-                            
-                            <!-- Datalist with predefined options -->
+                <div class="bg-gray-700 rounded-lg p-4">
+                    <div class="grid md:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block mb-2">Category</label>
+                            <input list="categories" name="category" 
+                                   class="w-full px-3 py-2 bg-gray-600 border border-gray-500 rounded focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                                   placeholder="Select or type category">
                             <datalist id="categories">
                                 {% for category in categories %}
                                     <option value="{{ category.category_name }}">
                                 {% endfor %}
                             </datalist>
                         </div>
-                        <div class="col-md-4 mb-3">
-                            <label class="form-label">Author Name</label>
-                            <input type="text" name="author_name" class="form-control" placeholder="Author name">
+                        <div>
+                            <label class="block mb-2">Author Name</label>
+                            <input type="text" name="author_name" 
+                                   class="w-full px-3 py-2 bg-gray-600 border border-gray-500 rounded focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                                   placeholder="Author name">
                             <datalist id="authors">
                                 {% for author in authors %}
                                     <option value="{{ author.author_name }}">
                                 {% endfor %}
                             </datalist>
                         </div>
-                        <div class="col-md-4 mb-3">
-                            <label class="form-label">Language</label>
-                            <!-- Input field with dropdown suggestions -->
-                            <input list="languages" name="language" class="form-control" placeholder="Select or type language">
-                            
-                            <!-- Datalist with predefined options -->
+                        <div>
+                            <label class="block mb-2">Language</label>
+                            <input list="languages" name="language" 
+                                   class="w-full px-3 py-2 bg-gray-600 border border-gray-500 rounded focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                                   placeholder="Select or type language">
                             <datalist id="languages">
                                 {% for language in languages %}
                                     <option value="{{ language.language_name }}">
@@ -93,65 +109,125 @@
                             </datalist>
                         </div>
                     </div>
-                </div>
-                <div class="col-md-12 mb-3">
-                    <label class="form-label">Author Details</label>
-                    <textarea class="form-control" name="bio" rows="5" placeholder="Type product description here..."></textarea>
-                </div>
-            
-                <!-- Image Upload -->
-                <div class="mb-4 d-flex gap-4">
-                    {% for i in "1234" %}
-                    <div class="border border-dashed border-secondary rounded-lg p-4 d-flex flex-column align-items-center bg-dark text-white" style="flex: 1;">
-                        <div class="mb-2">
-                          <!-- Image placeholder for preview with unique id -->
-                          <img src="{% static 'admin/images/logo/upload.webp' %}" alt="Upload icon" id="image_preview_{{i}}" class="img-fluid" onclick="triggerFileInput({{i}})" style="cursor: pointer;">
-                        </div>
-                        <p class="text-sm">Drag and drop image here, or click add image</p>
-                        <!-- Hidden file input with unique id -->
-                        <input type="file" name="book_images" class="d-none" id="profile_photo_{{i}}" accept="image/jpeg,image/png" onchange="previewImage(event, {{i}})">
-                        
-                        <!-- Add Image Button -->
-                        <label for="profile_photo_{{i}}" class="cursor-pointer text-center">
-                          <button type="button" class="btn btn-primary mt-2" onclick="submitImage()">Add image</button>
-                        </label>
+                    <div class="mt-4">
+                        <label class="block mb-2">Author Details</label>
+                        <textarea name="bio" 
+                                  class="w-full px-3 py-2 bg-gray-600 border border-gray-500 rounded focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                                  rows="5" 
+                                  placeholder="Type author details here..."></textarea>
                     </div>
-                    {% endfor %}
                 </div>
-            
+
+                <!-- Image Upload -->
+                <div class="bg-gray-700 rounded-lg p-4 flex flex-col items-center">
+                    <div class="w-full border-2 border-dashed border-gray-500 rounded-lg p-6 text-center">
+                        <div id="image-preview-container" class="flex flex-wrap gap-2 justify-center mb-4">
+                            <!-- Image previews will be added here -->
+                        </div>
+                        <p class="text-gray-400 mb-4">Drag and drop images here, or click add image</p>
+                        <input type="file" name="book_images" id="profile-photo" 
+                               class="hidden" 
+                               accept="image/jpeg,image/png" 
+                               multiple 
+                               onchange="previewImages(event)">
+                        <label for="profile-photo" class="cursor-pointer">
+                            <button type="button" 
+                                    class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded transition duration-300">
+                                Add image
+                            </button>
+                        </label>
+                        <div id="error-message" class="text-red-500 mt-2 hidden"></div>
+                    </div>
+                </div>
+
                 <!-- Action Buttons -->
-                <div class="d-flex justify-content-end gap-3 mt-4">
-                    <a href="{% url 'admin_users' %}" class="btn btn-secondary">Cancel</a>
-                    <button type="submit" class="btn btn-primary">Add Product</button>
+                <div class="flex justify-end space-x-4 mt-6">
+                    <a href="{% url 'admin_users' %}" 
+                       class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded transition duration-300">
+                        Cancel
+                    </a>
+                    <button type="submit" 
+                            class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded transition duration-300">
+                        Add Product
+                    </button>
                 </div>
-            </form>            
+            </form>
         </div>
     </div>
 </div>
-
 <!-- Bootstrap JS -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script>
-    function previewImage(event, id) {
-        const file = event.target.files[0];
-        if (file) {
-          const reader = new FileReader();
-          reader.onload = function(e) {
-            document.getElementById(`image_preview_${id}`).src = e.target.result; // Use dynamic id
-          };
-          reader.readAsDataURL(file); // Convert to base64 string for preview
-        }
-      }
-      
-      // JavaScript function to trigger the file input by clicking on the preview image
-      function triggerFileInput(id) {
-        document.getElementById(`profile_photo_${id}`).click(); // Use dynamic id
-      }
-      
-      // JavaScript function to handle form submission when clicking "Add image"
-      function submitImage() {
-        document.getElementById('profile_photo_form').submit(); // Assumes a form with this id is wrapping the input
-      }
-  </script>
 
+<script>
+    function previewImages(event) {
+        const imagePreviewContainer = document.getElementById('image-preview-container');
+        const errorMessage = document.getElementById('error-message');
+    
+        // Clear previous previews
+        imagePreviewContainer.innerHTML = '';
+    
+        // Loop through the selected files
+        for (let i = 0; i < event.target.files.length; i++) {
+            const file = event.target.files[i];
+    
+            // Resize the image
+            resizeImage(file, 240, 240)
+                .then((resizedImage) => {
+                    // Display the resized image preview
+                    const preview = document.createElement('img');
+                    preview.src = URL.createObjectURL(resizedImage);
+                    preview.alt = 'Uploaded Image';
+                    preview.className = 'h-24 w-24 object-cover rounded';
+                    imagePreviewContainer.appendChild(preview);
+                })
+                .catch((error) => {
+                    // Display an error message if image resizing fails
+                    errorMessage.textContent = 'Error uploading images. Please try again.';
+                    errorMessage.classList.remove('hidden');
+                });
+        }
+    
+        // Show an error message if the file size is not within the allowed range
+        if (event.target.files.length > 4) {
+            errorMessage.textContent = 'Maximum of 4 images can be uploaded.';
+            errorMessage.classList.remove('hidden');
+        } else {
+            errorMessage.classList.add('hidden');
+        }
+    }
+    
+    function resizeImage(file, maxWidth, maxHeight) {
+        return new Promise((resolve, reject) => {
+            const img = new Image();
+            img.src = URL.createObjectURL(file);
+            img.onload = () => {
+                let width = img.width;
+                let height = img.height;
+    
+                if (width > height) {
+                    if (width > maxWidth) {
+                        height *= maxWidth / width;
+                        width = maxWidth;
+                    }
+                } else {
+                    if (height > maxHeight) {
+                        width *= maxHeight / height;
+                        height = maxHeight;
+                    }
+                }
+    
+                const canvas = document.createElement('canvas');
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+    
+                canvas.toBlob((blob) => {
+                    resolve(blob);
+                }, 'image/jpeg', 0.9);
+            };
+            img.onerror = () => {
+                reject(new Error('Error uploading image.'));
+            };
+        });
+    }
 {% endblock %}

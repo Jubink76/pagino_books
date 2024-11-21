@@ -175,6 +175,17 @@ def admin_category(request):
     paginator = Paginator(categories, categories_per_page)
     page_number = request.GET.get('page')
     categories = paginator.get_page(page_number)
+    
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        categories_data = [{
+            "counter": index + 1 + (categories.number - 1) * categories.paginator.per_page,
+            "id": category.id,
+            "category_name": category.category_name,
+            "description": category.description or '',
+            "is_available": category.is_available, 
+            'is_deleted':category.is_deleted 
+        } for index, category in enumerate(categories)]
+        return JsonResponse({"categories": categories_data})
 
     return render(request,'admin_category.html',{'categories':categories,'categories_per_page':categories_per_page})
 

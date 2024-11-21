@@ -2,168 +2,156 @@
 {% load static %}
 
 {% block csslink %}
-<link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
 <style>
-    .thumbnail {
-        cursor: pointer;
-        transition: opacity 0.3s;
-    }
-    .thumbnail:hover {
-        opacity: 0.8;
+    .thumbnail-hover {
+        @apply opacity-80 cursor-pointer transition-opacity;
     }
     .active-thumbnail {
-        border: 2px solid #0d6efd;
+        @apply border-2 border-blue-600;
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="col-md-9 ms-sm-auto col-lg-10 offset-md-3 offset-lg-2">
-    <div class="card">
-        <div class="card-body">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h1 class="text-white mb-0">Product Details</h1>
-                <nav aria-label="breadcrumb">
-                    <ol class="breadcrumb mb-0">
-                        <li class="breadcrumb-item"><a href="{% url 'admin_dashboard' %}" class="text-secondary">Admin</a></li>
-                        <li class="breadcrumb-item"><a href="{% url 'admin_products' %}" class="text-secondary">Products</a></li>
-                        <li class="breadcrumb-item active" aria-current="page">{{ book.book_name }}</li>
-                    </ol>
-                </nav>
+<div class="container mx-auto px-4 py-8">
+    <div class="bg-gray-800 rounded-lg shadow-lg p-6">
+        <!-- Header with Breadcrumbs -->
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-white text-2xl font-bold">Product Details</h1>
+            <nav aria-label="breadcrumb" class="text-sm">
+                <ol class="flex space-x-2 text-gray-400">
+                    <li><a href="{% url 'admin_dashboard' %}" class="hover:text-white">Admin</a></li>
+                    <li>/</li>
+                    <li><a href="{% url 'admin_products' %}" class="hover:text-white">Products</a></li>
+                    <li>/</li>
+                    <li class="text-white">{{ book.book_name }}</li>
+                </ol>
+            </nav>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-8">
+            <!-- Product Images Section -->
+            <div class="flex items-start space-x-4">
+                <!-- Main Image -->
+                <div class="flex-grow">
+                    {% if images %}
+                        <img id="mainImage" 
+                             src="{{ images.first.image.url }}" 
+                             alt="{{ book.book_name }}" 
+                             class="w-full max-h-[500px] object-contain rounded-lg shadow-md"
+                        >
+                    {% else %}
+                        <p class="text-gray-400">No main image available for this book.</p>
+                    {% endif %}
+                </div>
+
+                <!-- Thumbnail Images -->
+                <div class="flex flex-col space-y-2">
+                    {% if images %}
+                        {% for image in images %}
+                            <img src="{{ image.image.url }}" 
+                                 alt="Thumbnail {{ forloop.counter }}"
+                                 class="thumbnail w-24 h-24 object-cover rounded cursor-pointer 
+                                        {% if forloop.first %}active-thumbnail{% endif %}"
+                                 onclick="updateMainImage(this.src)"
+                            >
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-gray-400">No images available for this book.</p>
+                    {% endif %}
+                </div>
             </div>
 
-            <div class="row">
-                <!-- Product Images Section -->
-                <div class="col-md-6 mb-4 d-flex align-items-start">
-                    <!-- Main Image -->
-                    <div class="mb-3 me-3">
-                        {% if images %}
-                            <img id="mainImage" src="{{ images.first.image.url }}" 
-                                alt="{{ book.book_name }}" 
-                                class="img-fluid rounded shadow-sm" 
-                                style="width: 300px; height: 500px; object-fit: contain;">
-                        {% else %}
-                            <p>No main image available for this book.</p>
-                        {% endif %}
-                    </div>
-                    <!-- Thumbnail Images -->
-                    <div class="d-flex flex-column justify-content-start mt-3">
-                        {% if images %}
-                            {% for image in images %}
-                                <img src="{{ image.image.url }}" 
-                                alt="Thumbnail {{ forloop.counter }}"
-                                class="thumbnail {% if forloop.first %}active-thumbnail{% endif %} ml-3 mb-3"
-                                onclick="updateMainImage(this.src)"
-                                style="width: 100px; height: 100px; object-fit: cover;">
-                            {% endfor %}
-                        {% else %}
-                            <p>No images available for this book.</p>   
-                        {% endif %}
+            <!-- Product Details Section -->
+            <div>
+                <!-- General Information -->
+                <div class="mb-6">
+                    <h2 class="text-xl font-semibold text-white mb-4">General Information</h2>
+                    <div class="space-y-3">
+                        <div>
+                            <label class="block text-gray-300 font-medium mb-1">Book Name</label>
+                            <p class="text-white">{{ book.book_name }}</p>
+                        </div>
+                        <div>
+                            <label class="block text-gray-300 font-medium mb-1">Description</label>
+                            <p class="text-white">{{ book.description }}</p>
+                        </div>
+                        <div>
+                            <label class="block text-gray-300 font-medium mb-1">Stock Quantity</label>
+                            <p class="text-white">{{ book.stock_quantity }}</p>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Product Details Section -->
-                <div class="col-md-6">
-                    <!-- General Information -->
-                    <div class="section mb-4">
-                        <h2 class="h4 mb-3">General Information</h2>
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">Book Name</label>
-                            <p class="form-control-static">{{ book.book_name }}</p>
+                <!-- Pricing -->
+                <div class="mb-6">
+                    <h2 class="text-xl font-semibold text-white mb-4">Pricing</h2>
+                    <div class="grid grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-gray-300 font-medium mb-1">Base Price</label>
+                            <p class="text-white">${{ book.price }}</p>
                         </div>
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">Description</label>
-                            <p class="form-control-static">{{ book.description }}</p>
+                        <div>
+                            <label class="block text-gray-300 font-medium mb-1">VAT Amount</label>
+                            <p class="text-white">{{ book.vat_amount }}%</p>
                         </div>
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">Stock Quantity</label>
-                            <p class="form-control-static">{{ book.stock_quantity }}</p>
+                        <div>
+                            <label class="block text-gray-300 font-medium mb-1">Discount</label>
+                            <p class="text-white">{{ book.discount_percentage }}%</p>
                         </div>
                     </div>
+                </div>
 
-                    <!-- Pricing -->
-                    <div class="section mb-4">
-                        <h2 class="h4 mb-3">Pricing</h2>
-                        <div class="row">
-                            <div class="col-md-4">
-                                <label class="form-label fw-bold">Base Price</label>
-                                <p class="form-control-static">${{ book.price }}</p>
-                            </div>
-                            <div class="col-md-4">
-                                <label class="form-label fw-bold">VAT Amount</label>
-                                <p class="form-control-static">{{ book.vat_amount }}%</p>
-                            </div>
-                            <div class="col-md-4">
-                                <label class="form-label fw-bold">Discount</label>
-                                <p class="form-control-static">{{ book.discount_percentage }}%</p>
-                            </div>
+                <!-- Category, Author, Language -->
+                <div class="mb-6">
+                    <div class="grid grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-gray-300 font-medium mb-1">Category</label>
+                            <p class="text-white">{{ book.category.category_name }}</p>
+                        </div>
+                        <div>
+                            <label class="block text-gray-300 font-medium mb-1">Author</label>
+                            <p class="text-white">{{ book.author }}</p>
+                        </div>
+                        <div>
+                            <label class="block text-gray-300 font-medium mb-1">Language</label>
+                            <p class="text-white">{{ book.language }}</p>
                         </div>
                     </div>
+                </div>
 
-                    <!-- Category, Author, Language -->
-                    <div class="section mb-4">
-                        <div class="row">
-                            <div class="col-md-4">
-                                <label class="form-label fw-bold">Category</label>
-                                <p class="form-control-static">{{ book.category.category_name }}</p>
-                            </div>
-                            <div class="col-md-4">
-                                <label class="form-label fw-bold">Author</label>
-                                <p class="form-control-static">{{ book.author }}</p>
-                            </div>
-                            <div class="col-md-4">
-                                <label class="form-label fw-bold">Language</label>
-                                <p class="form-control-static">{{ book.language }}</p>
-                            </div>
-                        </div>
-                    </div>
+                <!-- Author Details -->
+                <div class="mb-6">
+                    <label class="block text-gray-300 font-medium mb-1">Author Details</label>
+                    <p class="text-white">{{ book.author.bio }}</p>
+                </div>
 
-                    <!-- Author Details -->
-                    <div class="section mb-4">
-                        <label class="form-label fw-bold">Author Details</label>
-                        <p class="form-control-static">{{ book.author.bio }}</p>
-                    </div>
-
-                    <!-- Action Buttons -->
-                    <div class="d-flex justify-content-end gap-3 mt-4">
-                        <a href="{% url 'edit_product' book.id %}" class="btn btn-primary">Edit Product</a>
-                        <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">
-                            Delete Product
-                        </button>
-                    </div>
+                <!-- Action Buttons -->
+                <div class="flex justify-end space-x-4 mt-6">
+                    <a href="{% url 'edit_product' book.id %}" 
+                       class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition">
+                        Edit Product
+                    </a>
+                    <button type="button" 
+                            class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition"
+                            data-bs-toggle="modal" 
+                            data-bs-target="#deleteModal">
+                        Delete Product
+                    </button>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Delete Confirmation Modal -->
-<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="deleteModalLabel">Confirm Delete</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                Are you sure you want to delete this product?
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <form action="" method="POST" style="display: inline;">
-                    {% csrf_token %}
-                    <button type="submit" class="btn btn-danger">Delete</button>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Bootstrap JS -->
+<!-- Bootstrap JS and Image Update Script -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
     function updateMainImage(src) {
-        document.getElementById('mainImage').src = src;
+        const mainImage = document.getElementById('mainImage');
+        mainImage.src = src;
+
         // Update thumbnail highlighting
         document.querySelectorAll('.thumbnail').forEach(thumb => {
             thumb.classList.remove('active-thumbnail');
