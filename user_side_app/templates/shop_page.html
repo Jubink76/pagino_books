@@ -307,11 +307,13 @@
               {% for book in books %}
                   <div class="bg-white rounded-lg shadow-md overflow-hidden transform hover:scale-105 transition-transform duration-300">
                       <div class="relative aspect-[3/4]">
+                        <a href="{% url 'single_detail' book.id %}">
                           <img 
                               src="{{ book.images.first.image.url }}" 
                               alt="{{ book.book_name }}" 
                               class="w-full h-full object-contain"
                           />
+                        </a>
                           <span class="absolute top-2 right-2 bg-blue-400 text-white px-2 py-1 rounded-full text-sm">NEW</span>
                       </div>
                       <div class="p-4">

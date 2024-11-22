@@ -20,9 +20,9 @@
                     <p class="text-gray-400">Order #{{ order_detail.order_id }}</p>
                 </div>
                 <div class="flex gap-4 mt-4 md:mt-0">
-                    <form method="POST" action="{% url 'admin_cancel_order' order_detail.order_id %}">
+                    <form method="POST" action="{% url 'admin_cancel_order' order_detail.order_id %}" id="cancelOrderForm">
                         {% csrf_token %}
-                        <button type="submit" class="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors" data-toggle="tooltip" title="Cancel all orders">
+                        <button type="button" id="cancelOrder" class="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors" data-toggle="tooltip" title="Cancel all orders">
                             <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <line x1="18" y1="6" x2="6" y2="18"></line>
                                 <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -147,9 +147,9 @@
                                 <td class="inline-block bg-green-900 text-green-400 px-3  py-2 rounded-full text-sm font-medium mt-10">{{ item.order_status }}</td>
 
                                 <td class="px-6 py-4 text-sm">
-                                    <form method="POST" action="{% url 'admin_single_item_cancel' order_detail.order_id item.id %}">
+                                    <form method="POST" action="{% url 'admin_single_item_cancel' order_detail.order_id item.id %}" id="cancelItemForm-{{ item.id }}">
                                         {% csrf_token %}
-                                        <button type="submit" class="p-1 hover:text-red-500" data-toggle="tooltip" title="Cancel order">
+                                        <button type="button" class="p-1 hover:text-red-500" data-toggle="tooltip" title="Cancel item" id="cancelItemButton-{{ item.id }}">
                                             ❌
                                         </button>
                                     </form>
@@ -194,6 +194,67 @@
 </div>
 
 <!-- Initialize Lucide icons -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // Cancel Order Button Logic
+        const cancelOrderButton = document.getElementById('cancelOrder');
+        const cancelOrderForm = document.getElementById('cancelOrderForm');
+        
+        if (cancelOrderButton) {
+            cancelOrderButton.addEventListener('click', (event) => {
+                event.preventDefault(); // Prevent the form from submitting immediately
+        
+                // SweetAlert confirmation for canceling the order
+                Swal.fire({
+                    title: 'Are you sure?',
+                    text: "You will not be able to recover this order once it's canceled.",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#3085d6',
+                    confirmButtonText: 'Yes, cancel it!',
+                    cancelButtonText: 'No, keep it'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        // If confirmed, submit the form
+                        cancelOrderForm.submit();
+                    }
+                });
+            });
+        }
+    
+        // Cancel Item Button Logic
+        const cancelItemButtons = document.querySelectorAll('[id^="cancelItemButton-"]');
+    
+        cancelItemButtons.forEach(button => {
+            button.addEventListener('click', (event) => {
+                event.preventDefault(); // Prevent the form from submitting immediately
+    
+                const itemId = button.id.split('-')[1];  // Extract the item ID from the button ID
+                const itemForm = document.getElementById(`cancelItemForm-${itemId}`);  // Get the associated form
+    
+                // SweetAlert confirmation for canceling the item
+                Swal.fire({
+                    title: 'Are you sure?',
+                    text: "You will not be able to recover this item once it's canceled.",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#3085d6',
+                    confirmButtonText: 'Yes, cancel it!',
+                    cancelButtonText: 'No, keep it'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        // If confirmed, submit the form
+                        itemForm.submit();
+                    }
+                });
+            });
+        });
+    });
+    
+</script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         lucide.createIcons();

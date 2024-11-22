@@ -19,30 +19,24 @@
             </nav>
         </div>
 
-        <form method="POST" action="{% url 'view_users' record.id  %}" enctype="multipart/form-data">
+        <form method="POST" action="{% url 'view_users' record.id  %}" enctype="multipart/form-data" id="blockForm">
             {% csrf_token %}
             <div class="grid md:grid-cols-2 gap-6">
                 <!-- Left Column -->
                 <div>
                     <div class="mb-6">
                         <label class="block text-gray-300 font-medium mb-2">First Name</label>
-                        <input type="text" name="first_name" 
-                               class="bg-gray-700 text-gray-300 rounded-md px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500" 
-                               value="{{record.first_name}}">
+                        <input type="text" name="first_name" class="bg-gray-700 text-gray-300 rounded-md px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500" value="{{record.first_name}}">
                     </div>
-                    
+        
                     <div class="mb-6">
                         <label class="block text-gray-300 font-medium mb-2">Username</label>
-                        <input type="text" name="username" 
-                               class="bg-gray-700 text-gray-300 rounded-md px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500" 
-                               value="{{record.username}}">
+                        <input type="text" name="username" class="bg-gray-700 text-gray-300 rounded-md px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500" value="{{record.username}}">
                     </div>
-                    
+        
                     <div class="mb-6">
                         <label class="block text-gray-300 font-medium mb-2">Gender</label>
-                        <input type="text" name="gender" 
-                               class="bg-gray-700 text-gray-300 rounded-md px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500" 
-                               value="{{record.gender}}">
+                        <input type="text" name="gender" class="bg-gray-700 text-gray-300 rounded-md px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500" value="{{record.gender}}">
                     </div>
                 </div>
         
@@ -50,27 +44,21 @@
                 <div>
                     <div class="mb-6">
                         <label class="block text-gray-300 font-medium mb-2">Last Name</label>
-                        <input type="text" name="last_name" 
-                               class="bg-gray-700 text-gray-300 rounded-md px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500" 
-                               value="{{record.last_name}}">
+                        <input type="text" name="last_name" class="bg-gray-700 text-gray-300 rounded-md px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500" value="{{record.last_name}}">
                     </div>
         
                     <div class="mb-6">
                         <label class="block text-gray-300 font-medium mb-2">Email</label>
-                        <input type="email" name="email" 
-                               class="bg-gray-700 text-gray-300 rounded-md px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500" 
-                               value="{{record.email}}">
+                        <input type="email" name="email" class="bg-gray-700 text-gray-300 rounded-md px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500" value="{{record.email}}">
                     </div>
         
                     <div class="mb-6">
                         <label class="block text-gray-300 font-medium mb-2">Phone Number</label>
-                        <input type="tel" name="phone_number" 
-                               class="bg-gray-700 text-gray-300 rounded-md px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500" 
-                               value="{{record.phone_number}}">
+                        <input type="tel" name="phone_number" class="bg-gray-700 text-gray-300 rounded-md px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500" value="{{record.phone_number}}">
                     </div>
                 </div>
             </div>
-    
+        
             <!-- Action Buttons -->
             <div class="flex justify-end space-x-4 mt-6">
                 <a href="{% url 'admin_users' %}">
@@ -78,7 +66,7 @@
                         Back
                     </button>
                 </a>
-                <button type="submit" class="{% if record.is_blocked %}bg-green-500 hover:bg-green-600{% else %}bg-red-500 hover:bg-red-600{% endif %} text-white font-medium py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500">
+                <button type="submit" id="blockButton" class="{% if record.is_blocked %}bg-green-500 hover:bg-green-600{% else %}bg-red-500 hover:bg-red-600{% endif %} text-white font-medium py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500">
                     {% if record.is_blocked %}
                         Unblock
                     {% else %}
@@ -92,4 +80,32 @@
 
 <!-- Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    const blockButton = document.getElementById('blockButton');
+    const blockForm = document.getElementById('blockForm');
+
+    blockButton.addEventListener('click', (event) => {
+        event.preventDefault(); // Prevent form submission immediately
+
+        const action = blockButton.textContent.trim(); // Get button text ("Block" or "Unblock")
+        const message = action === "Block" ? "Are you sure you want to block this user?" : "Are you sure you want to unblock this user?";
+
+        // SweetAlert2 confirmation
+        Swal.fire({
+            title: 'Are you sure?',
+            text: message,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Yes, proceed!',
+            cancelButtonText: 'Cancel'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                blockForm.submit(); // Submit the form if the user confirms
+            }
+        });
+    });
+</script>
 {% endblock %}

@@ -193,16 +193,22 @@ def admin_category(request):
 @login_required(login_url='admin_login')
 def add_category(request):
     if request.method == "POST":
-        category_name = request.POST.get('category_name')
+        category_name = request.POST.get('category_name').strip()
+        description = request.POST.get('description', '').strip()
+
+        if not category_name and description:
+            messages.error(request, "Fields can't be empty.")
+            return render(request, 'add_category.html')
+        
         if CategoryTable.objects.filter(category_name__iexact = category_name).exists():
             messages.error(request,f"The category '{category_name}' already exists")
             return render(request,'add_category.html')
-        description = request.POST.get('description')
-
+        
         CategoryTable.objects.create(
             category_name = category_name,
             description = description
         )
+        messages.success(request, f"The category '{category_name}' has been added successfully!")
         return redirect('admin_category')
         
     return render(request,'add_category.html')
@@ -210,38 +216,38 @@ def add_category(request):
 ################################################################################################################################
 @login_required(login_url='admin_login')
 def edit_category(request, pk):
-    category = get_object_or_404(CategoryTable,id = pk)
+    category = get_object_or_404(CategoryTable, id=pk)
+
     if request.method == "POST":
-        # Check which button was clicked
+        # Handle delete category action if 'delete_category' was added in the form
         if 'delete_category' in request.POST:
-            # Handle delete category action
             category.is_available = False
             category.is_deleted = True
             category.save()
             messages.success(request, 'Category marked as deleted.')
             return redirect('admin_category')
         
+        # Handle re-add category action
         elif 'readd_category' in request.POST:
-            # Handle re-add category action
             category.is_available = True
             category.is_deleted = False
             category.save()
             messages.success(request, 'Category re-added to the list successfully.')
             return redirect('admin_category')
         
+        # Handle update category details
         else:
-            # Handle update category details action
             category_name = request.POST.get('category_name')
             description = request.POST.get('description')
 
-            # Update category fields
             category.category_name = category_name
             category.description = description
             category.save()
             messages.success(request, 'Category details updated successfully.')
             return redirect('admin_category')
             
-    return render(request,'edit_category.html',{'category':category})
+    return render(request, 'edit_category.html', {'category': category})
+
 
 ######################################################################################################################
 @login_required(login_url='admin_login')
@@ -319,55 +325,62 @@ def admin_products(request):
 @login_required(login_url='admin_login')
 def add_products(request):
     if request.method == 'POST':
-        book_name = request.POST.get('book_name')
-        description = request.POST.get('description')
-        stock_quantity = request.POST.get('stock_quantity')
-        base_price = float(request.POST.get('base_price'))
-        discount_percentage = float(request.POST.get('discount_percentage'))
-        offer_price = request.POST.get('offer_price')
+        try:
+            book_name = request.POST.get('book_name')
+            description = request.POST.get('description')
+            stock_quantity = request.POST.get('stock_quantity')
+            base_price = float(request.POST.get('base_price'))
+            discount_percentage = float(request.POST.get('discount_percentage'))
+            offer_price = request.POST.get('offer_price')
+            
+            author_name = request.POST.get('author_name')
+            bio = request.POST.get('bio')
+            author, created = Author.objects.get_or_create(name=author_name)
+            if created or not author.bio:
+                author.bio = bio
+                author.save()
+
+
+            language_name = request.POST.get('language')
+            new_language = request.POST.get('new_language')
+            
+            if language_name:  # Existing language selected
+                language, created = Language.objects.get_or_create(name=language_name)
+            elif new_language:  # New language input
+                language, created = Language.objects.get_or_create(name=new_language)
+            else:
+                # Handle case when no language is provided (optional)
+                language = None
+
+            category_name = request.POST.get('category')
+            
+            if category_name:  # Ensure category_name is not empty
+                category, created = CategoryTable.objects.get_or_create(category_name=category_name)
+            else:
+                # Handle the case where no category is provided (optional)
+                category = None
+
+            book = BookTable.objects.create(
+                book_name = book_name,
+                description = description,
+                stock_quantity = stock_quantity,
+                base_price = base_price,
+                discount_percentage = discount_percentage,
+                offer_price = offer_price,
+                category = category,
+                language = language,
+                author = author
+            )
+
+            image_files = request.FILES.getlist('book_images')
+            print("image_files",image_files)
+            if image_files:
+                for image_file in image_files:
+                    BookImage.objects.create(book=book, image=image_file)
+                    return redirect('admin_products')
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
         
-        author_name = request.POST.get('author_name')
-        bio = request.POST.get('bio')
-        author, created = Author.objects.get_or_create(name=author_name)
-        if created or not author.bio:
-            author.bio = bio
-            author.save()
-
-
-        language_name = request.POST.get('language')
-        new_language = request.POST.get('new_language')
-        
-        if language_name:  # Existing language selected
-            language, created = Language.objects.get_or_create(name=language_name)
-        elif new_language:  # New language input
-            language, created = Language.objects.get_or_create(name=new_language)
-        else:
-            # Handle case when no language is provided (optional)
-            language = None
-
-        category_name = request.POST.get('category')
-        
-        if category_name:  # Ensure category_name is not empty
-            category, created = CategoryTable.objects.get_or_create(category_name=category_name)
-        else:
-            # Handle the case where no category is provided (optional)
-            category = None
-
-        book = BookTable.objects.create(
-            book_name = book_name,
-            description = description,
-            stock_quantity = stock_quantity,
-            base_price = base_price,
-            discount_percentage = discount_percentage,
-            offer_price = offer_price,
-            category = category,
-            language = language,
-            author = author
-        )
-
-        for image_file in request.FILES.getlist('book_images'):
-            BookImage.objects.create(book=book, image=image_file)
-        return redirect('admin_products')
     categories = CategoryTable.objects.filter(is_available=True, is_deleted=False)
     languages = Language.objects.all()
     return render(request,'add_products.html',{'categories':categories,'languages':languages})
@@ -383,7 +396,6 @@ def view_product(request,pk):
 @login_required(login_url='admin_login')
 def edit_product(request, pk):
     book = get_object_or_404(BookTable, id=pk)
-    
     if request.method == "POST":
         if 'delete_book' in request.POST:
             book.is_available = False
@@ -401,75 +413,83 @@ def edit_product(request, pk):
         
         else:
             # Update book details
-            book_name = request.POST.get('book_name')
-            if book_name:
-                book.book_name = book_name
-            
-            description = request.POST.get('description')
-            if description:
-                book.description = description
-            
-            stock_quantity = request.POST.get('stock_quantity')
-            if stock_quantity:
-                book.stock_quantity = stock_quantity
-            
-            price = request.POST.get('price')
-            if price:
-                book.price = price
-            
-            vat_amount = request.POST.get('vat_amount')
-            if vat_amount:
-                book.vat_amount = vat_amount
-            
-            discount_percentage = request.POST.get('discount_percentage')
-            if discount_percentage:
-                book.discount_percentage = discount_percentage
-            # Update category, language, author only if new values are provided
+            book.book_name = request.POST.get('book_name', book.book_name)
+            book.description = request.POST.get('description', book.description)
+            book.stock_quantity = request.POST.get('stock_quantity', book.stock_quantity)
+            book.base_price = request.POST.get('price', book.base_price)
+            book.offer_price = request.POST.get('offer_price', book.offer_price)
+            book.discount_percentage = request.POST.get('discount_percentage', book.discount_percentage)
+
+            # Update category
             category_name = request.POST.get('category')
             if category_name:
-                book.category, _ = CategoryTable.objects.get_or_create(category_name=category_name)
+                category, _ = CategoryTable.objects.get_or_create(category_name=category_name)
+                book.category = category
                 
+            # Update language
             language_name = request.POST.get('language')
             if language_name:
-                book.language, _ = Language.objects.get_or_create(name=language_name)
+                language, _ = Language.objects.get_or_create(name=language_name)
+                book.language = language
                 
+            # Update author
             author_name = request.POST.get('author_name')
             bio = request.POST.get('bio')
             if author_name:
                 author, _ = Author.objects.get_or_create(name=author_name)
-                author.bio = bio  # Update the bio
-                author.save()
+                if bio:
+                    author.bio = bio
+                    author.save()
                 book.author = author
             
-            book.save()
-
             # Handle image updates
-            # Remove selected images
+            existing_images = list(book.images.all())
+            print(existing_images)
+
+            max_images = 4
+            current_image_count = len(existing_images)
+
+            # Handle updates to existing images
+            for i in range(1, max_images + 1):
+                updated_image = request.FILES.get(f'updated_image_{i}')
+                if updated_image:  # If an image is uploaded for this slot
+                    if i <= current_image_count:  # Ensure the image exists in the current list
+                        existing_images[i - 1].image = updated_image
+                        existing_images[i - 1].save()  # Save the updated image
+
+            # Handle new images
             new_images = request.FILES.getlist('book_images')
             if new_images:
-                # Delete all existing images for this book
-                BookImage.objects.filter(book=book).delete()
-                
-                # Add new images
-                for image_file in new_images:
+                remaining_slots = max_images - current_image_count  # Calculate how many slots are left
+                for image_file in new_images[:remaining_slots]:
+                    # Create a new image entry for the book
                     BookImage.objects.create(book=book, image=image_file)
-            
+
+            # Handle image deletions
+            images_to_keep = set()  # Track the images that should be kept
+            for i in range(1, max_images + 1):
+                image_id = request.POST.get(f'existing_image_{i}')
+                if image_id:
+                    images_to_keep.add(int(image_id))  # Collect image IDs to keep
+
+            # Delete images that are not selected to be kept
+            BookImage.objects.filter(book=book).exclude(id__in=images_to_keep).delete()
+
+            # Save the book object after making all changes
+            book.save()
             messages.success(request, 'Book details updated successfully.')
             return redirect('admin_products')
     
-    # Retrieve existing categories, languages, authors, and images
-    categories = CategoryTable.objects.filter(is_available=True, is_deleted=False)
-    languages = Language.objects.all()
-    authors = Author.objects.all()
-    
     context = {
         'book': book,
-        'categories': categories,
-        'languages': languages,
-        'authors': authors,
+        'categories': CategoryTable.objects.filter(is_available=True, is_deleted=False),
+        'languages': Language.objects.all(),
+        'authors': Author.objects.all(),
     }
     
     return render(request, 'edit_product.html', context)
+
+
 
 ############################################################################################################################
 @login_required(login_url='admin_login')

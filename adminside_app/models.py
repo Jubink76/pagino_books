@@ -40,20 +40,20 @@ class BookTable(models.Model):
     is_deleted = models.BooleanField(default=False)
 
     def save(self, *args, **kwargs):
-        # Convert to float if they're not already in numeric format
-        if isinstance(self.base_price, str):
-            self.base_price = float(self.base_price)
-        if isinstance(self.discount_percentage, str):
-            self.discount_percentage = float(self.discount_percentage)
+        # Ensure both base_price and discount_percentage are Decimal
+        self.base_price = Decimal(self.base_price)  # Ensure it's Decimal
+        self.discount_percentage = Decimal(self.discount_percentage)  # Ensure it's Decimal
 
         # Calculate the discount amount and offer price
         if self.discount_percentage:
-            discount_amount = (self.base_price * Decimal(self.discount_percentage)) / 100
+            discount_amount = (self.base_price * self.discount_percentage) / Decimal(100)
         else:
             discount_amount = Decimal(0)
-        self.offer_price = self.base_price - discount_amount
+        
+        self.offer_price = self.base_price - discount_amount  # Both are Decimal now
 
         super().save(*args, **kwargs)
+
 
 
     def __str__(self):
@@ -65,4 +65,4 @@ class BookImage(models.Model):
     image = models.ImageField(upload_to='book_images/')  # Ensure MEDIA_URL and MEDIA_ROOT are configured
 
     def __str__(self):
-        return f"Image for {self.book.title}"
+        return f"Image for {self.book.book_name}"

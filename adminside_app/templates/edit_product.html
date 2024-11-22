@@ -23,7 +23,7 @@
                 </nav>
             </div>
 
-            <form method="POST" action="{% url 'edit_product' book.id %}" enctype="multipart/form-data" class="space-y-6">
+            <form method="post" action="{% url 'edit_product' book.id %}" enctype="multipart/form-data" class="space-y-6">
                 {% csrf_token %}
                 
                 <!-- General Information -->
@@ -127,37 +127,154 @@
                 <!-- Image Upload -->
                 <div class="bg-gray-700 rounded-lg p-4 flex flex-col items-center">
                     <div class="w-full border-2 border-dashed border-gray-500 rounded-lg p-6 text-center">
-                        <div id="image-preview-container" class="flex flex-wrap gap-2 justify-center mb-4">
-                            {% for image in book.images.all %}
-                                <div class="relative">
-                                    <img src="{{ image.image.url }}" 
-                                         alt="Existing Image" 
-                                         id="existing-image-{{ forloop.counter }}"
-                                         class="h-24 w-24 object-cover rounded">
-                                    <input type="file" 
-                                           name="book_images" 
-                                           id="profile-photo-{{ forloop.counter }}" 
-                                           class="hidden" 
-                                           accept="image/jpeg,image/png"
-                                           onchange="previewImages(event, {{ forloop.counter }})">
+                        <div id="image-preview-container" class="flex flex-wrap gap-4 justify-center mb-4">
+                            <!-- Image Slot 1 -->
+                            <div class="relative" id="image-wrapper-1">
+                                <img src="{{ book.images.all.0.image.url }}" 
+                                     alt="Book Cover 1" 
+                                     id="existing-image-1"
+                                     class="existing-image h-48 w-32 object-cover rounded cursor-pointer shadow-lg hover:shadow-xl transition-shadow"
+                                     onclick="triggerFileInput(1)">
+                                <button onclick="removeImage(1)" 
+                                        class="absolute -top-2 -right-2 bg-red-500 rounded-full p-1 hover:bg-red-600 transition-colors">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-white" viewBox="0 0 24 24" fill="none" 
+                                         stroke="currentColor" stroke-width="2">
+                                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                                    </svg>
+                                </button>
+                                <div class="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white text-xs py-1">
+                                    Cover 1
                                 </div>
-                            {% endfor %}
+                                <!-- Hidden file input to update the image -->
+                                <input type="file" 
+                                       name="updated_image_1" 
+                                       id="profile-photo-1" 
+                                       class="hidden" 
+                                       accept="image/jpeg,image/png"
+                                       data-index="1"
+                                       onchange="previewImages(event, 1)">
+                                <!-- Hidden input field for existing image so that it can be passed when submitting the form -->
+                                <input type="hidden" name="existing_image_1" value="{{ book.images.all.0.id }}">
+                            </div>
+                            
+                            <!-- Image Slot 2 -->
+                            <div class="relative" id="image-wrapper-2">
+                                <img src="{{ book.images.all.1.image.url }}" 
+                                     alt="Book Cover 2" 
+                                     id="existing-image-2"
+                                     class="existing-image h-48 w-32 object-cover rounded cursor-pointer shadow-lg hover:shadow-xl transition-shadow"
+                                     onclick="triggerFileInput(2)">
+                                <button onclick="removeImage(2)" 
+                                        class="absolute -top-2 -right-2 bg-red-500 rounded-full p-1 hover:bg-red-600 transition-colors">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-white" viewBox="0 0 24 24" fill="none" 
+                                         stroke="currentColor" stroke-width="2">
+                                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                                    </svg>
+                                </button>
+                                <div class="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white text-xs py-1">
+                                    Cover 2
+                                </div>
+                                <!-- Hidden file input to update the image -->
+                                <input type="file" 
+                                       name="updated_image_2" 
+                                       id="profile-photo-2" 
+                                       class="hidden" 
+                                       accept="image/jpeg,image/png"
+                                       data-index="2"
+                                       onchange="previewImages(event, 2)">
+                                <!-- Hidden input field for existing image so that it can be passed when submitting the form -->
+                                <input type="hidden" name="existing_image_2" value="{{ book.images.all.1.id }}">
+                            </div>
+                            
+                            <!-- Image Slot 3 -->
+                            <div class="relative" id="image-wrapper-3">
+                                <img src="{{ book.images.all.2.image.url }}" 
+                                     alt="Book Cover 3" 
+                                     id="existing-image-3"
+                                     class="existing-image h-48 w-32 object-cover rounded cursor-pointer shadow-lg hover:shadow-xl transition-shadow"
+                                     onclick="triggerFileInput(3)">
+                                <button onclick="removeImage(3)" 
+                                        class="absolute -top-2 -right-2 bg-red-500 rounded-full p-1 hover:bg-red-600 transition-colors">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-white" viewBox="0 0 24 24" fill="none" 
+                                         stroke="currentColor" stroke-width="2">
+                                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                                    </svg>
+                                </button>
+                                <div class="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white text-xs py-1">
+                                    Cover 3
+                                </div>
+                                <!-- Hidden file input to update the image -->
+                                <input type="file" 
+                                       name="updated_image_3" 
+                                       id="profile-photo-3" 
+                                       class="hidden" 
+                                       accept="image/jpeg,image/png"
+                                       data-index="3"
+                                       onchange="previewImages(event, 3)">
+                                <!-- Hidden input field for existing image so that it can be passed when submitting the form -->
+                                <input type="hidden" name="existing_image_3" value="{{ book.images.all.2.id }}">
+                            </div>
+                            
+                            <!-- Image Slot 4 -->
+                            <div class="relative" id="image-wrapper-4">
+                                <img src="{{ book.images.all.3.image.url }}" 
+                                     alt="Book Cover 4" 
+                                     id="existing-image-4"
+                                     class="existing-image h-48 w-32 object-cover rounded cursor-pointer shadow-lg hover:shadow-xl transition-shadow"
+                                     onclick="triggerFileInput(4)">
+                                <button onclick="removeImage(4)" 
+                                        class="absolute -top-2 -right-2 bg-red-500 rounded-full p-1 hover:bg-red-600 transition-colors">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-white" viewBox="0 0 24 24" fill="none" 
+                                         stroke="currentColor" stroke-width="2">
+                                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                                    </svg>
+                                </button>
+                                <div class="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white text-xs py-1">
+                                    Cover 4
+                                </div>
+                                <!-- Hidden file input to update the image -->
+                                <input type="file" 
+                                       name="updated_image_4" 
+                                       id="profile-photo-4" 
+                                       class="hidden" 
+                                       accept="image/jpeg,image/png"
+                                       data-index="4"
+                                       onchange="previewImages(event, 4)">
+                                <!-- Hidden input field for existing image so that it can be passed when submitting the form -->
+                                <input type="hidden" name="existing_image_4" value="{{ book.images.all.3.id }}">
+                            </div>
                         </div>
-                        <p class="text-gray-400 mb-4">Click on an image to replace it</p>
-                        <input type="file" name="book_images" id="profile-photo" 
-                               class="hidden" 
-                               accept="image/jpeg,image/png" 
-                               multiple 
-                               onchange="previewImages(event)">
+                        
+                        <!-- Upload Placeholder for New Images -->
+                        <div id="upload-placeholder" class="flex justify-center {% if book.images.all|length >= 4 %}hidden{% endif %}">
+                            <label class="h-48 w-32 border-2 border-dashed border-gray-400 rounded flex flex-col items-center justify-center cursor-pointer hover:border-gray-300 transition-colors">
+                                <input type="file" 
+                                       name="book_images" 
+                                       id="profile-photo" 
+                                       class="hidden" 
+                                       accept="image/jpeg,image/png" 
+                                       onchange="previewImages(event)">
+                                <span class="text-gray-400 text-3xl mb-2">+</span>
+                                <span class="text-gray-400 text-sm">Add Book Cover</span>
+                            </label>
+                        </div>
+                        
+                        <p class="text-gray-400 mb-2">Click on an image to replace it</p>
+                        <p class="text-gray-400 text-sm mb-4">Recommended size: 600x900px (2:3 ratio)</p>
                         <div id="error-message" class="text-red-500 mt-2 hidden"></div>
                     </div>
                 </div>
+                
 
                 <!-- Action Buttons -->
                 <div class="flex justify-end space-x-4 mt-6">
                     {% if book.is_available %}
-                        <button type="submit" 
-                                name="delete_book"
+                        <button type="button" 
+                                id="deleteBookBtn"
                                 class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded transition duration-300">
                             Delete Product
                         </button>
@@ -169,7 +286,8 @@
                         </button>
                     {% endif %}
                     <button type="submit" 
-                            class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded transition duration-300">
+                        name="update_product"
+                        class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded transition duration-300">
                         Update Product
                     </button>
                 </div>
@@ -178,90 +296,353 @@
     </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-    function previewImages(event, existingImageIndex = null) {
-        const imagePreviewContainer = document.getElementById('image-preview-container');
-        const errorMessage = document.getElementById('error-message');
+    // Select the delete button and form
+    const deleteButton = document.getElementById('deleteBookBtn');
+    const form = document.getElementById('editProductForm');
     
-        // Clear error message
-        errorMessage.textContent = '';
-        errorMessage.classList.add('hidden');
-    
-        // Check number of files
-        if (event.target.files.length > 4) {
-            errorMessage.textContent = 'Maximum of 4 images can be uploaded.';
-            errorMessage.classList.remove('hidden');
-            return;
-        }
-    
-        // Process each file
-        for (let i = 0; i < event.target.files.length; i++) {
-            const file = event.target.files[i];
-    
-            // Resize the image
-            resizeImage(file, 240, 240)
-                .then((resizedImage) => {
-                    // If replacing an existing image
-                    if (existingImageIndex) {
-                        const existingImage = document.getElementById(`existing-image-${existingImageIndex}`);
-                        existingImage.src = URL.createObjectURL(resizedImage);
-                    } else {
-                        // Adding new image
-                        const preview = document.createElement('img');
-                        preview.src = URL.createObjectURL(resizedImage);
-                        preview.alt = 'Uploaded Image';
-                        preview.className = 'h-24 w-24 object-cover rounded';
-                        imagePreviewContainer.appendChild(preview);
-                    }
-                })
-                .catch((error) => {
-                    errorMessage.textContent = 'Error uploading images. Please try again.';
-                    errorMessage.classList.remove('hidden');
-                });
-        }
+    if (deleteButton) {
+        deleteButton.addEventListener('click', (event) => {
+            event.preventDefault(); // Prevent the form from submitting immediately
+            
+            // Show SweetAlert2 confirmation
+            Swal.fire({
+                title: 'Are you sure?',
+                text: "This action will mark the book as deleted!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Yes, delete it!',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // If confirmed, submit the form with 'delete_book' action
+                    const deleteInput = document.createElement('input');
+                    deleteInput.type = 'hidden';
+                    deleteInput.name = 'delete_book';
+                    form.appendChild(deleteInput);
+                    
+                    form.submit();  // Submit the form
+                }
+            });
+        });
     }
+</script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const form = document.querySelector('form');
+        const fields = {
+            bookName: form.querySelector('[name="book_name"]'),
+            description: form.querySelector('[name="description"]'),
+            stockQuantity: form.querySelector('[name="stock_quantity"]'),
+            basePrice: form.querySelector('[name="price"]'),
+            discountPercentage: form.querySelector('[name="discount_percentage"]'),
+            authorName: form.querySelector('[name="author_name"]'),
+            bio: form.querySelector('[name="bio"]'),
+            language: form.querySelector('[name="language"]'),
+            category: form.querySelector('[name="category"]'),
+            imageUpload: form.querySelector('#profile-photo')
+        };
     
-    function resizeImage(file, maxWidth, maxHeight) {
-        return new Promise((resolve, reject) => {
-            const img = new Image();
-            img.src = URL.createObjectURL(file);
-            img.onload = () => {
-                let width = img.width;
-                let height = img.height;
+        const errorMessages = {};
     
-                if (width > height) {
-                    if (width > maxWidth) {
-                        height *= maxWidth / width;
-                        width = maxWidth;
-                    }
-                } else {
-                    if (height > maxHeight) {
-                        width *= maxHeight / height;
-                        height = maxHeight;
+        const displayError = (field, message) => {
+            if (!errorMessages[field.name]) {
+                const errorElement = document.createElement('p');
+                errorElement.classList.add('text-red-500', 'text-sm', 'mt-1');
+                errorElement.textContent = message;
+                field.after(errorElement);
+                errorMessages[field.name] = errorElement;
+            }
+        };
+    
+        const clearError = (field) => {
+            if (errorMessages[field.name]) {
+                errorMessages[field.name].remove();
+                delete errorMessages[field.name];
+            }
+        };
+    
+        const validateField = (field) => {
+            const value = field.value.trim();
+            clearError(field);
+        
+            if (field.name === 'book_name' && value === '') {
+                displayError(field, 'Book name cannot be empty.');
+                return false;
+            }
+            if (field.name === 'description' && value === '') {
+                displayError(field, 'Description cannot be empty.');
+                return false;
+            }
+            if (field.name === 'stock_quantity' && (!/^\d+$/.test(value) || value <= 0)) {
+                displayError(field, 'Stock quantity must be a positive number.');
+                return false;
+            }
+            if (field.name === 'price' && (!/^\d+(\.\d{1,2})?$/.test(value) || value <= 0)) {
+                displayError(field, 'Base price must be a positive number with up to two decimal places.');
+                return false;
+            }
+            if (field.name === 'discount_percentage' && (!/^\d+(\.\d{1,2})?$/.test(value) || value < 0 || value > 100)) {
+                displayError(field, 'Discount percentage must be between 0 and 100.');
+                return false;
+            }
+            if (field.name === 'author_name' && value === '') {
+                displayError(field, 'Author name cannot be empty.');
+                return false;
+            }
+            if (field.name === 'bio' && value === '') {
+                displayError(field, 'Author bio cannot be empty.');
+                return false;
+            }
+            if (field.name === 'language' && value === '') {
+                displayError(field, 'Language cannot be empty.');
+                return false;
+            }
+            if (field.name === 'category' && value === '') {
+                displayError(field, 'Category cannot be empty.');
+                return false;
+            }
+    
+            return true;
+        };
+    
+        const validateImages = () => {
+            const existingImages = document.querySelectorAll('.existing-image').length;
+            const newImages = document.querySelectorAll('input[name="book_images"]').length;
+            const errorContainer = document.getElementById('error-message');
+            
+            if (existingImages === 0 && newImages === 0) {
+                errorContainer.textContent = 'You must upload at least 1 book image.';
+                errorContainer.classList.remove('hidden');
+                return false;
+            }
+            
+            errorContainer.classList.add('hidden');
+            return true;
+        };
+    
+        const validateAllFields = () => {
+            let isValid = true;
+            for (const key in fields) {
+                if (fields[key] && key !== 'imageUpload') {  // Skip image validation here
+                    if (!validateField(fields[key])) {
+                        isValid = false;
                     }
                 }
+            }
+            
+            // Separate image validation
+            if (!validateImages()) {
+                isValid = false;
+            }
+            
+            return isValid;
+        };
     
-                const canvas = document.createElement('canvas');
-                canvas.width = width;
-                canvas.height = height;
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(img, 0, 0, width, height);
+        // Add event listeners for fields
+        for (const key in fields) {
+            const field = fields[key];
+            if (field) {
+                field.addEventListener('input', () => validateField(field));
+            }
+        }
     
-                canvas.toBlob((blob) => {
-                    resolve(blob);
-                }, 'image/jpeg', 0.9);
-            };
-            img.onerror = () => {
-                reject(new Error('Error uploading image.'));
-            };
-        });
-    }
-
-    // Add click event to existing images to trigger file input
-    document.querySelectorAll('[id^=existing-image]').forEach((img, index) => {
-        img.addEventListener('click', () => {
-            document.getElementById(`profile-photo-${index + 1}`).click();
+        // Form submit event
+        form.addEventListener('submit', (event) => {
+            const isValid = validateAllFields();
+            if (!isValid) {
+                event.preventDefault();
+            }
         });
     });
+</script>
+
+<script>
+    const OPTIMAL_WIDTH = 600;
+    const OPTIMAL_HEIGHT = 900;
+    const MAX_IMAGES = 4;
+    const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+    
+    function triggerFileInput(index) {
+        document.getElementById(`profile-photo-${index}`).click();
+    }
+    
+    function validateImage(file) {
+        if (file.size > MAX_FILE_SIZE) {
+            showError('Image size should be less than 5MB');
+            return false;
+        }
+        
+        if (!file.type.match('image/jpeg') && !file.type.match('image/png')) {
+            showError('Please upload only JPEG or PNG images');
+            return false;
+        }
+        
+        return true;
+    }
+    
+    async function previewImages(event, existingIndex = null) {
+        const container = document.getElementById('image-preview-container');
+        const uploadPlaceholder = document.getElementById('upload-placeholder');
+        
+        try {
+            if (existingIndex) {
+                // Replacing existing image
+                if (!event.target.files.length) return;
+                
+                const file = event.target.files[0];
+                if (!validateImage(file)) return;
+                
+                const img = document.getElementById(`existing-image-${existingIndex}`);
+                img.src = URL.createObjectURL(file);
+                
+                // Create a new FormData input for the updated image
+                const formData = new FormData();
+                formData.append(`updated_image_${existingIndex}`, file);
+                
+                // Add the file to the form
+                const form = document.querySelector('form');
+                const existingInput = form.querySelector(`input[name="updated_image_${existingIndex}"]`);
+                if (existingInput) {
+                    existingInput.files = event.target.files;
+                } else {
+                    const input = document.createElement('input');
+                    input.type = 'file';
+                    input.name = `updated_image_${existingIndex}`;
+                    input.style.display = 'none';
+                    input.files = event.target.files;
+                    form.appendChild(input);
+                }
+            } else {
+                // Adding new image
+                const currentImages = container.querySelectorAll('.relative').length;
+                if (currentImages >= MAX_IMAGES) {
+                    showError(`Maximum ${MAX_IMAGES} images allowed`);
+                    return;
+                }
+    
+                const file = event.target.files[0];
+                if (!validateImage(file)) return;
+                
+                const newIndex = currentImages + 1;
+                
+                // Create new image preview
+                const wrapper = createImagePreviewElement(newIndex, URL.createObjectURL(file));
+                container.appendChild(wrapper);
+                
+                // Add the file to the form
+                const form = document.querySelector('form');
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.name = 'book_images';
+                input.style.display = 'none';
+                input.files = event.target.files;
+                form.appendChild(input);
+    
+                if (container.querySelectorAll('.relative').length >= MAX_IMAGES) {
+                    uploadPlaceholder.classList.add('hidden');
+                }
+            }
+            
+            hideError();
+        } catch (error) {
+            showError('Error processing image. Please try again.');
+            console.error(error);
+        }
+        
+        // Reset the input
+        event.target.value = '';
+    }
+    
+    function createImagePreviewElement(index, imageUrl) {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'relative';
+        wrapper.id = `image-wrapper-${index}`;
+        wrapper.innerHTML = `
+            <img src="${imageUrl}" 
+                 alt="Book Cover ${index}" 
+                 id="existing-image-${index}"
+                 class="h-48 w-32 object-cover rounded cursor-pointer shadow-lg hover:shadow-xl transition-shadow"
+                 onclick="triggerFileInput(${index})">
+            <button type="button"
+                    onclick="removeImage(${index})" 
+                    class="absolute -top-2 -right-2 bg-red-500 rounded-full p-1 hover:bg-red-600 transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-white" viewBox="0 0 24 24" fill="none" 
+                     stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+            <div class="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white text-xs py-1">
+                Cover ${index}
+            </div>
+            <input type="file" 
+                   name="book_images" 
+                   id="profile-photo-${index}" 
+                   class="hidden" 
+                   accept="image/jpeg,image/png"
+                   data-index="${index}"
+                   onchange="previewImages(event, ${index})">`;
+        return wrapper;
+    }
+    
+    function removeImage(index) {
+        const wrapper = document.getElementById(`image-wrapper-${index}`);
+        if (wrapper) {
+            // Remove the image preview
+            wrapper.remove();
+            
+            // Remove any associated file inputs
+            const form = document.querySelector('form');
+            const fileInput = form.querySelector(`input[name="updated_image_${index}"]`);
+            if (fileInput) {
+                fileInput.remove();
+            }
+            
+            // Show upload placeholder if below max images
+            const container = document.getElementById('image-preview-container');
+            const uploadPlaceholder = document.getElementById('upload-placeholder');
+            if (container.querySelectorAll('.relative').length < MAX_IMAGES) {
+                uploadPlaceholder.classList.remove('hidden');
+            }
+            
+            // Reorder remaining images
+            reorderImages();
+        }
+    }
+    
+    function reorderImages() {
+        const container = document.getElementById('image-preview-container');
+        const images = container.querySelectorAll('.relative');
+        images.forEach((img, i) => {
+            const newIndex = i + 1;
+            updateImageElementIndices(img, newIndex);
+        });
+    }
+    
+    function updateImageElementIndices(element, newIndex) {
+        element.id = `image-wrapper-${newIndex}`;
+        element.querySelector('img').id = `existing-image-${newIndex}`;
+        element.querySelector('input[type="file"]').id = `profile-photo-${newIndex}`;
+        element.querySelector('input[type="file"]').dataset.index = newIndex;
+        element.querySelector('.text-xs').textContent = `Cover ${newIndex}`;
+        
+        element.querySelector('img').setAttribute('onclick', `triggerFileInput(${newIndex})`);
+        element.querySelector('button').setAttribute('onclick', `removeImage(${newIndex})`);
+        element.querySelector('input[type="file"]').setAttribute('onchange', `previewImages(event, ${newIndex})`);
+    }
+    
+    function showError(message) {
+        const errorMessage = document.getElementById('error-message');
+        errorMessage.textContent = message;
+        errorMessage.classList.remove('hidden');
+    }
+    
+    function hideError() {
+        document.getElementById('error-message').classList.add('hidden');
+    }
 </script>
 {% endblock %}
