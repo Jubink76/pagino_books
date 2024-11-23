@@ -8,6 +8,11 @@ from django.views.decorators.cache import cache_control,never_cache
 from .models import CategoryTable,Language,Author,BookTable,BookImage
 from django.http import JsonResponse
 from order_detail_app.models import OrderDetails,OrderItem
+from django.db import transaction
+import logging
+from django.core.exceptions import ValidationError
+from django.http import JsonResponse
+from decimal import Decimal, InvalidOperation
 # Create your views here.
 
 ##############################################################################################################
@@ -322,68 +327,190 @@ def admin_products(request):
     return render(request,'admin_products.html',{'books':books})
 
 #####################################################################################################################
+logger = logging.getLogger(__name__)
+
 @login_required(login_url='admin_login')
 def add_products(request):
+    """Handle product addition with comprehensive field validation."""
     if request.method == 'POST':
+        logger.info("Processing add product POST request")
+        errors = []
+
         try:
+            # Validate book name
             book_name = request.POST.get('book_name')
+            if not book_name:
+                errors.append('Book name is required.')
+            elif len(book_name) > 100:  # Adjust max length as per your model
+                errors.append('Book name is too long.')
+
+            # Validate description
             description = request.POST.get('description')
-            stock_quantity = request.POST.get('stock_quantity')
-            base_price = float(request.POST.get('base_price'))
-            discount_percentage = float(request.POST.get('discount_percentage'))
-            offer_price = request.POST.get('offer_price')
-            
+            if not description:
+                errors.append('Description is required.')
+            elif len(description) > 1000:  # Adjust max length as per your model
+                errors.append('Description is too long.')
+
+            # Validate stock quantity
+            try:
+                stock_quantity = request.POST.get('stock_quantity')
+                if not stock_quantity:
+                    errors.append('Stock quantity is required.')
+                else:
+                    stock_quantity = int(stock_quantity)
+                    if stock_quantity <= 0:
+                        errors.append('Stock quantity must be a positive number.')
+            except ValueError:
+                errors.append('Invalid stock quantity value.')
+
+            # Validate base price
+            try:
+                base_price = request.POST.get('base_price')
+                if not base_price:
+                    errors.append('Base price is required.')
+                else:
+                    base_price = Decimal(base_price)
+                    if base_price <= 0:
+                        errors.append('Base price must be a positive number.')
+                    elif base_price > Decimal('999999.99'):  # Add reasonable maximum
+                        errors.append('Base price is too high.')
+            except (InvalidOperation, ValueError):
+                errors.append('Invalid base price value.')
+
+            # Validate discount percentage
+            try:
+                discount_percentage = request.POST.get('discount_percentage', '0')
+                discount_percentage = Decimal(discount_percentage)
+                if discount_percentage < 0 or discount_percentage > 100:
+                    errors.append('Discount percentage must be between 0 and 100.')
+            except (InvalidOperation, ValueError):
+                errors.append('Invalid discount percentage value.')
+
+            # Validate author information
             author_name = request.POST.get('author_name')
-            bio = request.POST.get('bio')
-            author, created = Author.objects.get_or_create(name=author_name)
-            if created or not author.bio:
-                author.bio = bio
-                author.save()
+            if not author_name:
+                errors.append('Author name is required.')
+            elif len(author_name) > 100:  # Adjust max length as per your model
+                errors.append('Author name is too long.')
 
-
+            # Validate language
             language_name = request.POST.get('language')
-            new_language = request.POST.get('new_language')
-            
-            if language_name:  # Existing language selected
-                language, created = Language.objects.get_or_create(name=language_name)
-            elif new_language:  # New language input
-                language, created = Language.objects.get_or_create(name=new_language)
-            else:
-                # Handle case when no language is provided (optional)
-                language = None
+            if not language_name:
+                errors.append('Language is required.')
 
+            # Validate category
             category_name = request.POST.get('category')
-            
-            if category_name:  # Ensure category_name is not empty
-                category, created = CategoryTable.objects.get_or_create(category_name=category_name)
-            else:
-                # Handle the case where no category is provided (optional)
-                category = None
+            if not category_name:
+                errors.append('Category is required.')
 
-            book = BookTable.objects.create(
-                book_name = book_name,
-                description = description,
-                stock_quantity = stock_quantity,
-                base_price = base_price,
-                discount_percentage = discount_percentage,
-                offer_price = offer_price,
-                category = category,
-                language = language,
-                author = author
-            )
+            # Validate images
+            image_files = [
+                request.FILES.get('book_image_1'),
+                request.FILES.get('book_image_2'),
+                request.FILES.get('book_image_3'),
+                request.FILES.get('book_image_4')
+            ]
+            print(image_files)
+            if not any(image_files):
+                errors.append('At least one book image is required.')
 
-            image_files = request.FILES.getlist('book_images')
-            print("image_files",image_files)
-            if image_files:
-                for image_file in image_files:
-                    BookImage.objects.create(book=book, image=image_file)
-                    return redirect('admin_products')
+            # Validate image sizes and types
+            allowed_types = ['image/jpeg', 'image/png', 'image/jpg']
+            max_size = 5 * 1024 * 1024  # 5MB
+
+            for i, image in enumerate(image_files, 1):
+                if image:
+                    if image.size > max_size:
+                        errors.append(f'Image {i} is too large. Maximum size is 5MB.')
+                    if image.content_type not in allowed_types:
+                        errors.append(f'Image {i} must be JPEG or PNG format.')
+
+            # If there are validation errors, return them
+            if errors:
+                return JsonResponse({
+                    'status': 'error',
+                    'message': 'Validation failed',
+                    'errors': errors
+                }, status=400)
+
+            # If validation passes, proceed with saving
+            with transaction.atomic():
+                # Calculate offer price
+                offer_price = base_price * (1 - discount_percentage / 100)
+
+                # Process Author
+                author, created = Author.objects.get_or_create(
+                    name=author_name,
+                    defaults={'bio': request.POST.get('bio', '')}
+                )
+                if not created and request.POST.get('bio'):
+                    author.bio = request.POST.get('bio')
+                    author.save()
+
+                # Process Language
+                language, _ = Language.objects.get_or_create(
+                    name=language_name
+                )
+
+                # Process Category
+                category, _ = CategoryTable.objects.get_or_create(
+                    category_name=category_name
+                )
+
+                # Create Book instance
+                book = BookTable.objects.create(
+                    book_name=book_name,
+                    description=description,
+                    stock_quantity=stock_quantity,
+                    base_price=base_price,
+                    discount_percentage=discount_percentage,
+                    offer_price=offer_price,
+                    author=author,
+                    language=language,
+                    category=category,
+                )
+                logger.debug(f"Uploaded files: {request.FILES}")
+                # Save valid images
+                for image in image_files:
+                    if image:
+                        BookImage.objects.create(
+                            book=book,
+                            image=image
+                        )
+                        logger.debug(f"Saved image: {image.name}")
+                    else:
+                        logger.debug("Skipped a missing image.")
+
+                messages.success(request, 'Product added successfully')
+                return JsonResponse({
+                    'status': 'success',
+                    'message': 'Product added successfully',
+                    'redirect_url': 'admin_products'
+                })
+
         except Exception as e:
-            return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
-        
-    categories = CategoryTable.objects.filter(is_available=True, is_deleted=False)
-    languages = Language.objects.all()
-    return render(request,'add_products.html',{'categories':categories,'languages':languages})
+            logger.error(f"Error adding product: {str(e)}", exc_info=True)
+            return JsonResponse({
+                'status': 'error',
+                'message': 'An unexpected error occurred. Please try again.',
+                'error_details': str(e)
+            }, status=500)
+
+    # GET request - render form
+    try:
+        categories = CategoryTable.objects.filter(is_available=True, is_deleted=False)
+        languages = Language.objects.all()
+        context = {
+            'categories': categories,
+            'languages': languages,
+            'max_upload_size': '5MB',
+            'allowed_image_types': 'JPEG, PNG'
+        }
+        return render(request, 'add_products.html', context)
+    except Exception as e:
+        logger.error(f"Error loading form data: {str(e)}", exc_info=True)
+        messages.error(request, 'Error loading form. Please try again.')
+        return redirect('admin_products')
 
 ########################################################################################################################
 @login_required(login_url='admin_login')
@@ -393,103 +520,216 @@ def view_product(request,pk):
     return render(request,'view_product.html',{'book':book,'images':images})
 
 ###########################################################################################################################
+logger = logging.getLogger(__name__)
+
 @login_required(login_url='admin_login')
 def edit_product(request, pk):
-    book = get_object_or_404(BookTable, id=pk)
-    if request.method == "POST":
-        if 'delete_book' in request.POST:
-            book.is_available = False
-            book.is_deleted = True
-            book.save()
-            messages.success(request, 'Book marked as deleted.')
-            return redirect('admin_products')
+    """
+    Handle product editing with comprehensive field validation and image management.
+    Supports both standard form submission and AJAX requests.
+    """
+    try:
+        book = get_object_or_404(BookTable, id=pk)
         
-        elif 'readd_book' in request.POST:
-            book.is_available = True
-            book.is_deleted = False
-            book.save()
-            messages.success(request, 'Book re-added to the list successfully.')
-            return redirect('admin_products')
-        
-        else:
-            # Update book details
-            book.book_name = request.POST.get('book_name', book.book_name)
-            book.description = request.POST.get('description', book.description)
-            book.stock_quantity = request.POST.get('stock_quantity', book.stock_quantity)
-            book.base_price = request.POST.get('price', book.base_price)
-            book.offer_price = request.POST.get('offer_price', book.offer_price)
-            book.discount_percentage = request.POST.get('discount_percentage', book.discount_percentage)
-
-            # Update category
-            category_name = request.POST.get('category')
-            if category_name:
-                category, _ = CategoryTable.objects.get_or_create(category_name=category_name)
-                book.category = category
-                
-            # Update language
-            language_name = request.POST.get('language')
-            if language_name:
-                language, _ = Language.objects.get_or_create(name=language_name)
-                book.language = language
-                
-            # Update author
-            author_name = request.POST.get('author_name')
-            bio = request.POST.get('bio')
-            if author_name:
-                author, _ = Author.objects.get_or_create(name=author_name)
-                if bio:
-                    author.bio = bio
-                    author.save()
-                book.author = author
+        if request.method == 'POST':
+            logger.info(f"Processing edit product POST request for product ID: {pk}")
             
-            # Handle image updates
-            existing_images = list(book.images.all())
-            print(existing_images)
+            # Handle delete request
+            if request.GET.get('action') == 'delete':
+                try:
+                    with transaction.atomic():
+                        book.is_available = False
+                        book.is_deleted = True
+                        book.save()
+                        return JsonResponse({
+                            'status': 'success',
+                            'message': 'Product deleted successfully'
+                        })
+                except Exception as e:
+                    logger.error(f"Error deleting product: {str(e)}", exc_info=True)
+                    return JsonResponse({
+                        'status': 'error',
+                        'message': 'Error deleting product'
+                    }, status=500)
 
-            max_images = 4
-            current_image_count = len(existing_images)
+            # Handle readd request
+            if 'readd_book' in request.POST:
+                try:
+                    with transaction.atomic():
+                        book.is_available = True
+                        book.is_deleted = False
+                        book.save()
+                        return JsonResponse({
+                            'status': 'success',
+                            'message': 'Product restored successfully'
+                        })
+                except Exception as e:
+                    logger.error(f"Error restoring product: {str(e)}", exc_info=True)
+                    return JsonResponse({
+                        'status': 'error',
+                        'message': 'Error restoring product'
+                    }, status=500)
 
-            # Handle updates to existing images
-            for i in range(1, max_images + 1):
-                updated_image = request.FILES.get(f'updated_image_{i}')
-                if updated_image:  # If an image is uploaded for this slot
-                    if i <= current_image_count:  # Ensure the image exists in the current list
-                        existing_images[i - 1].image = updated_image
-                        existing_images[i - 1].save()  # Save the updated image
+            # Handle update request
+            if 'update_product' in request.POST:
+                errors = []
+                try:
+                    # Extract and validate form data
+                    form_data = {
+                        'book_name': request.POST.get('book_name', '').strip(),
+                        'description': request.POST.get('description', '').strip(),
+                        'stock_quantity': request.POST.get('stock_quantity', ''),
+                        'base_price': request.POST.get('price', ''),
+                        'discount_percentage': request.POST.get('discount_percentage', '0'),
+                        'author_name': request.POST.get('author_name', '').strip(),
+                        'author_bio': request.POST.get('bio', '').strip(),
+                        'language': request.POST.get('language', '').strip(),
+                        'category': request.POST.get('category', '').strip()
+                    }
 
-            # Handle new images
-            new_images = request.FILES.getlist('book_images')
-            if new_images:
-                remaining_slots = max_images - current_image_count  # Calculate how many slots are left
-                for image_file in new_images[:remaining_slots]:
-                    # Create a new image entry for the book
-                    BookImage.objects.create(book=book, image=image_file)
+                    # Validation checks
+                    if not form_data['book_name']:
+                        errors.append('Book name is required.')
+                    elif len(form_data['book_name']) > 100:
+                        errors.append('Book name must be less than 100 characters.')
 
-            # Handle image deletions
-            images_to_keep = set()  # Track the images that should be kept
-            for i in range(1, max_images + 1):
-                image_id = request.POST.get(f'existing_image_{i}')
-                if image_id:
-                    images_to_keep.add(int(image_id))  # Collect image IDs to keep
+                    if not form_data['description']:
+                        errors.append('Description is required.')
+                    elif len(form_data['description']) > 1000:
+                        errors.append('Description must be less than 1000 characters.')
 
-            # Delete images that are not selected to be kept
-            BookImage.objects.filter(book=book).exclude(id__in=images_to_keep).delete()
+                    try:
+                        stock_qty = int(form_data['stock_quantity'])
+                        if stock_qty < 0:
+                            errors.append('Stock quantity cannot be negative.')
+                    except ValueError:
+                        errors.append('Invalid stock quantity.')
 
-            # Save the book object after making all changes
-            book.save()
-            messages.success(request, 'Book details updated successfully.')
-            return redirect('admin_products')
-    
-    context = {
-        'book': book,
-        'categories': CategoryTable.objects.filter(is_available=True, is_deleted=False),
-        'languages': Language.objects.all(),
-        'authors': Author.objects.all(),
-    }
-    
-    return render(request, 'edit_product.html', context)
+                    try:
+                        base_price = Decimal(form_data['base_price'])
+                        if base_price <= 0:
+                            errors.append('Base price must be greater than 0.')
+                        elif base_price > Decimal('999999.99'):
+                            errors.append('Base price exceeds maximum limit.')
+                    except InvalidOperation:
+                        errors.append('Invalid base price.')
 
+                    try:
+                        discount = Decimal(form_data['discount_percentage'])
+                        if not (0 <= discount <= 100):
+                            errors.append('Discount must be between 0 and 100.')
+                    except InvalidOperation:
+                        errors.append('Invalid discount percentage.')
 
+                    if not form_data['author_name']:
+                        errors.append('Author name is required.')
+                    elif len(form_data['author_name']) > 100:
+                        errors.append('Author name must be less than 100 characters.')
+
+                    if not form_data['language']:
+                        errors.append('Language is required.')
+
+                    if not form_data['category']:
+                        errors.append('Category is required.')
+
+                    # Validate images
+                    updated_images = []
+                    for i in range(1, 5):  # Handle up to 4 images
+                        image_key = f'updated_image_{i}'
+                        if image_key in request.FILES:
+                            image = request.FILES[image_key]
+                            if image.size > 5 * 1024 * 1024:  # 5MB limit
+                                errors.append(f'Image {i} exceeds 5MB size limit.')
+                            if image.content_type not in ['image/jpeg', 'image/png']:
+                                errors.append(f'Image {i} must be JPEG or PNG format.')
+                            updated_images.append((i, image))
+
+                    if errors:
+                        return JsonResponse({
+                            'status': 'error',
+                            'message': 'Validation failed',
+                            'errors': errors
+                        }, status=400)
+
+                    # Update product if validation passes
+                    with transaction.atomic():
+                        # Calculate offer price
+                        base_price = Decimal(form_data['base_price'])
+                        discount = Decimal(form_data['discount_percentage'])
+                        offer_price = base_price * (1 - discount / 100)
+
+                        # Update or create related objects
+                        author, _ = Author.objects.update_or_create(
+                            name=form_data['author_name'],
+                            defaults={'bio': form_data['author_bio']}
+                        )
+
+                        language, _ = Language.objects.get_or_create(
+                            name=form_data['language']
+                        )
+
+                        category, _ = CategoryTable.objects.get_or_create(
+                            category_name=form_data['category']
+                        )
+
+                        # Update book details
+                        book.book_name = form_data['book_name']
+                        book.description = form_data['description']
+                        book.stock_quantity = int(form_data['stock_quantity'])
+                        book.base_price = base_price
+                        book.discount_percentage = discount
+                        book.offer_price = offer_price
+                        book.author = author
+                        book.language = language
+                        book.category = category
+                        book.save()
+
+                        # Handle image updates
+                        existing_images = list(book.images.all())
+                        
+                        for index, new_image in updated_images:
+                            # Get or create image object at specified position
+                            if index <= len(existing_images):
+                                # Update existing image
+                                image_obj = existing_images[index - 1]
+                                image_obj.image = new_image
+                                image_obj.save()
+                            else:
+                                # Create new image
+                                BookImage.objects.create(
+                                    book=book,
+                                    image=new_image
+                                )
+
+                        return JsonResponse({
+                            'status': 'success',
+                            'message': 'Product updated successfully',
+                            'redirect_url': 'admin_products'
+                        })
+
+                except Exception as e:
+                    logger.error(f"Error updating product: {str(e)}", exc_info=True)
+                    return JsonResponse({
+                        'status': 'error',
+                        'message': 'An unexpected error occurred while updating the product.',
+                        'error_details': str(e)
+                    }, status=500)
+
+        # GET request - render form with existing data
+        context = {
+            'book': book,
+            'categories': CategoryTable.objects.filter(is_available=True, is_deleted=False),
+            'languages': Language.objects.all(),
+            'authors': Author.objects.all(),
+            'max_upload_size': '5MB',
+            'allowed_image_types': 'JPEG, PNG'
+        }
+        return render(request, 'edit_product.html', context)
+
+    except Exception as e:
+        logger.error(f"Error in edit_product view: {str(e)}", exc_info=True)
+        messages.error(request, 'Error loading product data. Please try again.')
+        return redirect('admin_products')
 
 ############################################################################################################################
 @login_required(login_url='admin_login')

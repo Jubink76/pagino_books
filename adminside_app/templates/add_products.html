@@ -126,12 +126,12 @@
                         <div id="image-preview-container" class="flex gap-4 justify-center mb-4">
                             <!-- Image previews will be added here -->
                         </div>
-                        
+                
                         <!-- Upload 4 images fields in a single line -->
                         <div class="flex gap-4 justify-center mb-4">
                             <div class="flex flex-col items-center">
                                 <label class="h-48 w-32 border-2 border-dashed border-gray-400 rounded flex flex-col items-center justify-center cursor-pointer hover:border-gray-300 transition-colors">
-                                    <input type="file" name="book_images" id="image-upload-1" class="hidden" accept="image/jpeg,image/png" multiple>
+                                    <input type="file" name="book_image_1" id="image-upload-1" class="hidden" accept="image/jpeg,image/png">
                                     <span class="text-gray-400 text-3xl mb-2">+</span>
                                     <span class="text-gray-400 text-sm">Cover Image 1</span>
                                 </label>
@@ -139,7 +139,7 @@
                 
                             <div class="flex flex-col items-center">
                                 <label class="h-48 w-32 border-2 border-dashed border-gray-400 rounded flex flex-col items-center justify-center cursor-pointer hover:border-gray-300 transition-colors">
-                                    <input type="file" name="book_images" id="image-upload-2" class="hidden" accept="image/jpeg,image/png" multiple>
+                                    <input type="file" name="book_image_2" id="image-upload-2" class="hidden" accept="image/jpeg,image/png">
                                     <span class="text-gray-400 text-3xl mb-2">+</span>
                                     <span class="text-gray-400 text-sm">Cover Image 2</span>
                                 </label>
@@ -147,7 +147,7 @@
                 
                             <div class="flex flex-col items-center">
                                 <label class="h-48 w-32 border-2 border-dashed border-gray-400 rounded flex flex-col items-center justify-center cursor-pointer hover:border-gray-300 transition-colors">
-                                    <input type="file" name="book_images" id="image-upload-3" class="hidden" accept="image/jpeg,image/png" multiple>
+                                    <input type="file" name="book_image_3" id="image-upload-3" class="hidden" accept="image/jpeg,image/png">
                                     <span class="text-gray-400 text-3xl mb-2">+</span>
                                     <span class="text-gray-400 text-sm">Cover Image 3</span>
                                 </label>
@@ -155,7 +155,7 @@
                 
                             <div class="flex flex-col items-center">
                                 <label class="h-48 w-32 border-2 border-dashed border-gray-400 rounded flex flex-col items-center justify-center cursor-pointer hover:border-gray-300 transition-colors">
-                                    <input type="file" name="book_images" id="image-upload-4" class="hidden" accept="image/jpeg,image/png" multiple>
+                                    <input type="file" name="book_image_4" id="image-upload-4" class="hidden" accept="image/jpeg,image/png">
                                     <span class="text-gray-400 text-3xl mb-2">+</span>
                                     <span class="text-gray-400 text-sm">Cover Image 4</span>
                                 </label>
@@ -184,218 +184,260 @@
         </div>
     </div>
 </div>
-<!-- Bootstrap JS -->
-<script>
-    // form-validation.js
-document.addEventListener('DOMContentLoaded', () => {
-    const form = document.querySelector('form');
-    const fields = {
-        bookName: form.querySelector('[name="book_name"]'),
-        description: form.querySelector('[name="description"]'),
-        stockQuantity: form.querySelector('[name="stock_quantity"]'),
-        basePrice: form.querySelector('[name="base_price"]'),
-        discountPercentage: form.querySelector('[name="discount_percentage"]'),
-        authorName: form.querySelector('[name="author_name"]'),
-        bio: form.querySelector('[name="bio"]'),
-        language: form.querySelector('[name="language"]'),
-        category: form.querySelector('[name="category"]')
-    };
-
-    const errorMessages = {};
-
-    const displayError = (field, message) => {
-        clearError(field);
-        const errorElement = document.createElement('p');
-        errorElement.classList.add('text-red-500', 'text-sm', 'mt-1');
-        errorElement.textContent = message;
-        field.parentNode.appendChild(errorElement);
-        errorMessages[field.name] = errorElement;
-    };
-
-    const clearError = (field) => {
-        if (errorMessages[field.name]) {
-            errorMessages[field.name].remove();
-            delete errorMessages[field.name];
-        }
-    };
-
-    const alphabetOnlyRegex = /^[A-Za-z\s]+$/;
-
-    const validateField = (field) => {
-        const value = field.value.trim();
-        clearError(field);
-
-        switch (field.name) {
-            case 'book_name':
-            case 'category':
-            case 'author_name':
-            case 'language':
-                if (!alphabetOnlyRegex.test(value)) {
-                    displayError(field, `${field.name.replace('_', ' ')} should only contain alphabetic characters and spaces.`);
-                    return false;
-                }
-                break;
-
-            case 'description':
-            case 'bio':
-                if (value === '') {
-                    displayError(field, `${field.name} cannot be empty.`);
-                    return false;
-                }
-                break;
-
-            case 'stock_quantity':
-                if (!/^\d+$/.test(value) || parseInt(value) <= 0) {
-                    displayError(field, 'Stock quantity must be a positive number.');
-                    return false;
-                }
-                break;
-
-            case 'base_price':
-                if (!/^\d+(\.\d{1,2})?$/.test(value) || parseFloat(value) <= 0) {
-                    displayError(field, 'Base price must be a positive number with up to two decimal places.');
-                    return false;
-                }
-                break;
-
-            case 'discount_percentage':
-                if (!/^\d+(\.\d{1,2})?$/.test(value) || parseFloat(value) < 0 || parseFloat(value) > 100) {
-                    displayError(field, 'Discount percentage must be between 0 and 100.');
-                    return false;
-                }
-                break;
-        }
-
-        return true;
-    };
-
-    // Attach event listeners for real-time validation
-    Object.values(fields).forEach(field => {
-        if (field) {
-            field.addEventListener('input', () => validateField(field));
-            field.addEventListener('blur', () => validateField(field));
-        }
-    });
-
-    // Form submit validation
-    form.addEventListener('submit', (event) => {
-        let isValid = true;
-
-        // Validate all fields
-        Object.values(fields).forEach(field => {
-            if (!validateField(field)) {
-                isValid = false;
-            }
-        });
-
-        const imageValidation = validateImages();
-        if (!imageValidation.isValid) {
-            showError(imageValidation.message);
-            isValid = false;
-            return;
-        }
-
-        if (isValid) {
-            const formData = new FormData(form);
-            
-            // Add each uploaded image to the FormData
-            uploadedImages.forEach((image, index) => {
-                formData.append('book_images', image.file, `book_image_${index + 1}.jpg`);
-            });
-
-            try {
-                const response = await fetch(form.action, {
-                    method: 'POST',
-                    body: formData,
-                });
-
-                if (response.ok) {
-                    window.location.href = '/admin_products/';  // Redirect on success
-                } else {
-                    showError('Error submitting form. Please try again.');
-                }
-            } catch (error) {
-                showError('Network error. Please try again.');
-            }
-        }
-    });
-});
-</script>
-
 <script>
     document.addEventListener('DOMContentLoaded', () => {
-        const imageUploadInputs = document.querySelectorAll('input[type="file"][id^="image-upload-"]');
+        // Form elements
+        const form = document.querySelector('form');
+        const fields = {
+            bookName: form.querySelector('[name="book_name"]'),
+            description: form.querySelector('[name="description"]'),
+            stockQuantity: form.querySelector('[name="stock_quantity"]'),
+            basePrice: form.querySelector('[name="base_price"]'),
+            discountPercentage: form.querySelector('[name="discount_percentage"]'),
+            authorName: form.querySelector('[name="author_name"]'),
+            bio: form.querySelector('[name="bio"]'),
+            language: form.querySelector('[name="language"]'),
+            category: form.querySelector('[name="category"]')
+        };
     
-        function setupImageUpload(input, label) {
-            input.addEventListener('change', async (event) => {
-                const file = event.target.files[0];
-                if (!file) return;
+        // Constants
+        const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+        const ALLOWED_FILE_TYPES = ['image/jpeg', 'image/png'];
+        const errorMessages = {};
+        const uploadedImages = new Map(); // Track uploaded images
     
-                // Validate file type and size
-                if (!['image/jpeg', 'image/png'].includes(file.type)) {
-                    alert('Please upload JPG or PNG images only.');
-                    return;
+        // Validation rules
+        const validationRules = {
+            bookName: {
+                pattern: /^[A-Za-z0-9\s\-_&(),.]+$/,
+                message: 'Book name should contain only letters, numbers, spaces, and basic punctuation.'
+            },
+            category: {
+                pattern: /^[A-Za-z\s\-&]+$/,
+                message: 'Category should contain only letters, spaces, and hyphens.'
+            },
+            authorName: {
+                pattern: /^[A-Za-z\s\-.']+$/,
+                message: 'Author name should contain only letters, spaces, and basic punctuation.'
+            },
+            language: {
+                pattern: /^[A-Za-z\s\-]+$/,
+                message: 'Language should contain only letters and spaces.'
+            }
+        };
+    
+        // Error handling functions
+        const displayError = (field, message) => {
+            clearError(field);
+            const errorElement = document.createElement('p');
+            errorElement.classList.add('text-red-500', 'text-sm', 'mt-1');
+            errorElement.textContent = message;
+            field.parentNode.appendChild(errorElement);
+            errorMessages[field.name] = errorElement;
+        };
+    
+        const clearError = (field) => {
+            if (errorMessages[field.name]) {
+                errorMessages[field.name].remove();
+                delete errorMessages[field.name];
+            }
+        };
+    
+        const showGlobalError = (message) => {
+            const errorDiv = document.getElementById('error-message');
+            errorDiv.textContent = message;
+            errorDiv.classList.remove('hidden');
+            setTimeout(() => errorDiv.classList.add('hidden'), 5000);
+        };
+    
+        // Field validation function
+        const validateField = (field) => {
+            const value = field.value.trim();
+            clearError(field);
+    
+            // Skip validation if field is empty and not required
+            if (!value && !field.hasAttribute('required')) {
+                return true;
+            }
+    
+            // Apply specific validation rules
+            if (validationRules[field.name]) {
+                if (!validationRules[field.name].pattern.test(value)) {
+                    displayError(field, validationRules[field.name].message);
+                    return false;
+                }
+            }
+    
+            // Additional field-specific validations
+            switch (field.name) {
+                case 'description':
+                case 'bio':
+                    if (value.length < 10) {
+                        displayError(field, `${field.name} must be at least 10 characters long.`);
+                        return false;
+                    }
+                    break;
+    
+                case 'stock_quantity':
+                    if (!/^\d+$/.test(value) || parseInt(value) <= 0) {
+                        displayError(field, 'Stock quantity must be a positive whole number.');
+                        return false;
+                    }
+                    break;
+    
+                case 'base_price':
+                    if (!/^\d+(\.\d{1,2})?$/.test(value) || parseFloat(value) <= 0) {
+                        displayError(field, 'Base price must be a positive number with up to two decimal places.');
+                        return false;
+                    }
+                    break;
+    
+                case 'discount_percentage':
+                    const discount = parseFloat(value);
+                    if (value && (isNaN(discount) || discount < 0 || discount > 100)) {
+                        displayError(field, 'Discount percentage must be between 0 and 100.');
+                        return false;
+                    }
+                    break;
+            }
+    
+            return true;
+        };
+    
+        // Image handling functions
+        const setupImageUpload = (input, label) => {
+            const defaultLabelContent = label.innerHTML;
+    
+            const handleImageUpload = (file) => {
+                if (!file) return false;
+    
+                // Validate file
+                if (!ALLOWED_FILE_TYPES.includes(file.type)) {
+                    showGlobalError('Please upload JPG or PNG images only.');
+                    return false;
                 }
     
-                if (file.size > 5 * 1024 * 1024) {
-                    alert('File size should not exceed 5MB.');
-                    return;
+                if (file.size > MAX_FILE_SIZE) {
+                    showGlobalError('File size should not exceed 5MB.');
+                    return false;
                 }
     
-                // Create image preview
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    // Create a container that looks like the original input field
-                    const previewContainer = document.createElement('div');
-                    previewContainer.className = 'relative w-full h-full border-2 border-dashed border-gray-300 rounded flex items-center justify-center bg-gray-100';
+                return new Promise((resolve) => {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        // Create preview
+                        label.innerHTML = '';
+                        const previewContainer = createPreviewContainer(e.target.result, file.name);
+                        label.appendChild(previewContainer);
+                        
+                        // Store uploaded image
+                        const inputIndex = parseInt(input.id.split('-').pop());
+                        uploadedImages.set(inputIndex, {
+                            file: file,
+                            preview: e.target.result
+                        });
     
-                    // Create image element
-                    const img = document.createElement('img');
-                    img.src = e.target.result;
-                    img.className = 'absolute inset-0 w-full h-full object-cover rounded z-0';
+                        resolve(true);
+                    };
+                    reader.readAsDataURL(file);
+                });
+            };
     
-                    // Create remove button
-                    const removeBtn = document.createElement('button');
-                    removeBtn.innerHTML = '&times;';
-                    removeBtn.className = 'absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center z-10';
+            const createPreviewContainer = (previewUrl, fileName) => {
+                const container = document.createElement('div');
+                container.className = 'relative w-full h-full';
     
-                    // Clicking on image should allow re-upload
-                    img.addEventListener('click', () => {
-                        input.click();
-                    });
+                const img = document.createElement('img');
+                img.src = previewUrl;
+                img.alt = fileName;
+                img.className = 'absolute inset-0 w-full h-full object-cover rounded';
     
-                    // Remove the image preview and reset input field
-                    removeBtn.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        input.value = ''; // Clear file input
-    
-                        // Reset the label to original state
-                        label.innerHTML = `
-                            <input type="file" name="book_images" id="${input.id}" class="hidden" accept="image/jpeg,image/png" multiple>
-                            <span class="text-gray-400 text-3xl mb-2">+</span>
-                            <span class="text-gray-400 text-sm">Cover Image ${input.id.split('-').pop()}</span>
-                        `;
-    
-                        // Reattach event listener to reset image upload functionality
-                        const newInput = label.querySelector('input');
-                        setupImageUpload(newInput, label);
-                    });
-    
-                    // Clear previous content and add preview
-                    label.innerHTML = '';
-                    previewContainer.appendChild(img);
-                    previewContainer.appendChild(removeBtn);
-                    label.appendChild(previewContainer);
+                const removeBtn = document.createElement('button');
+                removeBtn.innerHTML = '×';
+                removeBtn.className = 'absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600 transition-colors';
+                removeBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    input.value = '';
+                    label.innerHTML = defaultLabelContent;
+                    const inputIndex = parseInt(input.id.split('-').pop());
+                    uploadedImages.delete(inputIndex);
                 };
     
-                reader.readAsDataURL(file);
+                container.appendChild(img);
+                container.appendChild(removeBtn);
+                return container;
+            };
+    
+            input.addEventListener('change', async (e) => {
+                const file = e.target.files[0];
+                await handleImageUpload(file);
             });
-        }
+        };
     
-        // Initial setup for all inputs
-        imageUploadInputs.forEach(input => {
-            setupImageUpload(input, input.closest('label'));
-        });
+        // Initialize form
+        const initializeForm = () => {
+            // Set up field validation
+            Object.values(fields).forEach(field => {
+                if (field) {
+                    field.addEventListener('input', () => validateField(field));
+                    field.addEventListener('blur', () => validateField(field));
+                }
+            });
+    
+            // Set up image uploads
+            document.querySelectorAll('input[type="file"][id^="image-upload-"]').forEach(input => {
+                setupImageUpload(input, input.closest('label'));
+            });
+    
+            // Form submission handler
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                let isValid = true;
+    
+                // Validate all fields
+                Object.values(fields).forEach(field => {
+                    if (!validateField(field)) {
+                        isValid = false;
+                    }
+                });
+    
+                // Validate at least one image is uploaded
+                if (uploadedImages.size === 0) {
+                    showGlobalError('Please upload at least one book image.');
+                    isValid = false;
+                }
+    
+                if (isValid) {
+                    try {
+                        const formData = new FormData(form);
+                        
+                        // Add uploaded images
+                        uploadedImages.forEach((imageData, inputIndex) => {
+                            // Use the actual input index to maintain correct field names
+                            formData.append(`book_image_${inputIndex}`, imageData.file);
+                        });
+    
+                        const response = await fetch(form.action, {
+                            method: 'POST',
+                            body: formData
+                        });
+    
+                        if (response.ok) {
+                            window.location.href = '/admin_products/';
+                        } else {
+                            const errorData = await response.json();
+                            showGlobalError(errorData.message || 'Error submitting form. Please try again.');
+                        }
+                    } catch (error) {
+                        showGlobalError('Network error. Please try again.');
+                        console.error('Form submission error:', error);
+                    }
+                }
+            });
+        };
+    
+        // Initialize the form
+        initializeForm();
     });
-    
+</script>
 {% endblock %}
