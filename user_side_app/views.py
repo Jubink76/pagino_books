@@ -10,6 +10,7 @@ import json
 from user_profile_app.models import AddressTable
 from django.contrib.auth.decorators import login_required
 from order_detail_app.models import OrderDetails,OrderItem
+from django.urls import reverse
 
 ##########################################################################################################
 
@@ -116,69 +117,85 @@ def add_to_cart(request, book_id):
     book = get_object_or_404(BookTable, id=book_id)
     item_price = book.offer_price if book.offer_price else book.base_price
 
-    if request.user.is_authenticated:
-        cart_item, created = CartTable.objects.get_or_create(
-            user=request.user,
-            book=book,
-            defaults={
-                'quantity': 1,
-                'item_price': item_price,
-                'total_price': item_price,
-            }
-        )
-    else:
-        session_id = request.session.session_key or request.session.create()
-        cart_item, created = CartTable.objects.get_or_create(
-            session_id=session_id,
-            book=book,
-            defaults={
-                'quantity': 1,
-                'item_price': item_price,
-                'total_price': item_price,
-            }
-        )
-
-    if created:
-        if book.stock_quantity > 0:
-            book.stock_quantity -= 1
-            if book.stock_quantity <= 0:
-                book.is_available = False  
-            book.save()
-            messages.success(request, f"{book.book_name} added to your cart.")
+    try:
+        if request.user.is_authenticated:
+            cart_item, created = CartTable.objects.get_or_create(
+                user=request.user,
+                book=book,
+                defaults={
+                    'quantity': 1,
+                    'item_price': item_price,
+                    'total_price': item_price,
+                }
+            )
         else:
-            messages.error(request, f"{book.book_name} is out of stock.")
-            return redirect('cart_page')
-    
+            session_id = request.session.session_key or request.session.create()
+            cart_item, created = CartTable.objects.get_or_create(
+                session_id=session_id,
+                book=book,
+                defaults={
+                    'quantity': 1,
+                    'item_price': item_price,
+                    'total_price': item_price,
+                }
+            )
 
-    if not created:
-        cart_item.quantity += 1
-        cart_item.save()  
+        if created:
+            if book.stock_quantity > 0:
+                book.stock_quantity -= 1
+                if book.stock_quantity <= 0:
+                    book.is_available = False
+                book.save()
+                return JsonResponse({
+                    'status': 'success',
+                    'message': f"{book.book_name} added to your cart.",
+                    'redirect_url': reverse('cart_page')
+                })
+            else:
+                return JsonResponse({
+                    'status': 'error',
+                    'message': f"{book.book_name} is out of stock."
+                })
 
-    messages.success(request, f"{book.book_name} added to your cart.")
-    return redirect('cart_page')
+        if not created:
+            cart_item.quantity += 1
+            cart_item.save()
+
+        return JsonResponse({
+            'status': 'success',
+            'message': f"{book.book_name} added to your cart.",
+            'redirect_url': reverse('cart_page')
+        })
+
+    except Exception as e:
+        return JsonResponse({
+            'status': 'error',
+            'message': 'An error occurred while adding to cart.',
+        })
 
 
 
 ###########################################################################################################
+def delete_cart_item(request, item_id):
+    try:
+        if request.user.is_authenticated:
+            cart_item = get_object_or_404(CartTable, id=item_id, user=request.user)
+        else:
+            session_id = request.session.session_key
+            cart_item = get_object_or_404(CartTable, id=item_id, session_id=session_id)
 
-def delete_cart_item(request,item_id):
-    if request.user.is_authenticated:
-        cart_item = get_object_or_404(CartTable, id=item_id, user=request.user)
-    else:
-        session_id = request.session.session_key
-        cart_item = get_object_or_404(CartTable, id=item_id, session_id=session_id)
+        # Update stock and delete cart item
+        book = cart_item.book
+        book.stock_quantity += cart_item.quantity
+        if book.stock_quantity > 0:
+            book.is_available = True  
+        book.save()
 
-    book = cart_item.book
-    book.stock_quantity += cart_item.quantity
-    if book.stock_quantity > 0:
-        book.is_available = True  
-    book.save()
+        cart_item.delete()
 
-    cart_item.delete()
-
-    messages.success(request, "Item removed from the cart.")
-
-    return redirect('cart_page')
+        return JsonResponse({'status': 'success', 'message': 'Item removed from the cart.'})
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': 'Failed to remove item from the cart.'})
 
 ###########################################################################################################
 
@@ -196,43 +213,60 @@ def update_cart_quantity(request, item_id):
 
         try:
             data = json.loads(request.body)
-            new_quantity = data.get('quantity')
+            new_quantity = int(data.get('quantity', 0))
+            
+            # Validate quantity
             if new_quantity < 1:
-                return JsonResponse({'error': 'Quantity cannot be zero or less.'}, status=400)
+                return JsonResponse({
+                    'error': 'Quantity cannot be zero or less.',
+                    'current_quantity': cart_item.quantity,
+                    'item_total': float(cart_item.total_price),
+                }, status=400)
             
-            # Calculate the change in quantity
-            quantity_diff = new_quantity - cart_item.quantity
-            
-            # Check if stock is sufficient for the new quantity
-            if quantity_diff > 0 and new_quantity > book.stock_quantity + cart_item.quantity:
-                return JsonResponse({'error': 'Not enough stock available.'}, status=400)
+            max_allowed = min(10, book.stock_quantity)
+            if new_quantity > max_allowed:
+                error_message = 'Maximum quantity allowed is 10.' if max_allowed == 10 else f'Only {max_allowed} items available in stock.'
+                return JsonResponse({
+                    'error': error_message,
+                    'current_quantity': cart_item.quantity,
+                    'item_total': float(cart_item.total_price),
+                }, status=400)
 
-            # Calculate new total price and update cart item
+            # Update cart item and book stock
+            quantity_diff = new_quantity - cart_item.quantity
             cart_item.quantity = new_quantity
             cart_item.total_price = cart_item.item_price * new_quantity
             cart_item.save()
 
-            # Update available stock in BookTable
-            book.stock_quantity -= quantity_diff  
+            book.stock_quantity -= quantity_diff
             if book.stock_quantity <= 0:
-                book.is_available = False  
+                book.is_available = False
             book.save()
 
-            # Calculate grand total across all items in the user's cart
+            # Calculate grand total
             if request.user.is_authenticated:
                 cart_items = CartTable.objects.filter(user=request.user)
             else:
                 cart_items = CartTable.objects.filter(session_id=session_key)
-                
+
             grand_total = sum(item.total_price for item in cart_items)
 
             return JsonResponse({
-                'item_total': cart_item.total_price,
-                'grand_total': grand_total,
+                'success': True,
+                'item_total': float(cart_item.total_price),
+                'grand_total': float(grand_total),
+                'current_quantity': cart_item.quantity,
+                'max_quantity': max_allowed,
             })
-        except ValueError:
-            return JsonResponse({'error': 'Invalid quantity value.'}, status=400)
-    return JsonResponse({'error': 'Invalid request'}, status=400)
+
+        except (ValueError, TypeError, json.JSONDecodeError):
+            return JsonResponse({
+                'error': 'Invalid data format.',
+                'current_quantity': cart_item.quantity,
+                'item_total': float(cart_item.total_price),
+            }, status=400)
+
+    return JsonResponse({'error': 'Invalid request method'}, status=400)
 
 ###########################################################################################################
 
@@ -250,47 +284,54 @@ def whishlist_page(request):
 
 ###########################################################################################################
 
-def add_to_whishlist(request,book_id):
+def add_to_whishlist(request, book_id):
     book = get_object_or_404(BookTable, id=book_id)
 
-    if request.user.is_authenticated:
-        whishlist_item, created = WhishlistTable.objects.get_or_create(
-            user = request.user,
-            book = book
-        )
+    try:
+        if request.user.is_authenticated:
+            whishlist_item, created = WhishlistTable.objects.get_or_create(
+                user=request.user,
+                book=book
+            )
+        else:
+            session_id = request.session.session_key or request.session.create()
+            whishlist_item, created = WhishlistTable.objects.get_or_create(
+                session_id=session_id,
+                book=book,
+            )
 
-    else:
-        session_id = request.session.session_key or request.session.create()
-        whishlist_item, created = WhishlistTable.objects.get_or_create(
-            session_id=session_id,
-            book=book,
-        )
+        if created:
+            return JsonResponse({
+                'status': 'success',
+                'message': 'Book added to wishlist successfully!',
+                'redirect_url': reverse('whishlist_page')  # Ensure this URL name exists
+            })
+        else:
+            return JsonResponse({
+                'status': 'info',
+                'message': 'This book is already in your wishlist.',
+                'redirect_url': reverse('whishlist_page')
+            })
 
-    if created:
-        response = {'message': 'Book added to wishlist successfully!'}
-        messages.success(request, response['message'])
-    else:
-        response = {'message': 'This book is already in your wishlist.'}
-        messages.info(request, response['message'])
-
-    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-        return JsonResponse(response)
-
-    return redirect('whishlist_page')
+    except Exception as e:
+        return JsonResponse({
+            'status': 'error',
+            'message': 'An error occurred while adding to the wishlist.'
+        })
 
 #################################################################################################################
 
 def del_whishlist_item(request,book_id):
-    if request.user.is_authenticated:
-        whishlist_item = get_object_or_404(WhishlistTable, book_id=book_id, user=request.user)
-    else:
-        session_id = request.session.session_key
-        whishlist_item = get_object_or_404(WhishlistTable,  book_id=book_id, session_id=session_id)
-
-    whishlist_item.delete()
-    messages.success(request,"item removed from whishlist")
-
-    return redirect('whishlist_page')
+    try:
+        if request.user.is_authenticated:
+            whishlist_item = get_object_or_404(WhishlistTable, book_id=book_id, user=request.user)
+        else:
+            session_id = request.session.session_key
+            whishlist_item = get_object_or_404(WhishlistTable,  book_id=book_id, session_id=session_id)
+        whishlist_item.delete()
+        return JsonResponse({'status': 'success', 'message': 'Item removed from wishlist.'})
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': 'Failed to remove item from wishlist.'})
 
 ###################################################################################################################
 @login_required
@@ -317,34 +358,91 @@ def checkout_page(request):
 @login_required
 def checkout_add_address(request):
     if request.method == "POST":
-        address_name = request.POST.get('address_name')
-        street_name= request.POST.get('street_name')
-        building_no = request.POST.get('building_no')
-        landmark = request.POST.get('landmark')
-        city = request.POST.get('city')
-        pincode = request.POST.get('pincode')
-        address_phone = request.POST.get('address_phone')
-        state = request.POST.get('state')
+        # Get form data
+        address_name = request.POST.get('address_name', '').strip()
+        street_name = request.POST.get('street_name', '').strip()
+        building_no = request.POST.get('building_no', '').strip()
+        landmark = request.POST.get('landmark', '').strip()
+        city = request.POST.get('city', '').strip()
+        pincode = request.POST.get('pincode', '').strip()
+        address_phone = request.POST.get('address_phone', '').strip()
+        state = request.POST.get('state', '').strip()
+        address_type = request.POST.get('address_type', 'Home')  # Default to Home if not specified
 
+        # Initialize errors dictionary
+        errors = {}
 
-        address = AddressTable(
-                    user=request.user,
-                    address_name=address_name,
-                    street_name=street_name,
-                    building_no=building_no,
-                    landmark=landmark,
-                    city=city,
-                    pincode=pincode,
-                    address_phone=address_phone,
-                    state=state
-                )
+        # Validate each field
+        if not address_name:
+            errors['address_name'] = 'Full name is required'
+        elif not re.match(r'^[a-zA-Z\s]*$', address_name):
+            errors['address_name'] = 'Name should only contain letters and spaces'
 
-                # Attempt to save the address
-        address.save()
-        print("address saved")
-        messages.success(request, "Address added successfully!")
+        if not street_name:
+            errors['street_name'] = 'Street address is required'
 
-    return render(request, 'checkout_page.html')
+        if not building_no:
+            errors['building_no'] = 'Building/Apartment number is required'
+
+        if not city:
+            errors['city'] = 'City is required'
+        elif not re.match(r'^[a-zA-Z\s]*$', city):
+            errors['city'] = 'City should only contain letters and spaces'
+
+        if not pincode:
+            errors['pincode'] = 'Pincode is required'
+        elif not re.match(r'^\d{6}$', pincode):
+            errors['pincode'] = 'Pincode must be 6 digits'
+
+        if not address_phone:
+            errors['address_phone'] = 'Phone number is required'
+        elif not re.match(r'^\d{10}$', address_phone):
+            errors['address_phone'] = 'Phone number must be 10 digits'
+
+        if not state:
+            errors['state'] = 'State is required'
+        elif not re.match(r'^[a-zA-Z\s]*$', state):
+            errors['state'] = 'State should only contain letters and spaces'
+
+        # If there are any errors, return them
+        if errors:
+            return JsonResponse({
+                'status': 'error',
+                'errors': errors
+            })
+
+        try:
+            # Create and save the address
+            address = AddressTable(
+                user=request.user,
+                address_name=address_name,
+                street_name=street_name,
+                building_no=building_no,
+                landmark=landmark,
+                city=city,
+                pincode=pincode,
+                address_phone=address_phone,
+                state=state,
+                address_type=address_type
+            )
+            address.save()
+
+            return JsonResponse({
+                'status': 'success',
+                'message': 'Address added successfully!'
+            })
+
+        except Exception as e:
+            return JsonResponse({
+                'status': 'error',
+                'message': 'An error occurred while saving the address.'
+            })
+
+    return JsonResponse({
+        'status': 'error',
+        'message': 'Invalid request method'
+    })
+
 ###################################################################################################################
 
 def order_success(request,order_id):

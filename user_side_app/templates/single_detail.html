@@ -4,7 +4,7 @@
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
 <script src="https://cdn.jsdelivr.net/npm/jquery-zoom@1.7.21/jquery.zoom.min.js"></script>
-
+<script src="{% static 'user/js/sweetAlert.js' %}"></script>
 <style>
 	.image-zoom-container {
 		display: flex;
@@ -291,7 +291,7 @@
 				  			</div>
 		  
 				  			<!-- Quantity and Add to Cart -->
-				  			<div class="flex items-center space-x-4">
+				  			<!--<div class="flex items-center space-x-4">
 								<div class="flex items-center border rounded-md">
 					  				<button class="px-3 py-2 hover:bg-gray-100">-</button>
 					  			<input 
@@ -300,20 +300,28 @@
 									class="w-16 text-center border-x px-2 py-2"
 					  			>
 					  			<button class="px-3 py-2 hover:bg-gray-100">+</button>
+							</div>-->
+							<div class="flex items-center space-x-4">
+								<button   
+									class="add-to-cart-btn bg-blue-600 text-white px-8 py-3 rounded-md hover:bg-blue-700 transition flex items-center space-x-2" 
+									data-url="{% url 'add_to_cart' book.id %}" 
+									data-success-redirect="{% url 'cart_page' %}">
+									<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+											d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+									</svg>
+									<span>ADD TO CART</span>
+								</button>
+								<button class="add-to-wishlist-btn bg-pink-100 text-pink-600 px-4 py-3 rounded-md hover:bg-pink-200 transition flex items-center space-x-2" 
+									data-url="{% url 'add_to_whishlist' book.id %}"
+									data-success-redirect="">
+									<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+									</svg>
+									<span>ADD TO WISHLIST</span>
+								</button>
 							</div>
-							<a href="{% url 'add_to_cart' book.id %}"><button class="bg-blue-600 text-white px-8 py-3 rounded-md hover:bg-blue-700 transition flex items-center space-x-2">
-					  			<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
-					  			</svg>
-					  			<span>ADD TO CART</span>
-								</button>
-							</a>
-							<a href="{% url 'add_to_whishlist' book.id %}"><button class="bg-pink-100 text-pink-600 px-4 py-3 rounded-md hover:bg-pink-200 transition">
-					  			<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
-					  			</svg>
-								</button>
-							</a>
+							
 				  		</div>
 				</div>
 				{% endif %}
@@ -355,6 +363,7 @@
 {% endblock %}
 
 {% block script %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
 	document.addEventListener('DOMContentLoaded', function () {
 		function initImageZoom(container) {

@@ -1,6 +1,10 @@
 {% extends 'base.html' %}
 {% load static %}
 
+{% block css_link %}
+<script src="{% static 'user/js/confirm_alert.js' %}"></script>
+{% endblock %}
+
 {% block content %}
 <div class="font-sans">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
@@ -237,7 +241,10 @@
                                 {% if order.order_status != 'Canceled' %}
                                 <form method="POST" action="{% url 'cancel_order' order.order_id %}" class="mr-4">
                                     {% csrf_token %}
-                                    <button type="submit" class="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600">
+                                    <button 
+                                        type="button" 
+                                        class="action-btn bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition" 
+                                        data-url="{% url 'cancel_order' order.order_id %}">
                                         Cancel Order
                                     </button>
                                 </form>
@@ -279,5 +286,5 @@
 {% endblock %}
 
 {% block script %}
-
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 {% endblock %}

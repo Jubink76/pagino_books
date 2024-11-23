@@ -7,7 +7,8 @@ import random
 import string
 from django.db import transaction
 from django.contrib.auth.decorators import login_required
-
+from django.urls import reverse
+from django.http import JsonResponse
 # generating unique order id
 def generate_order_id():
     return ''.join(random.choices(string.ascii_uppercase + string.ascii_lowercase + string.digits, k=10))
@@ -79,18 +80,18 @@ def create_order(request):
 
             # Clear cart
             cart_items.delete()
-            messages.success(request, "Order placed successfully!")
-            return redirect('order_success', order_id=order.order_id)
+            return JsonResponse({
+                'status': 'success',
+                'message': 'Order placed successfully!',
+                'redirect_url': reverse('order_success', kwargs={'order_id': order.order_id})
+            })
 
     except AddressTable.DoesNotExist:
-        messages.error(request, "Selected address not found.")
-        return redirect('checkout_page')
+        return JsonResponse({'status': 'error', 'message': 'Selected address not found.'})
     except ValueError as e:
-        messages.error(request, str(e))
-        return redirect('checkout_page')
+        return JsonResponse({'status': 'error', 'message': str(e)})
     except Exception as e:
-        messages.error(request, f"An error occurred: {str(e)}")
-        return redirect('checkout_page')
+        return JsonResponse({'status': 'error', 'message': f"An error occurred: {str(e)}"})
     
 #################################################################################################################################
 @login_required
@@ -102,9 +103,16 @@ def cancel_order(request,order_id):
             order.order_status = 'Canceled'
             order.is_canceled = True
             order.save()
-            messages.success(request, f"Order {order.order_id} has been canceled.")
+            return JsonResponse({
+            'status': 'success',
+            'message': f"Order {order.order_id} has been canceled.",
+            'redirect_url': reverse('user_orders')
+            })
         else:
-            messages.warning(request, f"Order {order.order_id} is already canceled.")
+            return JsonResponse({
+            'status': 'info',
+            'message': f"Order {order.order_id} is already canceled."
+            })
     return redirect('user_orders')
 
 ################################################################################################################################

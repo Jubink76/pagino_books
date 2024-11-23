@@ -3,6 +3,8 @@
 {% load static %}
 
 {% block css_link %}
+<script src="{% static 'user/js/confirm_alert.js' %}"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
 
 {% endblock %}
 
@@ -28,6 +30,7 @@
             <!-- Cart Table -->
             <div class="bg-white rounded-lg shadow-md overflow-hidden mb-8">
                 <div class="overflow-x-auto">
+                    {% csrf_token %}
                     <table class="w-full">
                         <thead class="bg-gray-50">
                             <tr class="text-left text-gray-600">
@@ -43,11 +46,17 @@
                             <tr class="hover:bg-gray-50">
                                 <!-- Remove Button -->
                                 <td class="py-4 px-6">
-									<a href="{% url 'delete_cart_item' item.id %}" class="inline-block text-red-500 hover:text-red-700 transition-colors">
-										<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-											<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-										</svg>
-									</a>
+									<a href="#" 
+                                        class="action-btn inline-block text-red-500 hover:text-red-700 transition-colors" 
+                                        data-url="{% url 'delete_cart_item' item.id %}"
+                                        data-title="Remove Item?"
+                                        data-text="Do you want to remove this item from your cart?"
+                                        data-success-message="Item removed successfully!">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                        </svg>
+                                    </a>
 								</td>
                                 
                                 <!-- Product Image -->
@@ -75,28 +84,31 @@
                                 <td class="py-4 px-6">
                                     <div class="flex items-center space-x-2">
                                         <div class="flex items-center border rounded-lg">
-                                            <button class="minus gradient px-3 py-1 text-gray-600 hover:bg-gray-100" data-id="{{ item.id }}">
-                                                <i class="fa fa-sort-desc"></i>
+                                            <button class="minus gradient px-3 py-1 text-gray-600 hover:bg-gray-100" 
+                                                    data-id="{{ item.id }}">
+                                                <i class="fas fa-minus"></i>
                                             </button>
                                             <input type="number" 
                                                    class="w-16 px-2 py-1 text-center focus:outline-none"
                                                    data-id="{{ item.id }}"
                                                    value="{{ item.quantity }}"
                                                    min="1"
-                                                   max="{{ item.book.stock_quantity}}">
-                                            <button class="plus gradient px-3 py-1 text-gray-600 hover:bg-gray-100" data-id="{{ item.id }}">
-                                                <i class="fa fa-sort-asc"></i>
+                                                   max="{% if item.book.stock_quantity > 10 %}10{% else %}{{ item.book.stock_quantity }}{% endif %}"
+                                                   readonly>
+                                            <button class="plus gradient px-3 py-1 text-gray-600 hover:bg-gray-100" 
+                                                    data-id="{{ item.id }}">
+                                                <i class="fas fa-plus"></i>
                                             </button>
                                         </div>
                                     </div>
-                                    <div id="error-message-{{ item.id }}" class="hidden text-red-500 text-sm mt-1">
-                                        Quantity cannot be zero or less.
-                                    </div>
+                                    <div id="error-message-{{ item.id }}" class="hidden text-red-500 text-sm mt-1"></div>
                                 </td>
+
+                        
                                 
                                 <!-- Total Price -->
                                 <td class="py-4 px-6">
-                                    <span class="font-medium text-gray-900" data-id="{{ item.id }}">₹{{ item.item_price }}</span>
+                                    <span class="font-medium text-gray-900" id="item-total-{{ item.id }}">₹{{ item.item_price }}</span>
                                 </td>
                             </tr>
                             {% endfor %}
@@ -154,21 +166,6 @@
 {% endblock %}
 
 {% block script %}
-<script type="text/javascript">
-    function getCookie(name) {
-        let cookieValue = null;
-        if (document.cookie && document.cookie !== '') {
-            const cookies = document.cookie.split(';');
-            for (let i = 0; i < cookies.length; i++) {
-                const cookie = cookies[i].trim();
-                if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                    break;
-                }
-            }
-        }
-        return cookieValue;
-    }
-</script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="{% static 'user/js/update_cart.js' %}"></script>
 {% endblock %}

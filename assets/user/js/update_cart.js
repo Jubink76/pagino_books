@@ -1,6 +1,21 @@
-document.addEventListener('DOMContentLoaded', function() {
-    const plusButtons = document.querySelectorAll('.arrow.plus');
-    const minusButtons = document.querySelectorAll('.arrow.minus');
+document.addEventListener('DOMContentLoaded', function () {
+    const plusButtons = document.querySelectorAll('.plus');
+    const minusButtons = document.querySelectorAll('.minus');
+
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
 
     function updateCartQuantity(itemId, newQuantity) {
         fetch(`/update_cart_quantity/${itemId}/`, {
@@ -9,81 +24,91 @@ document.addEventListener('DOMContentLoaded', function() {
                 'X-CSRFToken': getCookie('csrftoken'),
                 'Content-Type': 'application/json',
             },
-            cache: "no-cache",
-            body: JSON.stringify({ quantity: newQuantity })
+            body: JSON.stringify({ quantity: newQuantity }),
         })
         .then(response => response.json())
         .then(data => {
             if (data.error) {
-                // Show error message for 2 seconds
                 const errorMessage = document.getElementById(`error-message-${itemId}`);
                 errorMessage.textContent = data.error;
-                errorMessage.style.display = 'block';
+                errorMessage.classList.remove('hidden');
                 setTimeout(() => {
-                    errorMessage.style.display = 'none';
+                    errorMessage.classList.add('hidden');
                 }, 2000);
             } else {
-                // Update item total and grand total in the UI
-                document.querySelector(`.cart-sub-total-price[data-id="${itemId}"]`).textContent = `₹${data.item_total}`;
-                document.querySelector('.cart-grand-total .inner-left-md').textContent = `₹${data.grand_total}`;
+                // Update item total price
+                const itemTotalElement = document.getElementById(`item-total-${itemId}`);
+                if (itemTotalElement) {
+                    itemTotalElement.textContent = `₹${data.item_total.toFixed(2)}`;
+                }
 
-                // Update quantity display if you have an element for showing it
-                const quantityInput = document.querySelector(`.quantity-input[data-id="${itemId}"]`);
-                quantityInput.value = newQuantity;
+                // Update grand total
+                const grandTotal = document.querySelector('.text-xl.font-bold.text-gray-900');
+                if (grandTotal && data.grand_total) {
+                    grandTotal.textContent = `₹${data.grand_total.toFixed(2)}`;
+                }
 
-                // Check if quantity reached the max stock
-                if (data.error === 'Not enough stock available.') {
-                    document.querySelector(`.arrow.plus[data-id="${itemId}"]`).disabled = true;
+                // Update quantity input
+                const quantityInput = document.querySelector(`input[data-id="${itemId}"]`);
+                if (quantityInput) {
+                    quantityInput.value = data.current_quantity;
                 }
             }
         })
-        .catch(error => console.error('Error:', error));
+        .catch(error => {
+            console.error('Error:', error);
+            const errorMessage = document.getElementById(`error-message-${itemId}`);
+            errorMessage.textContent = 'An error occurred. Please try again.';
+            errorMessage.classList.remove('hidden');
+            setTimeout(() => {
+                errorMessage.classList.add('hidden');
+            }, 2000);
+        });
     }
 
-    // Increment button click event
+    // Plus button click handler
     plusButtons.forEach(button => {
         button.addEventListener('click', function() {
+            console.log('Plus button clicked'); // Debug log
             const itemId = this.getAttribute('data-id');
-            const quantityInput = document.querySelector(`.quantity-input[data-id="${itemId}"]`);
-            const currentQuantity = parseInt(quantityInput.value) + 1;
-            quantityInput.value = currentQuantity;
-            updateCartQuantity(itemId, currentQuantity);
+            const quantityInput = document.querySelector(`input[data-id="${itemId}"]`);
+            const currentQuantity = parseInt(quantityInput.value);
+            const maxQuantity = parseInt(quantityInput.getAttribute('max'));
+
+            console.log('ItemId:', itemId); // Debug log
+            console.log('Current Quantity:', currentQuantity); // Debug log
+            console.log('Max Quantity:', maxQuantity); // Debug log
+
+            if (currentQuantity < maxQuantity) {
+                updateCartQuantity(itemId, currentQuantity + 1);
+            } else {
+                const errorMessage = document.getElementById(`error-message-${itemId}`);
+                errorMessage.textContent = 'Maximum stock limit reached.';
+                errorMessage.classList.remove('hidden');
+                setTimeout(() => {
+                    errorMessage.classList.add('hidden');
+                }, 2000);
+            }
         });
     });
 
-    // Decrement button click event
+    // Minus button click handler
     minusButtons.forEach(button => {
         button.addEventListener('click', function() {
             const itemId = this.getAttribute('data-id');
-            const quantityInput = document.querySelector(`.quantity-input[data-id="${itemId}"]`);
-            const currentQuantity = parseInt(quantityInput.value) - 1;
+            const quantityInput = document.querySelector(`input[data-id="${itemId}"]`);
+            const currentQuantity = parseInt(quantityInput.value);
 
-            if (currentQuantity > 0) {
-                quantityInput.value = currentQuantity;
-                updateCartQuantity(itemId, currentQuantity);
+            if (currentQuantity > 1) {
+                updateCartQuantity(itemId, currentQuantity - 1);
             } else {
-                // Show error if trying to set quantity below 1
                 const errorMessage = document.getElementById(`error-message-${itemId}`);
-                errorMessage.textContent = "Quantity cannot be zero or less.";
-                errorMessage.style.display = 'block';
+                errorMessage.textContent = 'Quantity cannot be zero or less.';
+                errorMessage.classList.remove('hidden');
                 setTimeout(() => {
-                    errorMessage.style.display = 'none';
+                    errorMessage.classList.add('hidden');
                 }, 2000);
             }
         });
     });
 });
-function getCookie(name) {
-    var cookieValue = null;
-    if (document.cookie && document.cookie !== '') {
-        var cookies = document.cookie.split(';');
-        for (var i = 0; i < cookies.length; i++) {
-            var cookie = cookies[i].trim();
-            if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                break;
-            }
-        }
-    }
-    return cookieValue;
-}

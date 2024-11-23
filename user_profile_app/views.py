@@ -9,6 +9,7 @@ from django.contrib.auth import update_session_auth_hash
 from order_detail_app.models import OrderDetails,OrderItem
 from django.db.models import Count
 from django.db.models import Q
+from django.urls import reverse
 # Create your views here.
 #######################################################################################################################
 def user_profile(request):
@@ -141,11 +142,14 @@ def add_address(request):
                     state = state
                 )
                 address.save()
-                messages.success(request, "Address added successfully!")
-                return redirect('user_address')
+                return JsonResponse({
+                    'status': 'success',
+                    'message': 'Address added successfully!',
+                    'redirect_url': reverse('user_address'),  # Ensure this URL exists
+                })
             
         except Exception as e:
-            messages.error(request, f'An error occurred: {str(e)}')
+            return JsonResponse({'status': 'error', 'message': f'An error occurred: {str(e)}'})
     return render(request,'add_address.html')
 
 #######################################################################################################################
@@ -204,8 +208,11 @@ def user_password_reset(request):
         user.save()
 
         update_session_auth_hash(request, user) 
-        messages.success(request,"Your password has been successfully updated")
-        return redirect('user_profile')
+        return JsonResponse({
+            'status': 'success',
+            'message': 'Your password has been successfully updated.',
+            'redirect_url': reverse('user_profile')  # Ensure this URL exists
+        })
     return render(request,'user_password_reset.html')
 
 #######################################################################################################################
