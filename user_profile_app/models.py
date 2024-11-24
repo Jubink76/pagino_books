@@ -16,6 +16,10 @@ class AddressTable(models.Model):
     state = models.CharField(max_length=100)
     user = models.ForeignKey(UserTable, on_delete=models.CASCADE, related_name="addresses", null=True, blank=True)
     is_default = models.BooleanField(default = False)
+    address_type = models.CharField(max_length=20,
+                                    choices=[('home','home'),
+                                             ('office','office')],
+                                             default='home')
     class Meta:
         db_table = 'Address Table'
         ordering = ['-is_default', 'id']

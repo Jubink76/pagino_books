@@ -1,6 +1,11 @@
 {% extends 'base.html' %}
-<script src="https://cdn.tailwindcss.com"></script>
+
 {% load static %}
+{% block css_link %}
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<script src="{% static 'user/js/sweetAlert.js' %}"></script>
+{% endblock %}
 
 {% block content %}
     <main>
@@ -20,7 +25,7 @@
                 <div class="bg-white shadow-md">
                 {% for category in categories %}
                     {% if category.is_available %}
-                    <a href="#" class="flex items-center p-4 border-b hover:bg-gray-50">
+                    <a href="{% url 'single_category' category.id %}" class="flex items-center p-4 border-b hover:bg-gray-50">
                         <svg class="w-5 h-5 text-gray-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
                         </svg>
@@ -225,12 +230,12 @@
                         <div class="flex space-x-3">
                             {% for book in books|slice:":5" %}
                             {% if book.is_available %}
-                            <!-- Product Card 1 -->
-                            <div class="w-1/5 bg-white rounded-lg shadow-md overflow-hidden transform hover:scale-105 transition-transform duration-300">
+                            <!-- Product Card -->
+                            <div class="w-1/5 bg-white rounded-lg shadow-md overflow-hidden transform hover:scale-105 transition-transform duration-300 relative group">
                                 <div class="relative">
                                     <a href="{% url 'single_detail' book.id %}">
-                                    <img src="{{ book.images.first.image.url }}" alt="The Hunter" class="w-full h-96 object-cover"/>
-                                    <span class="absolute top-2 right-2 bg-blue-400 text-white px-2 py-1 rounded-full text-sm">NEW</span>
+                                        <img src="{{ book.images.first.image.url }}" alt="The Hunter" class="w-full h-96 object-cover" />
+                                        <span class="absolute top-2 right-2 bg-blue-400 text-white px-2 py-1 rounded-full text-sm">NEW</span>
                                     </a>
                                 </div>
                                 <div class="p-4">
@@ -246,10 +251,31 @@
                                         <span class="text-gray-400 line-through">₹{{ book.base_price }}</span>
                                     </div>
                                 </div>
+                                <!-- Floating Icons -->
+                                <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                    <div class="flex gap-5">
+                                        <!-- Floating Cart Icon -->
+                                        <button
+                                            class="add-to-cart-btn w-10 h-10 bg-yellow-400 text-black flex justify-center items-center rounded-full shadow-md transform translate-x-[-50px] group-hover:translate-x-0 transition-transform duration-500 hover:bg-yellow-500"
+                                            data-url="{% url 'add_to_cart' book.id %}"
+                                            data-success-redirect="{% url 'cart_page' %}">
+                                            <i class="fa fa-shopping-cart"></i>
+                                        </button>
+                                
+                                        <!-- Floating Wishlist Icon -->
+                                        <button
+                                            class="add-to-wishlist-btn w-10 h-10 bg-yellow-400 text-black flex justify-center items-center rounded-full shadow-md transform translate-x-[50px] group-hover:translate-x-0 transition-transform duration-500 hover:bg-yellow-500"
+                                            data-url="{% url 'add_to_whishlist' book.id %}"
+                                            data-success-redirect="">
+                                            <i class="fa fa-heart"></i>
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                             {% endif %}
                             {% endfor %}
                         </div>
+                        
                     </div>
                 <!-----------------------authors list and banners ------------------------------------------------>
                 <div class="flex space-x-4 px-8 mb-8">
@@ -316,7 +342,7 @@
                                 {% for book in books|slice:"5:9" %}
                                 {% if book.is_available %}
                                 <!-- Product Card -->
-                                <div class="bg-white rounded-lg shadow-md overflow-hidden transform hover:scale-105 transition-transform duration-300">
+                                <div class="bg-white rounded-lg shadow-md overflow-hidden transform hover:scale-105 transition-transform duration-300 relative group">
                                     <div class="relative">
                                         <a href="{% url 'single_detail' book.id %}">
                                             <img src="{{ book.images.first.image.url }}" alt="{{ book.book_name }}" class="w-full h-96 object-cover"/>
@@ -340,10 +366,32 @@
                                             <span class="text-gray-400 line-through">₹{{ book.base_price }}</span>
                                         </div>
                                     </div>
+                                    <!-- Floating Icons -->
+                                    <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                        <div class="flex gap-5">
+                                            <!-- Cart Icon -->
+                                            <button 
+                                                class="add-to-cart-btn w-10 h-10 bg-yellow-400 text-black flex justify-center items-center rounded-full shadow-md transform translate-x-[-50px] group-hover:translate-x-0 transition-transform duration-500 hover:bg-yellow-500"
+                                                data-url="{% url 'add_to_cart' book.id %}"
+                                                data-success-redirect="{% url 'cart_page' %}">
+                                                <i class="fa fa-shopping-cart"></i>
+                                            </button>
+                                            
+                                            <!-- Wishlist Icon -->
+                                            <button 
+                                                class="add-to-wishlist-btn w-10 h-10 bg-yellow-400 text-black flex justify-center items-center rounded-full shadow-md transform translate-x-[50px] group-hover:translate-x-0 transition-transform duration-500 hover:bg-yellow-500"
+                                                data-url="{% url 'add_to_whishlist' book.id %}"
+                                                data-success-redirect="">
+                                                <i class="fa fa-heart"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    
                                 </div>
                                 {% endif %}
                                 {% endfor %}
                             </div>
+                            
                         </div>
                     </div>
                 </div>
@@ -423,111 +471,56 @@
                 
                     <!-- Product Grid - Modified for 5 cards -->
                     <div class="flex space-x-3">
+                        {% for book in books|slice:"9:14" %}
+                        {% if book.is_available %}
                         <!-- Product Card 1 -->
-                        <div class="w-1/5 bg-white rounded-lg shadow-md overflow-hidden transform hover:scale-105 transition-transform duration-300">
+                        <div class="w-1/5 bg-white rounded-lg shadow-md overflow-hidden transform hover:scale-105 transition-transform duration-300 relative group">
                             <div class="relative">
-                                <img src="{% static 'the-hunter.jpg' %}" alt="The Hunter" class="w-full h-72 object-cover"/>
-                                <span class="absolute top-2 right-2 bg-blue-400 text-white px-2 py-1 rounded-full text-sm">NEW</span>
+                                <a href="{% url 'single_detail' book.id %}">
+                                    <img src="{{ book.images.first.image.url }}" alt="The Hunter" class="w-full h-96 object-cover"/>
+                                    <span class="absolute top-2 right-2 bg-blue-400 text-white px-2 py-1 rounded-full text-sm">NEW</span>
+                                </a>
                             </div>
                             <div class="p-4">
-                                <h3 class="font-semibold text-lg mb-2">The Hunter</h3>
-                                <p class="text-gray-600 mb-2">Tom Wood</p>
+                                <h3 class="font-semibold text-lg mb-2">{{ book.book_name }}</h3>
+                                <p class="text-gray-600 mb-2">{{ book.author }}</p>
                                 <div class="flex items-center mb-2">
                                     <div class="flex text-yellow-400">
                                         ★★★★☆
                                     </div>
                                 </div>
                                 <div class="flex justify-between items-center">
-                                    <span class="text-green-600 font-bold">₹743.07</span>
-                                    <span class="text-gray-400 line-through">₹793.00</span>
+                                    <span class="text-green-600 font-bold">₹{{ book.offer_price }}</span>
+                                    <span class="text-gray-400 line-through">₹{{ book.base_price }}</span>
                                 </div>
                             </div>
+                    
+                            <!-- Floating Icons -->
+                            <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                <div class="flex gap-5">
+                                    <!-- Cart Icon -->
+                                    <button 
+                                        class="add-to-cart-btn w-10 h-10 bg-yellow-400 text-black flex justify-center items-center rounded-full shadow-md transform translate-x-[-50px] group-hover:translate-x-0 transition-transform duration-500 hover:bg-yellow-500"
+                                        data-url="{% url 'add_to_cart' book.id %}"
+                                        data-success-redirect="{% url 'cart_page' %}">
+                                        <i class="fa fa-shopping-cart"></i>
+                                    </button>
+                                    
+                                    <!-- Wishlist Icon -->
+                                    <button 
+                                        class="add-to-wishlist-btn w-10 h-10 bg-yellow-400 text-black flex justify-center items-center rounded-full shadow-md transform translate-x-[50px] group-hover:translate-x-0 transition-transform duration-500 hover:bg-yellow-500"
+                                        data-url="{% url 'add_to_whishlist' book.id %}"
+                                        data-success-redirect="">
+                                        <i class="fa fa-heart"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            
                         </div>
-                
-                        <!-- Product Card 2 -->
-                        <div class="w-1/5 bg-white rounded-lg shadow-md overflow-hidden">
-                            <div class="relative">
-                                <img src="{% static 'ikigai.jpg' %}" alt="Ikigai" class="w-full h-72 object-cover"/>
-                                <span class="absolute top-2 right-2 bg-blue-400 text-white px-2 py-1 rounded-full text-sm">NEW</span>
-                            </div>
-                            <div class="p-4">
-                                <h3 class="font-semibold text-lg mb-2">Ikigai</h3>
-                                <p class="text-gray-600 mb-2">Héctor Garcia and Francesc Miralles</p>
-                                <div class="flex items-center mb-2">
-                                    <div class="flex text-yellow-400">
-                                        ★★★★☆
-                                    </div>
-                                </div>
-                                <div class="flex justify-between items-center">
-                                    <span class="text-green-600 font-bold">₹312.55</span>
-                                    <span class="text-gray-400 line-through">₹329.00</span>
-                                </div>
-                            </div>
-                        </div>
-                
-                        <!-- Product Card 3 -->
-                        <div class="w-1/5 bg-white rounded-lg shadow-md overflow-hidden">
-                            <div class="relative">
-                                <img src="{% static 'wings-of-fire.jpg' %}" alt="Wings of Fire" class="w-full h-72 object-cover"/>
-                                <span class="absolute top-2 right-2 bg-blue-400 text-white px-2 py-1 rounded-full text-sm">NEW</span>
-                            </div>
-                            <div class="p-4">
-                                <h3 class="font-semibold text-lg mb-2">Wings of Fire</h3>
-                                <p class="text-gray-600 mb-2">APJ</p>
-                                <div class="flex items-center mb-2">
-                                    <div class="flex text-yellow-400">
-                                        ★★★★☆
-                                    </div>
-                                </div>
-                                <div class="flex justify-between items-center">
-                                    <span class="text-green-600 font-bold">₹409.50</span>
-                                    <span class="text-gray-400 line-through">₹455.00</span>
-                                </div>
-                            </div>
-                        </div>
-                
-                        <!-- Product Card 4 -->
-                        <div class="w-1/5 bg-white rounded-lg shadow-md overflow-hidden">
-                            <div class="relative">
-                                <img src="{% static 'rich-dad.jpg' %}" alt="Rich Dad Poor Dad" class="w-full h-72 object-cover"/>
-                                <span class="absolute top-2 right-2 bg-blue-400 text-white px-2 py-1 rounded-full text-sm">NEW</span>
-                            </div>
-                            <div class="p-4">
-                                <h3 class="font-semibold text-lg mb-2">Rich Dad Poor Dad</h3>
-                                <p class="text-gray-600 mb-2">Robert T. Kiyosaki</p>
-                                <div class="flex items-center mb-2">
-                                    <div class="flex text-yellow-400">
-                                        ★★★★☆
-                                    </div>
-                                </div>
-                                <div class="flex justify-between items-center">
-                                    <span class="text-green-600 font-bold">₹569.05</span>
-                                    <span class="text-gray-400 line-through">₹593.00</span>
-                                </div>
-                            </div>
-                        </div>
-                
-                        <!-- Product Card 5 (New) -->
-                        <div class="w-1/5 bg-white rounded-lg shadow-md overflow-hidden">
-                            <div class="relative">
-                                <img src="{% static 'atomic-habits.jpg' %}" alt="Atomic Habits" class="w-full h-72 object-cover"/>
-                                <span class="absolute top-2 right-2 bg-blue-400 text-white px-2 py-1 rounded-full text-sm">NEW</span>
-                            </div>
-                            <div class="p-4">
-                                <h3 class="font-semibold text-lg mb-2">Atomic Habits</h3>
-                                <p class="text-gray-600 mb-2">James Clear</p>
-                                <div class="flex items-center mb-2">
-                                    <div class="flex text-yellow-400">
-                                        ★★★★☆
-                                    </div>
-                                </div>
-                                <div class="flex justify-between items-center">
-                                    <span class="text-green-600 font-bold">₹489.00</span>
-                                    <span class="text-gray-400 line-through">₹525.00</span>
-                                </div>
-                            </div>
-                        </div>
+                        {% endif %}
+                        {% endfor %}
                     </div>
+                    
                 </div>
             </div>
         </div>
@@ -535,5 +528,6 @@
 {% endblock %}
 <!-------------------------------Footer section ------------------------>
 {% block script %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="{% static 'user/js/deal_of_the_day_timer.js' %}"></script>
 {% endblock %}

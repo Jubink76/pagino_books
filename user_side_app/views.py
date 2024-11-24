@@ -11,13 +11,17 @@ from user_profile_app.models import AddressTable
 from django.contrib.auth.decorators import login_required
 from order_detail_app.models import OrderDetails,OrderItem
 from django.urls import reverse
+import re
+from django.db.models import Q
+
+
 
 ##########################################################################################################
 
 def shop_page(request):
     # Get filters and sorting options from the request
     search_query = request.GET.get('search', '').strip()  # Search text
-    sort_option = request.GET.get('sort', 'popularity')  # Default sort
+    sort = request.GET.get('sort', 'popularity')  # Default sort
     filter_category = request.GET.get('category', '')  
     filter_author = request.GET.get('author', '')  
     price_min = request.GET.get('price_min', 0)  
@@ -25,33 +29,31 @@ def shop_page(request):
 
     books = BookTable.objects.prefetch_related('images').filter(is_available=True, is_deleted=False)
 
-    # search filter (search in book name and description)
     if search_query:
         books = books.filter(Q(book_name__icontains=search_query) | Q(description__icontains=search_query))
 
-    #  category filter
     if filter_category:
         books = books.filter(category__name__iexact=filter_category)
 
-    #  author filter
     if filter_author:
         books = books.filter(author__name__iexact=filter_author)
 
-    #  price range filter
     books = books.filter(offer_price__gte=price_min, offer_price__lte=price_max)
 
     # Apply sorting
     
-    if sort_option == 'price_low_to_high':
+    if sort == 'price_low':
         books = books.order_by('offer_price')
-    elif sort_option == 'price_high_to_low':
+    elif sort == 'price_high':
         books = books.order_by('-offer_price')
-    elif sort_option == 'new_arrivals':
-        books = books.order_by('-publication_date')
-    elif sort_option == 'a_to_z':
+    elif sort == 'name_asc':
         books = books.order_by('book_name')
-    elif sort_option == 'z_to_a':
+    elif sort == 'name_desc':
         books = books.order_by('-book_name')
+    elif sort == 'new_arrivals':
+        books = books.order_by('-publication_date')  
+    else:
+        books = books.order_by('id')
 
     # Set up pagination (16 books per page)
     paginator = Paginator(books, 16)
@@ -62,7 +64,7 @@ def shop_page(request):
     return render(request, 'shop_page.html', {
         'books': books,
         'search_query': search_query,
-        'sort_option': sort_option,
+        'sort_option': sort,
         'filter_category': filter_category,
         'filter_author': filter_author,
         'price_min': price_min,
@@ -86,13 +88,57 @@ def single_detail(request,pk):
 ###########################################################################################################
 
 def single_category(request,pk):
+    
+    # Get filters and sorting options from the request
+    search_query = request.GET.get('search', '').strip()  # Search text
+    sort = request.GET.get('sort', 'popularity')  # Default sort
+    filter_category = request.GET.get('category', '')  
+    filter_author = request.GET.get('author', '')  
+    price_min = request.GET.get('price_min', 0)  
+    price_max = request.GET.get('price_max', 10000)
+
     category = get_object_or_404(CategoryTable,id=pk,is_available=True,is_deleted=False)
     books = BookTable.objects.prefetch_related('images').filter(category=category,is_available=True,is_deleted=False)
+
+    if search_query:
+        books = books.filter(Q(book_name__icontains=search_query) | Q(description__icontains=search_query))
+
+    if filter_category:
+        books = books.filter(category__name__iexact=filter_category)
+
+    if filter_author:
+        books = books.filter(author__name__iexact=filter_author)
+
+    books = books.filter(offer_price__gte=price_min, offer_price__lte=price_max)
+
+    # Apply sorting
+    
+    if sort == 'price_low':
+        books = books.order_by('offer_price')
+    elif sort == 'price_high':
+        books = books.order_by('-offer_price')
+    elif sort == 'name_asc':
+        books = books.order_by('book_name')
+    elif sort == 'name_desc':
+        books = books.order_by('-book_name')
+    elif sort == 'new_arrivals':
+        books = books.order_by('-publication_date')  
+    else:
+        books = books.order_by('id')
+
     # Set up pagination
     paginator = Paginator(books, 16)  # Display 16 books per page
     page_number = request.GET.get('page')
     books = paginator.get_page(page_number)
-    return render(request,'single_category.html',{'books':books,'category':category})
+
+    return render(request,'single_category.html',{
+        'books':books,
+        'search_query': search_query,
+        'sort': sort,
+        'filter_category': filter_category,
+        'filter_author': filter_author,
+        'price_min': price_min,
+        'price_max': price_max})                                 
 
 ###########################################################################################################
 
@@ -368,7 +414,6 @@ def checkout_add_address(request):
         address_phone = request.POST.get('address_phone', '').strip()
         state = request.POST.get('state', '').strip()
         address_type = request.POST.get('address_type', 'Home')  # Default to Home if not specified
-
         # Initialize errors dictionary
         errors = {}
 
@@ -405,9 +450,11 @@ def checkout_add_address(request):
             errors['state'] = 'State should only contain letters and spaces'
 
         # If there are any errors, return them
+        print(errors)
         if errors:
             return JsonResponse({
                 'status': 'error',
+                'message': 'Please correct the errors below.',
                 'errors': errors
             })
 
@@ -426,10 +473,10 @@ def checkout_add_address(request):
                 address_type=address_type
             )
             address.save()
-
             return JsonResponse({
                 'status': 'success',
-                'message': 'Address added successfully!'
+                'message': 'Address added successfully!',
+                'redirect_url': reverse('user_address')  
             })
 
         except Exception as e:

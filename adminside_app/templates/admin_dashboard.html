@@ -2,97 +2,288 @@
 {% load static %}
 
 {% block csslink %}
-<link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
-<link rel="stylesheet" href="{% static 'admin/css/add_category.css' %}">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
+<script src="https://cdn.tailwindcss.com"></script>
 {% endblock %}
 
 {% block content %}
-<div class="bg-gray-900 text-white p-8 flex space-x-8">
-  <div class="flex justify-between items-center w-1/3">
-    <div>
-      <h1 class="text-2xl font-medium">Revenue</h1>
-      <p class="text-gray-400 text-sm">$32123 <span class="text-green-500">+3.5%</span> Since last month</p>
-    </div>
-    <div>
-      <img src="/images/revenue-icon.svg" alt="Revenue Icon" class="w-12 h-12">
-    </div>
+<div class="bg-gray-900 p-4 flex justify-between items-center">
+  <div class="flex items-center">
+      <button class="text-gray-400 mr-4">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+          </svg>
+      </button>
+      <input type="text" placeholder="Search" class="bg-gray-800 text-gray-300 px-4 py-2 rounded">
   </div>
-  <div class="flex justify-between items-center w-1/3">
-    <div>
-      <h1 class="text-2xl font-medium">Sales</h1>
-      <p class="text-gray-400 text-sm">$45850 <span class="text-green-500">+8.3%</span> Since last month</p>
-    </div>
-    <div>
-      <img src="/images/sales-icon.svg" alt="Sales Icon" class="w-12 h-12">
-    </div>
-  </div>
-  <div class="flex justify-between items-center w-1/3">
-    <div>
-      <h1 class="text-2xl font-medium">Purchase</h1>
-      <p class="text-gray-400 text-sm">$2039 <span class="text-red-500">-2.1%</span> Since last month</p>
-    </div>
-    <div>
-      <img src="/images/purchase-icon.svg" alt="Purchase Icon" class="w-12 h-12">
-    </div>
+  <div class="flex items-center space-x-4">
+      <button class="bg-green-500 text-white px-4 py-2 rounded">+ Create New Product</button>
+      <button class="text-gray-400">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+          </svg>
+      </button>
+      <button class="text-gray-400">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+          </svg>
+      </button>
+      <div class="flex items-center">
+          <img src="/api/placeholder/40/40" alt="Admin" class="w-8 h-8 rounded-full">
+          <span class="ml-2 text-white">Admin</span>
+      </div>
   </div>
 </div>
 
-<div class="bg-gray-900 text-gray-400 p-8">
-  <h2 class="text-xl font-medium mb-4">Order Status</h2>
-  <div class="overflow-x-auto">
-    <table class="w-full border-separate border-spacing-y-2">
-      <thead>
-        <tr>
-          <th class="px-4 py-2 text-left font-medium">Client Name</th>
-          <th class="px-4 py-2 text-left font-medium">Order No</th>
-          <th class="px-4 py-2 text-left font-medium">Product Cost</th>
-          <th class="px-4 py-2 text-left font-medium">Project</th>
-          <th class="px-4 py-2 text-left font-medium">Payment Mode</th>
-          <th class="px-4 py-2 text-left font-medium">Start Date</th>
-          <th class="px-4 py-2 text-left font-medium">Payment Status</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr class="bg-gray-800 rounded">
-          <td class="px-4 py-2">Henry Klein</td>
-          <td class="px-4 py-2">02312</td>
-          <td class="px-4 py-2">$14,500</td>
-          <td class="px-4 py-2">Dashboard</td>
-          <td class="px-4 py-2">Credit card</td>
-          <td class="px-4 py-2">04 Dec 2019</td>
-          <td class="px-4 py-2 text-green-500">Approved</td>
-        </tr>
-        <tr class="bg-gray-800 rounded">
-          <td class="px-4 py-2">Estella Bryan</td>
-          <td class="px-4 py-2">02312</td>
-          <td class="px-4 py-2">$14,500</td>
-          <td class="px-4 py-2">Website</td>
-          <td class="px-4 py-2">Cash on delivered</td>
-          <td class="px-4 py-2">04 Dec 2019</td>
-          <td class="px-4 py-2 text-yellow-500">Pending</td>
-        </tr>
-        <tr class="bg-gray-800 rounded">
-          <td class="px-4 py-2">Lucy Abbott</td>
-          <td class="px-4 py-2">02312</td>
-          <td class="px-4 py-2">$14,500</td>
-          <td class="px-4 py-2">App design</td>
-          <td class="px-4 py-2">Credit card</td>
-          <td class="px-4 py-2">04 Dec 2019</td>
-          <td class="px-4 py-2 text-red-500">Rejected</td>
-        </tr>
-        <tr class="bg-gray-800 rounded">
-          <td class="px-4 py-2">Peter Gill</td>
-          <td class="px-4 py-2">02312</td>
-          <td class="px-4 py-2">$14,500</td>
-          <td class="px-4 py-2">Development</td>
-          <td class="px-4 py-2">Online Payment</td>
-          <td class="px-4 py-2">04 Dec 2019</td>
-          <td class="px-4 py-2 text-green-500">Approved</td>
-        </tr>
-      </tbody>
-    </table>
+<!-- Main Content -->
+<main class="p-6">
+  <!-- Stats Cards -->
+  <div class="grid grid-cols-4 gap-4 mb-6">
+      <div class="bg-gray-800 p-4 rounded">
+          <div class="flex justify-between">
+              <span class="text-gray-400">Potential growth</span>
+              <span class="text-green-500">+3.5%</span>
+          </div>
+          <div class="text-white text-2xl mt-2">$12.34</div>
+      </div>
+      <div class="bg-gray-800 p-4 rounded">
+          <div class="flex justify-between">
+              <span class="text-gray-400">Revenue current</span>
+              <span class="text-green-500">+11%</span>
+          </div>
+          <div class="text-white text-2xl mt-2">$17.34</div>
+      </div>
+      <div class="bg-gray-800 p-4 rounded">
+          <div class="flex justify-between">
+              <span class="text-gray-400">Daily income</span>
+              <span class="text-red-500">-2.4%</span>
+          </div>
+          <div class="text-white text-2xl mt-2">$12.34</div>
+      </div>
+      <div class="bg-gray-800 p-4 rounded">
+          <div class="flex justify-between">
+              <span class="text-gray-400">Expense current</span>
+              <span class="text-green-500">+3.5%</span>
+          </div>
+          <div class="text-white text-2xl mt-2">$31.53</div>
+      </div>
   </div>
-</div>
-<!-- Bootstrap JS -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+  <!-- Charts Section -->
+  <div class="grid grid-cols-2 gap-6 mb-6">
+      <!-- Transaction History -->
+      <div class="bg-gray-800 p-6 rounded">
+          <h2 class="text-white text-xl mb-4">Transaction History</h2>
+          <div class="relative" style="height: 200px;">
+              <canvas id="doughnutChart"></canvas>
+          </div>
+          <div class="mt-4 space-y-4">
+              <div class="flex justify-between items-center text-gray-400">
+                  <span>Online payment</span>
+                  <span>$ 4000</span>
+              </div>
+              <div class="flex justify-between items-center text-gray-400">
+                  <span>Cash on Delivery</span>
+                  <span>$ 4000</span>
+              </div>
+          </div>
+      </div>
+
+      <!-- Bar Chart -->
+      <div class="bg-gray-800 p-6 rounded">
+          <h2 class="text-white text-xl mb-4">Bar Chart</h2>
+          <div style="height: 300px;">
+              <canvas id="barChart"></canvas>
+          </div>
+      </div>
+  </div>
+
+  <!-- Statistics Cards -->
+  <div class="grid grid-cols-3 gap-6 mb-6">
+      <div class="bg-gray-800 p-6 rounded">
+          <div class="flex justify-between items-center">
+              <div>
+                  <h3 class="text-white text-2xl">$32123</h3>
+                  <p class="text-gray-400">+3.5% since last month</p>
+              </div>
+              <div class="bg-blue-500/20 p-3 rounded">
+                  <svg class="w-8 h-8 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  </svg>
+              </div>
+          </div>
+      </div>
+      <div class="bg-gray-800 p-6 rounded">
+          <div class="flex justify-between items-center">
+              <div>
+                  <h3 class="text-white text-2xl">$45850</h3>
+                  <p class="text-gray-400">+8.3% since last month</p>
+              </div>
+              <div class="bg-red-500/20 p-3 rounded">
+                  <svg class="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+                  </svg>
+              </div>
+          </div>
+      </div>
+      <div class="bg-gray-800 p-6 rounded">
+          <div class="flex justify-between items-center">
+              <div>
+                  <h3 class="text-white text-2xl">$2039</h3>
+                  <p class="text-gray-400">-2.1% since last month</p>
+              </div>
+              <div class="bg-green-500/20 p-3 rounded">
+                  <svg class="w-8 h-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                  </svg>
+              </div>
+          </div>
+      </div>
+  </div>
+
+  <!-- Order Status Table -->
+  <div class="bg-gray-800 rounded p-6">
+      <div class="flex justify-between items-center mb-6">
+          <h2 class="text-white text-xl">Order Status</h2>
+          <select class="bg-gray-700 text-white px-3 py-1 rounded">
+              <option>7</option>
+          </select>
+      </div>
+      <div class="overflow-x-auto">
+          <table class="w-full">
+              <thead>
+                  <tr class="text-gray-400">
+                      <th class="py-3 text-left">Client Name</th>
+                      <th class="py-3 text-left">Order No</th>
+                      <th class="py-3 text-left">Product Cost</th>
+                      <th class="py-3 text-left">Project</th>
+                      <th class="py-3 text-left">Payment Mode</th>
+                      <th class="py-3 text-left">Start Date</th>
+                      <th class="py-3 text-left">Payment Status</th>
+                  </tr>
+              </thead>
+              <tbody class="text-gray-300">
+                  <tr class="border-b border-gray-700">
+                      <td class="py-3 flex items-center">
+                          <img src="/api/placeholder/32/32" alt="" class="w-8 h-8 rounded-full mr-3">
+                          Henry Klein
+                      </td>
+                      <td class="py-3">02312</td>
+                      <td class="py-3">$14,500</td>
+                      <td class="py-3">Dashboard</td>
+                      <td class="py-3">Credit card</td>
+                      <td class="py-3">04 Dec 2019</td>
+                      <td class="py-3"><span class="text-green-500">Approved</span></td>
+                  </tr>
+                  <tr class="border-b border-gray-700">
+                      <td class="py-3 flex items-center">
+                          <img src="/api/placeholder/32/32" alt="" class="w-8 h-8 rounded-full mr-3">
+                          Estella Bryan
+                      </td>
+                      <td class="py-3">02312</td>
+                      <td class="py-3">$14,500</td>
+                      <td class="py-3">Website</td>
+                      <td class="py-3">Cash on delivered</td>
+                      <td class="py-3">04 Dec 2019</td>
+                      <td class="py-3"><span class="text-yellow-500">Pending</span></td>
+                  </tr>
+                  <tr class="border-b border-gray-700">
+                      <td class="py-3 flex items-center">
+                          <img src="/api/placeholder/32/32" alt="" class="w-8 h-8 rounded-full mr-3">
+                          Lucy Abbott
+                      </td>
+                      <td class="py-3">02312</td>
+                      <td class="py-3">$14,500</td>
+                      <td class="py-3">App design</td>
+                      <td class="py-3">Credit card</td>
+                      <td class="py-3">04 Dec 2019</td>
+                      <td class="py-3"><span class="text-red-500">Rejected</span></td>
+                  </tr>
+                  <tr class="border-b border-gray-700">
+                      <td class="py-3 flex items-center">
+                          <img src="/api/placeholder/32/32" alt="" class="w-8 h-8 rounded-full mr-3">
+                          Peter Gill
+                      </td>
+                      <td class="py-3">02312</td>
+                      <td class="py-3">$14,500</td>
+                      <td class="py-3">Development</td>
+                      <td class="py-3">Online Payment</td>
+                      <td class="py-3">04 Dec 2019</td>
+                      <td class="py-3"><span class="text-green-500">Approved</span></td>
+                  </tr>
+              </tbody>
+          </table>
+      </div>
+  </div>
+</main>
+{% endblock %}
+{% block script %}
+<script>
+  // Initialize charts
+  const doughnutCtx = document.getElementById('doughnutChart').getContext('2d');
+  new Chart(doughnutCtx, {
+      type: 'doughnut',
+      data: {
+          labels: ['Online Payment', 'Cash on Delivery'],
+          datasets: [{
+              data: [4000, 4000],
+              backgroundColor: ['#4CAF50', '#FFC107'],
+              borderWidth: 0
+          }]
+      },
+      options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+              legend: {
+                  display: false
+              }
+          },
+          cutout: '70%'
+      }
+  });
+
+  const barCtx = document.getElementById('barChart').getContext('2d');
+  new Chart(barCtx, {
+      type: 'bar',
+      data: {
+          labels: ['2013', '2014', '2014', '2015', '2016', '2017'],
+          datasets: [{
+              label: 'Sales',
+              data: [10, 18, 3, 5, 2, 3],
+              backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40'],
+                    borderWidth: 0,
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        },
+                        ticks: {
+                            color: '#9CA3AF'
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        },
+                        ticks: {
+                            color: '#9CA3AF'
+                        }
+                    }
+                }
+            }
+        });
+ </script>
 {% endblock %}

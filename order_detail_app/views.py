@@ -15,83 +15,87 @@ def generate_order_id():
 
 def create_order(request):
     if request.method != "POST":
-        return redirect('checkout_page')
-    
-    address_id = request.POST.get("savedAddress")
-    payment_method = request.POST.get("payment")
-
-    if not address_id:
-        messages.error(request, "Please select a delivery address.")
-        return redirect('checkout_page')
-    
-    if not payment_method:
-        messages.error(request, "Please select a payment method.")
-        return redirect('checkout_page')
-    
-    # Validate payment method
-    valid_payment_methods = ['COD', 'ONLINE', 'WALLET']
-    if payment_method not in valid_payment_methods:
-        messages.error(request, "Invalid payment method selected.")
-        return redirect('checkout_page')
+        return JsonResponse({'status': 'error', 'message': 'Invalid request method'})
     
     try:
-        with transaction.atomic():
-            address = AddressTable.objects.get(id=address_id)
-            cart_items = CartTable.objects.filter(user=request.user)
+        address_id = request.POST.get("savedAddress")
+        payment_method = request.POST.get("payment")
 
-            if not cart_items.exists():
-                messages.error(request, "Your cart is empty.")
-                return redirect('checkout_page')
+        if not address_id:
+            return JsonResponse({'status': 'error', 'message': 'Please select a delivery address'})
+        
+        if not payment_method:
+            return JsonResponse({'status': 'error', 'message': 'Please select a payment method'})
+    
+        # Validate payment method
+        valid_payment_methods = ['COD', 'ONLINE', 'WALLET']
+        if payment_method not in valid_payment_methods:
+            messages.error(request, "Invalid payment method selected.")
+            return redirect('checkout_page')
+        
+        try:
+            with transaction.atomic():
+                address = AddressTable.objects.get(id=address_id)
+                cart_items = CartTable.objects.filter(user=request.user)
 
-            # Generate single order ID
-            single_order_id = generate_order_id()
+                if not cart_items.exists():
+                    messages.error(request, "Your cart is empty.")
+                    return redirect('checkout_page')
 
-            # Calculate total amount
-            grand_total = sum(
-                item.quantity * item.book.offer_price 
-                for item in cart_items
-            )
+                # Generate single order ID
+                single_order_id = generate_order_id()
 
-            # Create main order
-            order = OrderDetails.objects.create(
-                order_id=single_order_id,
-                user=request.user,
-                address=address,
-                payment_method=payment_method,
-                total_amount=grand_total,
-                order_status='Pending'
-            )
-            # Create order items
-            for cart_item in cart_items:
-                if cart_item.book.stock_quantity < cart_item.quantity:
-                    raise ValueError(f"Insufficient stock for {cart_item.book.title}")
-                
-                OrderItem.objects.create(
-                    order=order,
-                    book=cart_item.book,
-                    quantity=cart_item.quantity,
-                    price_per_item=cart_item.book.offer_price,
-                    total_price=cart_item.quantity * cart_item.book.offer_price
+                # Calculate total amount
+                grand_total = sum(
+                    item.quantity * item.book.offer_price 
+                    for item in cart_items
                 )
-                
-                # Update stock
-                cart_item.book.stock_quantity -= cart_item.quantity
-                cart_item.book.save()
 
-            # Clear cart
-            cart_items.delete()
-            return JsonResponse({
-                'status': 'success',
-                'message': 'Order placed successfully!',
-                'redirect_url': reverse('order_success', kwargs={'order_id': order.order_id})
-            })
+                # Create main order
+                order = OrderDetails.objects.create(
+                    order_id=single_order_id,
+                    user=request.user,
+                    address=address,
+                    payment_method=payment_method,
+                    total_amount=grand_total,
+                    order_status='Pending'
+                )
+                # Create order items
+                for cart_item in cart_items:
+                    if cart_item.book.stock_quantity < cart_item.quantity:
+                        raise ValueError(f"Insufficient stock for {cart_item.book.title}")
+                    
+                    OrderItem.objects.create(
+                        order=order,
+                        book=cart_item.book,
+                        quantity=cart_item.quantity,
+                        price_per_item=cart_item.book.offer_price,
+                        total_price=cart_item.quantity * cart_item.book.offer_price
+                    )
+                    
+                    # Update stock
+                    cart_item.book.stock_quantity -= cart_item.quantity
+                    cart_item.book.save()
 
-    except AddressTable.DoesNotExist:
-        return JsonResponse({'status': 'error', 'message': 'Selected address not found.'})
-    except ValueError as e:
-        return JsonResponse({'status': 'error', 'message': str(e)})
+                # Clear cart
+                cart_items.delete()
+                return JsonResponse({
+                    'status': 'success',
+                    'message': 'Order placed successfully!',
+                    'redirect_url': reverse('order_success', kwargs={'order_id': order.order_id})
+                })
+
+        except AddressTable.DoesNotExist:
+            return JsonResponse({'status': 'error', 'message': 'Selected address not found.'})
+        except ValueError as e:
+            return JsonResponse({'status': 'error', 'message': str(e)})
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': f"An error occurred: {str(e)}"})
     except Exception as e:
-        return JsonResponse({'status': 'error', 'message': f"An error occurred: {str(e)}"})
+        return JsonResponse({
+            'status': 'error',
+            'message': 'An unexpected error occurred while processing your order'
+        })
     
 #################################################################################################################################
 @login_required

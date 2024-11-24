@@ -3,6 +3,7 @@
 {% load static %}
 
 {% block css_link %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 
 {% endblock %}
 
@@ -24,7 +25,7 @@
           <div class="bg-white shadow-md">
           {% for category in categories %}
               {% if category.is_available %}
-              <a href="#" class="flex items-center p-4 border-b hover:bg-gray-50">
+              <a href="{% url 'single_category' category.id %}" class="flex items-center p-4 border-b hover:bg-gray-50">
                   <svg class="w-5 h-5 text-gray-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
                   </svg>
@@ -196,7 +197,7 @@
       <div class = "flex-1">
           <div class="flex flex-wrap items-center justify-between border-b pb-4">
               <!-- Grid/List Toggle -->
-              <div class="w-full sm:w-auto mb-4 sm:mb-0 flex items-center space-x-4">
+              <div class="w-full sm:w-auto m-4 sm:mb-0 flex items-center space-x-4 ">
                 <div class="flex space-x-2">
                   <button class="flex items-center px-4 py-2 text-gray-700 hover:text-yellow-500 border rounded-md focus:outline-none">
                     <i class="fa fa-th-large mr-2"></i> Grid
@@ -206,42 +207,50 @@
                   </button>
                 </div>
               </div>
-            
-              <!-- Sort By Dropdown -->
-              <div class="flex-1 flex justify-center space-x-4">
-                <div>
-                  <label class="text-gray-600 font-medium">Sort by</label>
-                  <div class="relative">
-                    <button class="flex items-center px-4 py-2 border rounded-md text-gray-700 hover:text-yellow-500 focus:outline-none">
-                      Position <i class="fa fa-caret-down ml-2"></i>
-                    </button>
-                    <ul class="absolute mt-2 w-48 bg-white border rounded-md shadow-lg hidden group-hover:block">
-                      <li><a href="#" class="block px-4 py-2 hover:bg-gray-100">Position</a></li>
-                      <li><a href="#" class="block px-4 py-2 hover:bg-gray-100">Price: Lowest first</a></li>
-                      <li><a href="#" class="block px-4 py-2 hover:bg-gray-100">Price: Highest first</a></li>
-                      <li><a href="#" class="block px-4 py-2 hover:bg-gray-100">Product Name: A to Z</a></li>
-                    </ul>
-                  </div>
-                </div>
-            
-                <!-- Show Dropdown -->
-                <div>
-                  <label class="text-gray-600 font-medium">Show</label>
-                  <div class="relative">
-                    <button class="flex items-center px-4 py-2 border rounded-md text-gray-700 hover:text-yellow-500 focus:outline-none">
-                      1 <i class="fa fa-caret-down ml-2"></i>
-                    </button>
-                    <ul class="absolute mt-2 w-20 bg-white border rounded-md shadow-lg hidden group-hover:block">
-        
-                      <li><a href="#" class="block px-4 py-2 hover:bg-gray-100"></a></li>
-                      
-                    </ul>
-                  </div>
-                </div>
-              </div>
-            
+                    <div class="flex-1 flex justify-center space-x-8 items-center">
+                        <!-- Sort by Dropdown -->
+                        <div class="flex items-center space-x-4 relative">
+                            <label class="text-gray-600 font-medium">Sort by</label>
+                            <div class="relative">
+                                <button 
+                                    id="sortDropdownBtn"
+                                    class="flex items-center px-4 py-2 border rounded-md text-gray-700 hover:text-yellow-500 focus:outline-none">
+                                    <span id="selectedSortOption">Position</span> <!-- Default text -->
+                                    <i class="fa fa-caret-down ml-2"></i>
+                                </button>
+                                <ul 
+                                    id="sortDropdownMenu"
+                                    class="absolute z-10 hidden mt-2 w-48 bg-white border rounded-md shadow-lg">
+                                    <li><a href="?sort=position" class="block px-4 py-2 hover:bg-gray-100" data-sort="Position">Position</a></li>
+                                    <li><a href="?sort=price_low" class="block px-4 py-2 hover:bg-gray-100" data-sort="Price: Lowest first">Price: Lowest first</a></li>
+                                    <li><a href="?sort=price_high" class="block px-4 py-2 hover:bg-gray-100" data-sort="Price: Highest first">Price: Highest first</a></li>
+                                    <li><a href="?sort=name_asc" class="block px-4 py-2 hover:bg-gray-100" data-sort="Product Name: A to Z">Product Name: A to Z</a></li>
+                                    <li><a href="?sort=name_desc" class="block px-4 py-2 hover:bg-gray-100" data-sort="Product Name: Z to A">Product Name: Z to A</a></li>
+                                    <li><a href="?sort=new_arrivals" class="block px-4 py-2 hover:bg-gray-100" data-sort="New arrivals">New arrivals</a></li>
+                                </ul>
+                            </div>
+                            <!-- Show Dropdown -->
+                            <div class="flex items-center space-x-4 relative">
+                                <label class="text-gray-600 font-medium">Show</label>
+                                <div>
+                                    <button 
+                                        id="showDropdownBtn"
+                                        class="flex items-center px-4 py-2 border rounded-md text-gray-700 hover:text-yellow-500 focus:outline-none">
+                                        1 <i class="fa fa-caret-down ml-2"></i>
+                                    </button>
+                                    <ul 
+                                        id="showDropdownMenu"
+                                        class="absolute z-10 hidden mt-2 w-20 bg-white border rounded-md shadow-lg">
+                                        <li><a href="javascript:void(0);" class="block px-4 py-2 hover:bg-gray-100">1</a></li>
+                                        <li><a href="javascript:void(0);" class="block px-4 py-2 hover:bg-gray-100">2</a></li>
+                                        <li><a href="javascript:void(0);" class="block px-4 py-2 hover:bg-gray-100">3</a></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
               <!-- Pagination -->
-              <div class="w-full sm:w-auto flex justify-end">
+              <div class="w-full sm:w-auto flex justify-end mr-5 mt-3">
                 <ul class="flex space-x-2">
                   {% if books.has_previous %}
                   <li>
@@ -304,34 +313,110 @@
           </div>
           <div class="p-8">
             <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-              {% for book in books %}
-                  <div class="bg-white rounded-lg shadow-md overflow-hidden transform hover:scale-105 transition-transform duration-300">
-                      <div class="relative aspect-[3/4]">
+                {% for book in books %}
+                <div class="bg-white rounded-lg shadow-md overflow-hidden transform hover:scale-105 transition-transform duration-300 relative group">
+                    <div class="relative aspect-[3/4]">
                         <a href="{% url 'single_detail' book.id %}">
-                          <img 
-                              src="{{ book.images.first.image.url }}" 
-                              alt="{{ book.book_name }}" 
-                              class="w-full h-full object-contain"
-                          />
+                            <img 
+                                src="{{ book.images.first.image.url }}" 
+                                alt="{{ book.book_name }}" 
+                                class="w-full h-full object-contain"
+                            />
                         </a>
-                          <span class="absolute top-2 right-2 bg-blue-400 text-white px-2 py-1 rounded-full text-sm">NEW</span>
-                      </div>
-                      <div class="p-4">
-                          <h3 class="font-semibold text-lg mb-2">{{ book.book_name }}</h3>
-                          <p class="text-gray-600 mb-2">{{ book.author }}</p>
-                          <div class="flex text-yellow-400 mb-2">★★★★☆</div>
-                          <div class="flex justify-between items-center">
-                              <span class="text-green-600 font-bold">₹{{ book.offer_price }}</span>
-                              <span class="text-gray-400 line-through">₹{{ book.base_price }}</span>                       
-                          </div>
-                      </div>
-                  </div>
-              {% endfor %}
+                        <span class="absolute top-2 right-2 bg-blue-400 text-white px-2 py-1 rounded-full text-sm">NEW</span>
+                    </div>
+                    <div class="p-4">
+                        <h3 class="font-semibold text-lg mb-2">{{ book.book_name }}</h3>
+                        <p class="text-gray-600 mb-2">{{ book.author }}</p>
+                        <div class="flex text-yellow-400 mb-2">★★★★☆</div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-green-600 font-bold">₹{{ book.offer_price }}</span>
+                            <span class="text-gray-400 line-through">₹{{ book.base_price }}</span>                       
+                        </div>
+                    </div>
+            
+                    <!-- Floating Icons (Cart & Wishlist) -->
+                    <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        <div class="flex gap-5">
+                            <!-- Cart Icon -->
+                            <button 
+                                class="add-to-cart-btn w-10 h-10 bg-yellow-400 text-black flex justify-center items-center rounded-full shadow-md transform translate-x-[-50px] group-hover:translate-x-0 transition-transform duration-500 hover:bg-yellow-500"
+                                data-url="{% url 'add_to_cart' book.id %}"
+                                data-success-redirect="{% url 'cart_page' %}">
+                                <i class="fa fa-shopping-cart"></i>
+                            </button>
+                            
+                            <!-- Wishlist Icon -->
+                            <button 
+                                class="add-to-wishlist-btn w-10 h-10 bg-yellow-400 text-black flex justify-center items-center rounded-full shadow-md transform translate-x-[50px] group-hover:translate-x-0 transition-transform duration-500 hover:bg-yellow-500"
+                                data-url="{% url 'add_to_whishlist' book.id %}"
+                                data-success-redirect="">
+                                <i class="fa fa-heart"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
             </div>
+            
           </div>
       </div>
   </div>
 </main>
+{% endblock %}
 
-  
+{% block script %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const sortDropdownBtn = document.getElementById('sortDropdownBtn');
+        const sortDropdownMenu = document.getElementById('sortDropdownMenu');
+        const selectedSortOption = document.getElementById('selectedSortOption');  // Span that displays the selected sort option
+
+        // Function to update the button text based on the selected sort option
+        function updateButtonText() {
+            const urlParams = new URLSearchParams(window.location.search); // Get the query parameters from the URL
+            const sortOption = urlParams.get('sort'); // Retrieve the 'sort' parameter
+            const sortItems = sortDropdownMenu.querySelectorAll('a');
+
+            // Loop through sort items and update the button text based on the 'sort' parameter
+            sortItems.forEach(function (item) {
+                if (item.getAttribute('href').includes(sortOption)) {
+                    selectedSortOption.textContent = item.getAttribute('data-sort'); // Update button text with selected option
+                }
+            });
+        }
+
+        // Toggle the visibility of the dropdown menu when the button is clicked
+        sortDropdownBtn.addEventListener('click', function (event) {
+            event.preventDefault(); // Prevent default button behavior
+            sortDropdownMenu.classList.toggle('hidden'); // Toggle the dropdown visibility
+        });
+
+        // Add event listener to each dropdown item to update the button text when clicked
+        const sortItems = sortDropdownMenu.querySelectorAll('a');
+        sortItems.forEach(function (item) {
+            item.addEventListener('click', function (event) {
+                // Allow default action (page reload)
+                const sortOptionText = item.getAttribute('data-sort'); // Get the sort option text from data attribute
+                selectedSortOption.textContent = sortOptionText; // Update the button text
+
+                // Close the dropdown after selection
+                sortDropdownMenu.classList.add('hidden');
+            });
+        });
+
+        // Close dropdown if clicking outside
+        document.addEventListener('click', function (event) {
+            if (!sortDropdownBtn.contains(event.target) && !sortDropdownMenu.contains(event.target)) {
+                sortDropdownMenu.classList.add('hidden'); // Hide dropdown if click is outside
+            }
+        });
+
+        // Update the button text based on the URL on page load
+        updateButtonText();
+    });
+</script>
+
+
+
 {% endblock %}

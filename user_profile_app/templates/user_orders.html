@@ -220,7 +220,7 @@
                                 {% with order.orderitem_set.first.book.images.first as first_image %}
                                 {% if first_image %}
                                 <img src="{{ first_image.image.url }}" alt="{{ order.orderitem_set.first.book.book_name }}" 
-                                     class="w-20 h-20 object-cover rounded">
+                                     class="w-20 h-30 object-cover rounded">
                                 {% endif %}
                                 {% endwith %}
                                 
