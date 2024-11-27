@@ -4,7 +4,7 @@
 
 {% block css_link %}
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-
+<script src="{% static 'user/js/sweetAlert.js' %}"></script>
 {% endblock %}
 
 {% block content %}
@@ -315,6 +315,7 @@
             <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
                 {% for book in books %}
                 <div class="bg-white rounded-lg shadow-md overflow-hidden transform hover:scale-105 transition-transform duration-300 relative group">
+                    <!-- Image Section -->
                     <div class="relative aspect-[3/4]">
                         <a href="{% url 'single_detail' book.id %}">
                             <img 
@@ -325,37 +326,40 @@
                         </a>
                         <span class="absolute top-2 right-2 bg-blue-400 text-white px-2 py-1 rounded-full text-sm">NEW</span>
                     </div>
+                
+                    <!-- Content Section -->
                     <div class="p-4">
                         <h3 class="font-semibold text-lg mb-2">{{ book.book_name }}</h3>
                         <p class="text-gray-600 mb-2">{{ book.author }}</p>
                         <div class="flex text-yellow-400 mb-2">★★★★☆</div>
-                        <div class="flex justify-between items-center">
+                        
+                        <!-- Price Section with Floating Icons -->
+                        <div class="relative flex justify-between items-center">
                             <span class="text-green-600 font-bold">₹{{ book.offer_price }}</span>
-                            <span class="text-gray-400 line-through">₹{{ book.base_price }}</span>                       
-                        </div>
-                    </div>
-            
-                    <!-- Floating Icons (Cart & Wishlist) -->
-                    <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                        <div class="flex gap-5">
-                            <!-- Cart Icon -->
-                            <button 
-                                class="add-to-cart-btn w-10 h-10 bg-yellow-400 text-black flex justify-center items-center rounded-full shadow-md transform translate-x-[-50px] group-hover:translate-x-0 transition-transform duration-500 hover:bg-yellow-500"
-                                data-url="{% url 'add_to_cart' book.id %}"
-                                data-success-redirect="{% url 'cart_page' %}">
-                                <i class="fa fa-shopping-cart"></i>
-                            </button>
+                            <span class="text-gray-400 line-through">₹{{ book.base_price }}</span>
                             
-                            <!-- Wishlist Icon -->
-                            <button 
-                                class="add-to-wishlist-btn w-10 h-10 bg-yellow-400 text-black flex justify-center items-center rounded-full shadow-md transform translate-x-[50px] group-hover:translate-x-0 transition-transform duration-500 hover:bg-yellow-500"
-                                data-url="{% url 'add_to_whishlist' book.id %}"
-                                data-success-redirect="">
-                                <i class="fa fa-heart"></i>
-                            </button>
+                            <!-- Floating Icons -->
+                            <div 
+                                class="absolute inset-x-0 top-1/2 transform -translate-y-1/2 flex justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                <!-- Cart Icon -->
+                                <button 
+                                    class="add-to-cart-btn w-10 h-10 bg-yellow-400 text-black flex justify-center items-center rounded-full shadow-md hover:bg-yellow-500"
+                                    data-url="{% url 'add_to_cart' book.id %}"
+                                    data-success-redirect="{% url 'cart_page' %}">
+                                    <i class="fa fa-shopping-cart"></i>
+                                </button>
+                                
+                                <!-- Wishlist Icon -->
+                                <button 
+                                    class="add-to-wishlist-btn w-10 h-10 bg-yellow-400 text-black flex justify-center items-center rounded-full shadow-md hover:bg-yellow-500"
+                                    data-url="{% url 'add_to_whishlist' book.id %}"
+                                    data-success-redirect="">
+                                    <i class="fa fa-heart"></i>
+                                </button>
+                            </div>
                         </div>
                     </div>
-                </div>
+                </div>                
                 {% endfor %}
             </div>
             
@@ -366,6 +370,7 @@
 {% endblock %}
 
 {% block script %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         const sortDropdownBtn = document.getElementById('sortDropdownBtn');

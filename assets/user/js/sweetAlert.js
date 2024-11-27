@@ -1,16 +1,15 @@
 document.addEventListener('DOMContentLoaded', function () {
-    console.log("Dynamic script loaded"); // Check if script is loaded
-    
-    const actionButtons = document.querySelectorAll('[data-url]');
-    console.log("Found buttons:", actionButtons); // Check if buttons are detected
+    const submitButtons = document.querySelectorAll('button[type="submit"][data-url]');
 
-    actionButtons.forEach(button => {
+    submitButtons.forEach(button => {
         button.addEventListener('click', (event) => {
-            event.preventDefault();
-            console.log("Button clicked:", button); // Check if click is detected
+            event.preventDefault(); // Prevent default form submission
 
+            const form = button.closest('form'); // Find the parent form
             const actionUrl = button.dataset.url;
-            console.log("Action URL:", actionUrl); // Check if URL is correct
+
+            // Use FormData to collect all form fields
+            const formData = new FormData(form);
 
             // Perform AJAX request
             fetch(actionUrl, {
@@ -19,11 +18,10 @@ document.addEventListener('DOMContentLoaded', function () {
                     'X-CSRFToken': getCookie('csrftoken'),
                     'Accept': 'application/json',
                 },
+                body: formData // Send form data
             })
                 .then(response => response.json())
                 .then(data => {
-                    console.log("Response Data:", data); // Log server response
-
                     if (data.status === 'success') {
                         Swal.fire({
                             title: 'Success!',
@@ -53,7 +51,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     }
                 })
                 .catch(error => {
-                    console.error("Error:", error); // Log any fetch errors
+                    console.error("Error:", error);
                     Swal.fire({
                         title: 'Error!',
                         text: 'An error occurred while processing your request.',

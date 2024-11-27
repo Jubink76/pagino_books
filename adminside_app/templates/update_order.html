@@ -20,9 +20,40 @@
                     <p class="text-gray-400">Order #{{ order_detail.order_id }}</p>
                 </div>
                 <div class="flex gap-4 mt-4 md:mt-0">
+                    <!-- Update Status Dropdown -->
+                    <div class="relative inline-block">
+                        <button id="updateStatusButton" 
+                                class="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors" 
+                                type="button">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M6 9l6 6 6-6"></path>
+                            </svg>
+                            Update Status
+                        </button>
+                        <!-- Dropdown Menu -->
+                        <ul id="statusDropdown" 
+                            class="hidden absolute bg-white border border-gray-200 rounded-lg shadow-lg mt-2 w-48 z-10">
+                            {% for status in statuses %}
+                                {% if status != order_detail.order_status %}  <!-- Skip the current status -->
+                                    <li>
+                                        <form method="POST" action="{% url 'order_status_update' order_detail.order_id %}">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="new_status" value="{{ status }}">
+                                            <button type="submit" 
+                                                    class="w-full text-left px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100">
+                                                {{ status }}
+                                            </button>
+                                        </form>
+                                    </li>
+                                {% endif %}
+                            {% endfor %}
+                        </ul>
+                    </div>
+                
+                    <!-- Cancel Order Button -->
                     <form method="POST" action="{% url 'admin_cancel_order' order_detail.order_id %}" id="cancelOrderForm">
                         {% csrf_token %}
-                        <button type="button" id="cancelOrder" class="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors" data-toggle="tooltip" title="Cancel all orders">
+                        <button type="button" id="cancelOrder" class="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors" data-toggle="tooltip" title="Cancel this order">
                             <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <line x1="18" y1="6" x2="6" y2="18"></line>
                                 <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -63,12 +94,24 @@
                                 <p class="text-gray-400">Payment Method</p>
                                 <p class="font-medium">{{ order_detail.payment_method }}</p>
                             </div>
-                            <div>
-                                <p class="text-gray-400">Order Status</p>
-                                <span class="inline-block bg-blue-900 text-blue-400 px-3 py-1 rounded-full text-sm font-medium">
-                                    {{ order_detail.order_status }}
-                                </span>
-                            </div>
+                            <div class="order-status-container">
+                                <p class="text-gray-500">Order Status</p>
+                                <div class="relative inline-block">
+                                    <!-- Order Status Display -->
+                                    <span class="px-3 py-1 rounded-full text-sm font-medium focus:outline-none
+                                        {% if order_detail.order_status == 'Pending' %}
+                                            bg-yellow-500 text-white
+                                        {% elif order_detail.order_status == 'Shipped' %}
+                                            bg-yellow-500 text-white
+                                        {% elif order_detail.order_status == 'Out of delivery' %}
+                                            bg-blue-500 text-white
+                                        {% elif order_detail.order_status == 'Delivered' %}
+                                            bg-green-500 text-white
+                                        {% endif %}">
+                                        {{ order_detail.order_status }}
+                                    </span>
+                                </div>                                
+                            </div>                               
                         </div>
                     </div>
                 </div>
@@ -154,7 +197,6 @@
                                         </button>
                                     </form>
                                 </td>
-                        
                             {% endfor %}
                         </tbody>
                     </table>
@@ -192,72 +234,48 @@
         </div>
     </div>
 </div>
-
-<!-- Initialize Lucide icons -->
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-    document.addEventListener('DOMContentLoaded', () => {
-        // Cancel Order Button Logic
-        const cancelOrderButton = document.getElementById('cancelOrder');
-        const cancelOrderForm = document.getElementById('cancelOrderForm');
-        
-        if (cancelOrderButton) {
-            cancelOrderButton.addEventListener('click', (event) => {
-                event.preventDefault(); // Prevent the form from submitting immediately
-        
-                // SweetAlert confirmation for canceling the order
-                Swal.fire({
-                    title: 'Are you sure?',
-                    text: "You will not be able to recover this order once it's canceled.",
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: '#d33',
-                    cancelButtonColor: '#3085d6',
-                    confirmButtonText: 'Yes, cancel it!',
-                    cancelButtonText: 'No, keep it'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        // If confirmed, submit the form
-                        cancelOrderForm.submit();
-                    }
-                });
-            });
-        }
-    
-        // Cancel Item Button Logic
-        const cancelItemButtons = document.querySelectorAll('[id^="cancelItemButton-"]');
-    
-        cancelItemButtons.forEach(button => {
-            button.addEventListener('click', (event) => {
-                event.preventDefault(); // Prevent the form from submitting immediately
-    
-                const itemId = button.id.split('-')[1];  // Extract the item ID from the button ID
-                const itemForm = document.getElementById(`cancelItemForm-${itemId}`);  // Get the associated form
-    
-                // SweetAlert confirmation for canceling the item
-                Swal.fire({
-                    title: 'Are you sure?',
-                    text: "You will not be able to recover this item once it's canceled.",
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: '#d33',
-                    cancelButtonColor: '#3085d6',
-                    confirmButtonText: 'Yes, cancel it!',
-                    cancelButtonText: 'No, keep it'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        // If confirmed, submit the form
-                        itemForm.submit();
-                    }
-                });
-            });
+    const cancelOrderButton = document.getElementById('cancelOrder');
+    const cancelOrderForm = document.getElementById('cancelOrderForm');
+
+    cancelOrderButton.addEventListener('click', function(event) {
+        event.preventDefault(); // Prevent the form from submitting immediately
+
+        // SweetAlert2 confirmation dialog
+        Swal.fire({
+            title: 'Are you sure?',
+            text: "Do you really want to cancel this order?",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Yes, cancel it!',
+            cancelButtonText: 'No, keep it'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                cancelOrderForm.submit(); // Submit the form if the user confirms
+            }
         });
     });
-    
 </script>
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        lucide.createIcons();
+    document.addEventListener("DOMContentLoaded", function () {
+        const updateStatusButton = document.getElementById("updateStatusButton");
+        const statusDropdown = document.getElementById("statusDropdown");
+
+        // Toggle dropdown visibility
+        updateStatusButton.addEventListener("click", function (e) {
+            e.stopPropagation();
+            statusDropdown.classList.toggle("hidden");
+        });
+
+        // Hide dropdown if clicking outside
+        document.addEventListener("click", function (e) {
+            if (!statusDropdown.classList.contains("hidden") && !statusDropdown.contains(e.target) && e.target !== updateStatusButton) {
+                statusDropdown.classList.add("hidden");
+            }
+        });
     });
 </script>
 {% endblock %}

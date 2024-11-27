@@ -30,6 +30,9 @@
                         <button id="addNewAddressBtn" type="button" class="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 flex items-center gap-2">
                             <i class="fas fa-plus"></i> Add New Address
                         </button>
+                        <button id="addNewAddressBtn" type="button" class="hidden px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 flex items-center gap-2">
+                            <i class="fas fa-list"></i> Show Addresses
+                        </button>
                     </div>
 
                     <!-- Saved Addresses Section -->
@@ -37,13 +40,18 @@
                         {% if addresses %}
                         <div class="space-y-4">
                             {% for address in addresses %}
-                            <div class="saved-address-item border rounded-lg p-4 cursor-pointer hover:border-yellow-500 transition-colors">
+                            <div class="saved-address-item border rounded-lg p-4 cursor-pointer hover:border-yellow-500 transition-colors {% if address.is_default %}border-yellow-500{% endif %}"
+                                 data-address-id="{{ address.id }}">
                                 <div class="flex items-start gap-4">
-                                    <input type="radio" name="savedAddress" class="mt-1" value="{{ address.id }}" required>
+                                    <input type="radio" name="savedAddress" class="mt-1" value="{{ address.id }}" 
+                                           {% if address.is_default %}checked{% endif %} required>
                                     <div class="flex-1">
                                         <div class="flex items-center gap-2 mb-2">
-                                            <i class="fas fa-{% if address.type == 'home' %}home{% else %}building{% endif %} text-gray-600"></i>
-                                            <span class="font-medium">{{ address.type|default:"Home"|title }}</span>
+                                            <i class="fas fa-{% if address.address_type == 'home' %}home{% else %}building{% endif %} text-gray-600"></i>
+                                            <span class="font-medium">{{ address.address_type|title }}</span>
+                                            {% if address.is_default %}
+                                            <span class="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full">Default</span>
+                                            {% endif %}
                                         </div>
                                         <div class="space-y-1 text-gray-600">
                                             <p class="font-semibold text-gray-900">{{ address.address_name }}</p>
@@ -76,10 +84,12 @@
                                 <div class="flex-1 p-4 border rounded-lg text-center cursor-pointer transition-all type-option active" name="home" data-type="home">
                                     <span class="block text-2xl mb-2">🏠</span>
                                     <div>Home</div>
+                                    <input type="hidden" name="address_type" id="address_type" value="home">
                                 </div>
                                 <div class="flex-1 p-4 border rounded-lg text-center cursor-pointer transition-all type-option" name="office" data-type="office">
                                     <span class="block text-2xl mb-2">🏢</span>
                                     <div>Office</div>
+                                    <input type="hidden" name="address_type" id="address_type" value="office">
                                 </div>
                             </div>
         
@@ -137,10 +147,10 @@
         
                                 <!-- Form Actions -->
                                 <div class="flex justify-end gap-4 mt-8">
-                                    <a href="{% url 'user_address' %}"><button type="button" onclick="window.history.back()"
+                                    <button type="button"
                                         class="px-6 py-3 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors">
                                         Cancel
-                                    </button></a>
+                                    </button>
                                     <button type="submit" id="submit"
                                         class="px-6 py-3 rounded-lg bg-yellow-500 text-black hover:bg-yellow-600 transition-colors">
                                         Save Address
@@ -154,7 +164,7 @@
 
             <!-- Right Column - Order Summary -->
             <div class="lg:w-1/3">
-                <form action="{% url 'create_order' %}" method="POST" id="orderForm">
+                <form id="orderForm" method="post" data-url="{% url 'create-order' %}">
                     {% csrf_token %}
                     {% if cart_items %}
                     <div class="bg-white rounded-lg shadow-md p-6">
@@ -200,7 +210,29 @@
                         <div class="mt-8">
                             <h4 class="text-lg font-semibold mb-4">Delivery Address</h4>
                             <div class="delivery-address text-gray-600">
-                                <p>Please select a delivery address</p>
+                                {% if addresses %}
+                                    {% for address in addresses %}
+                                        {% if address.is_default %}
+                                        <div id="currentDeliveryAddress" class="p-4 border rounded-lg" data-address-id="{{ address.id }}">
+                                            <div class="flex justify-between items-center mb-2">
+                                                <div class="flex items-center gap-2">
+                                                    <span class="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full">Default</span>
+                                                </div>
+                                                <a href="#savedAddressesSection" class="text-yellow-600 text-sm" id="changeAddressLink">Change Address</a>
+                                            </div>
+                                            <p class="font-semibold">{{ address.address_name }}</p>
+                                            <p>{{ address.street_name }}</p>
+                                            {% if address.landmark %}
+                                            <p>Near {{ address.landmark }}</p>
+                                            {% endif %}
+                                            <p>{{ address.city }}, {{ address.state }} {{ address.pincode }}</p>
+                                            <p>Phone: {{ address.address_phone }}</p>
+                                        </div>
+                                        {% endif %}
+                                    {% endfor %}
+                                {% else %}
+                                    <p>Please select a delivery address</p>
+                                {% endif %}
                             </div>
                         </div>
 
@@ -240,10 +272,7 @@
                             </div>
                         </div>
 
-                        <button
-                            type="submit" 
-                            class="w-full mt-6 py-3 bg-gray-400 text-white rounded-md font-medium disabled:cursor-not-allowed disabled:opacity-75 transition-colors" disabled
-                            data-url="{% url 'create_order' %}">
+                        <button type="submit" id="place-order-button"  class="w-full mt-6 py-3 bg-gray-400 text-white rounded-md font-medium disabled:cursor-not-allowed disabled:opacity-75 transition-colors">
                             Place Order <i class="fas fa-arrow-right ml-2"></i>
                         </button>
                     </div>
@@ -257,6 +286,8 @@
 
 
 {% block script %}
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 <script src="{% static 'user/js/checkout_page.js' %}"></script>
+<script src="{% static 'user/js/place_order.js' %}"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 {% endblock %}

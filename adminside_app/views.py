@@ -13,6 +13,10 @@ import logging
 from django.core.exceptions import ValidationError
 from django.http import JsonResponse
 from decimal import Decimal, InvalidOperation
+import re
+from django.views.decorators.csrf import csrf_exempt
+import json
+
 # Create your views here.
 
 ##############################################################################################################
@@ -744,34 +748,66 @@ def delete_product(request,pk):
 ############################################################################################################################
 @login_required(login_url='admin_login')
 def admin_orders(request):
-    orders = OrderDetails.objects.select_related('user').all()
+    # Default orders per page
     orders_per_page = request.GET.get('orders_per_page', 5)
     try:
         orders_per_page = int(orders_per_page)
     except ValueError:
         orders_per_page = 5
 
-    search_query = request.GET.get('search','')
+    # Base queryset
+    orders = OrderDetails.objects.select_related('user', 'address')
 
+    # Get search and filter parameters
+    search_query = request.GET.get('search', '').strip()
+    status_filter = request.GET.get('status', '')
+
+    # Apply status filter
+    status_mapping = {
+        'pending': 'Pending',
+        'shipped': 'Shipped',
+        'out of delivery': 'Out of delivery',
+        'delivered': 'Delivered',
+        'canceled': 'Canceled',
+    }
+    if status_filter and status_filter in status_mapping:
+        orders = orders.filter(order_status=status_mapping[status_filter])
+
+    # Apply search filter
     if search_query:
-        orders = OrderDetails.objects.select_related('user', 'address').filter(
-            Q(order_id__icontains=search_query) |                    # Order ID
-            Q(user__first_name__icontains=search_query) |            # Customer first name
-            Q(user__last_name__icontains=search_query) |             # Customer last name
-            Q(order_date__date=search_query) |                       # Exact Order Date (e.g., '2024-11-17')
-            Q(payment_method__icontains=search_query) |              # Payment method (e.g., 'COD', 'ONLINE')
-            Q(order_status__icontains=search_query)                  # Order Status (e.g., 'Pending', 'Shipped')
-        ).order_by('-order_date')  # Order by most recent orders
-    else:
-    # Fetch all orders when no search query is provided
-        orders = OrderDetails.objects.select_related('user', 'address').all().order_by('-order_date')
-    # implement pagination
+        query = Q(order_id__icontains=search_query) | \
+                Q(user__first_name__icontains=search_query) | \
+                Q(user__last_name__icontains=search_query) | \
+                Q(payment_method__icontains=search_query) | \
+                Q(order_status__icontains=search_query)
 
+        # Check if search query is a date
+        try:
+            if re.match(r'^\d{4}-\d{2}-\d{2}$', search_query):  # YYYY-MM-DD format
+                query |= Q(order_date__date=search_query)
+        except ValueError:
+            pass
+
+        orders = orders.filter(query)
+
+    # Get counts for each status
+    status_counts = {
+        'pending': OrderDetails.objects.filter(order_status='Pending').count(),
+        'shipped': OrderDetails.objects.filter(order_status='Shipped').count(),
+        'out of delivery': OrderDetails.objects.filter(order_status='Out of delivery').count(),
+        'delivered': OrderDetails.objects.filter(order_status='Delivered').count(),
+        'canceled': OrderDetails.objects.filter(order_status='Canceled').count(),
+    }
+
+    # Order by date
+    orders = orders.order_by('-order_date')
+
+    # Paginate results
     paginator = Paginator(orders, orders_per_page)
     page_number = request.GET.get('page')
     orders = paginator.get_page(page_number)
 
-    # Check for AJAX request and send JSON response
+    # Handle AJAX requests for partial updates
     if request.headers.get('x-requested-with') == 'XMLHttpRequest':
         orders_data = [
             {
@@ -787,13 +823,17 @@ def admin_orders(request):
         ]
         return JsonResponse({"orders": orders_data})
 
-    
-
-    return render(request, 'admin_orders.html', {
+    # Render template with context
+    context = {
         'orders': orders,
         'search_query': search_query,
         'orders_per_page': orders_per_page,
-    })
+        'current_status': status_filter,
+        'status_counts': status_counts,
+    }
+
+    return render(request, 'admin_orders.html', context)
+
     
 
 ############################################################################################################################
@@ -814,7 +854,8 @@ def update_order(request,order_id):
         order_id=order_id
     )
     book_detail = OrderItem.objects.filter(order=order_detail).select_related('book')
-    return render(request,'update_order.html',{'order_detail':order_detail,'book_detail':book_detail})
+    statuses = ["Pending", "Shipped","Out of delivery", "Delivered"]
+    return render(request,'update_order.html',{'order_detail':order_detail,'book_detail':book_detail,'statuses':statuses})
 
 ############################################################################################################################
 @login_required(login_url='admin_login')
@@ -850,3 +891,25 @@ def admin_single_item_cancel(request,order_id,order_item_id):
 
         messages.success(request, f"Item has been canceled in Order {order_detail.order_id}.")
     return redirect('update_order',order_id=order_id)
+
+#############################################################################################################################
+
+@login_required(login_url='admin_login')
+def status_update(request,order_id):
+    if request.method =="POST":
+        order = get_object_or_404(OrderDetails, order_id = order_id)
+        new_status = request.POST.get('new_status')
+
+        if new_status and new_status != order.order_status:
+            order.order_status = new_status
+            order.save()
+
+             # Update the status of all items in the order
+            order_items = OrderItem.objects.filter(order=order)
+            order_items.update(order_status=new_status)
+
+            messages.success(request,f"Order{order.order_id} status updated to {new_status}.")
+        else:
+            messages.warning(request, f"Order {order.order_id} is already in the {new_status} status.")
+
+    return redirect('update_order', order_id=order_id)

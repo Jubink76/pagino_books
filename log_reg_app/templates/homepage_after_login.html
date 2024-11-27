@@ -232,46 +232,50 @@
                             {% if book.is_available %}
                             <!-- Product Card -->
                             <div class="w-1/5 bg-white rounded-lg shadow-md overflow-hidden transform hover:scale-105 transition-transform duration-300 relative group">
+                                <!-- Image Section -->
                                 <div class="relative">
                                     <a href="{% url 'single_detail' book.id %}">
                                         <img src="{{ book.images.first.image.url }}" alt="The Hunter" class="w-full h-96 object-cover" />
                                         <span class="absolute top-2 right-2 bg-blue-400 text-white px-2 py-1 rounded-full text-sm">NEW</span>
                                     </a>
                                 </div>
-                                <div class="p-4">
+                            
+                                <!-- Content Section -->
+                                <div class="p-4 relative">
                                     <h3 class="font-semibold text-lg mb-2">{{ book.book_name }}</h3>
                                     <p class="text-gray-600 mb-2">{{ book.author }}</p>
                                     <div class="flex items-center mb-2">
-                                        <div class="flex text-yellow-400">
-                                            ★★★★☆
+                                        <div class="flex text-yellow-400">★★★★☆</div>
+                                    </div>
+                            
+                                    <!-- Price Section -->
+                                    <div class="flex justify-between items-center relative">
+                                        <span class="text-green-600 font-bold">₹{{ book.offer_price }}</span>
+                                        <span class="text-red-400 line-through">₹{{ book.base_price }}</span>
+                            
+                                        <!-- Floating Icons -->
+                                        <div
+                                            class="absolute inset-0 flex justify-center items-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                            <div class="flex gap-2">
+                                                <!-- Floating Cart Icon -->
+                                                <button
+                                                    class="add-to-cart-btn w-10 h-10 bg-yellow-400 text-black flex justify-center items-center rounded-full shadow-md transform translate-y-[20px] group-hover:translate-y-0 transition-transform duration-500 hover:bg-yellow-500"
+                                                    data-url="{% url 'add_to_cart' book.id %}"
+                                                    data-success-redirect="{% url 'cart_page' %}">
+                                                    <i class="fa fa-shopping-cart"></i>
+                                                </button>
+                            
+                                                <!-- Floating Wishlist Icon -->
+                                                <button
+                                                    class="add-to-wishlist-btn w-10 h-10 bg-yellow-400 text-black flex justify-center items-center rounded-full shadow-md transform translate-y-[20px] group-hover:translate-y-0 transition-transform duration-500 hover:bg-yellow-500"
+                                                    data-url="{% url 'add_to_whishlist' book.id %}">
+                                                    <i class="fa fa-heart"></i>
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
-                                    <div class="flex justify-between items-center">
-                                        <span class="text-green-600 font-bold">₹{{ book.offer_price }}</span>
-                                        <span class="text-gray-400 line-through">₹{{ book.base_price }}</span>
-                                    </div>
                                 </div>
-                                <!-- Floating Icons -->
-                                <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                                    <div class="flex gap-5">
-                                        <!-- Floating Cart Icon -->
-                                        <button
-                                            class="add-to-cart-btn w-10 h-10 bg-yellow-400 text-black flex justify-center items-center rounded-full shadow-md transform translate-x-[-50px] group-hover:translate-x-0 transition-transform duration-500 hover:bg-yellow-500"
-                                            data-url="{% url 'add_to_cart' book.id %}"
-                                            data-success-redirect="{% url 'cart_page' %}">
-                                            <i class="fa fa-shopping-cart"></i>
-                                        </button>
-                                
-                                        <!-- Floating Wishlist Icon -->
-                                        <button
-                                            class="add-to-wishlist-btn w-10 h-10 bg-yellow-400 text-black flex justify-center items-center rounded-full shadow-md transform translate-x-[50px] group-hover:translate-x-0 transition-transform duration-500 hover:bg-yellow-500"
-                                            data-url="{% url 'add_to_whishlist' book.id %}"
-                                            data-success-redirect="">
-                                            <i class="fa fa-heart"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
+                            </div>                                                                                                             
                             {% endif %}
                             {% endfor %}
                         </div>
@@ -343,6 +347,7 @@
                                 {% if book.is_available %}
                                 <!-- Product Card -->
                                 <div class="bg-white rounded-lg shadow-md overflow-hidden transform hover:scale-105 transition-transform duration-300 relative group">
+                                    <!-- Image Section -->
                                     <div class="relative">
                                         <a href="{% url 'single_detail' book.id %}">
                                             <img src="{{ book.images.first.image.url }}" alt="{{ book.book_name }}" class="w-full h-96 object-cover"/>
@@ -357,37 +362,39 @@
                                             {% endif %}
                                         </a>
                                     </div>
-                                    <div class="p-4">
+                                
+                                    <!-- Content Section -->
+                                    <div class="p-4 relative">
                                         <h3 class="font-semibold text-lg mb-2">{{ book.book_name }}</h3>
                                         <p class="text-gray-600 mb-2">{{ book.author }}</p>
                                         <div class="flex text-yellow-400 mb-2">★★★★☆</div>
-                                        <div class="flex justify-between items-center">
+                                
+                                        <!-- Price and Floating Icons Section -->
+                                        <div class="flex justify-between items-center relative">
                                             <span class="text-green-600 font-bold">₹{{ book.offer_price }}</span>
-                                            <span class="text-gray-400 line-through">₹{{ book.base_price }}</span>
+                                            <span class="text-red-400 line-through">₹{{ book.base_price }}</span>
+                                
+                                            <!-- Floating Icons -->
+                                            <div
+                                                class="absolute inset-x-0 top-1/2 transform -translate-y-1/2 flex justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                                <!-- Floating Cart Icon -->
+                                                <button
+                                                    class="add-to-cart-btn w-10 h-10 bg-yellow-400 text-black flex justify-center items-center rounded-full shadow-md hover:bg-yellow-500"
+                                                    data-url="{% url 'add_to_cart' book.id %}"
+                                                    data-success-redirect="{% url 'cart_page' %}">
+                                                    <i class="fa fa-shopping-cart"></i>
+                                                </button>
+                                                <!-- Floating Wishlist Icon -->
+                                                <button
+                                                    class="add-to-wishlist-btn w-10 h-10 bg-yellow-400 text-black flex justify-center items-center rounded-full shadow-md hover:bg-yellow-500"
+                                                    data-url="{% url 'add_to_whishlist' book.id %}"
+                                                    data-success-redirect="{% url 'whishlist_page' %}">
+                                                    <i class="fa fa-heart"></i>
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
-                                    <!-- Floating Icons -->
-                                    <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                                        <div class="flex gap-5">
-                                            <!-- Cart Icon -->
-                                            <button 
-                                                class="add-to-cart-btn w-10 h-10 bg-yellow-400 text-black flex justify-center items-center rounded-full shadow-md transform translate-x-[-50px] group-hover:translate-x-0 transition-transform duration-500 hover:bg-yellow-500"
-                                                data-url="{% url 'add_to_cart' book.id %}"
-                                                data-success-redirect="{% url 'cart_page' %}">
-                                                <i class="fa fa-shopping-cart"></i>
-                                            </button>
-                                            
-                                            <!-- Wishlist Icon -->
-                                            <button 
-                                                class="add-to-wishlist-btn w-10 h-10 bg-yellow-400 text-black flex justify-center items-center rounded-full shadow-md transform translate-x-[50px] group-hover:translate-x-0 transition-transform duration-500 hover:bg-yellow-500"
-                                                data-url="{% url 'add_to_whishlist' book.id %}"
-                                                data-success-redirect="">
-                                                <i class="fa fa-heart"></i>
-                                            </button>
-                                        </div>
-                                    </div>
-                                    
-                                </div>
+                                </div>                                
                                 {% endif %}
                                 {% endfor %}
                             </div>
@@ -475,47 +482,49 @@
                         {% if book.is_available %}
                         <!-- Product Card 1 -->
                         <div class="w-1/5 bg-white rounded-lg shadow-md overflow-hidden transform hover:scale-105 transition-transform duration-300 relative group">
+                            <!-- Image Section -->
                             <div class="relative">
                                 <a href="{% url 'single_detail' book.id %}">
-                                    <img src="{{ book.images.first.image.url }}" alt="The Hunter" class="w-full h-96 object-cover"/>
+                                    <img src="{{ book.images.first.image.url }}" alt="The Hunter" class="w-full h-96 object-cover" />
                                     <span class="absolute top-2 right-2 bg-blue-400 text-white px-2 py-1 rounded-full text-sm">NEW</span>
                                 </a>
                             </div>
-                            <div class="p-4">
+                        
+                            <!-- Content Section -->
+                            <div class="p-4 relative">
                                 <h3 class="font-semibold text-lg mb-2">{{ book.book_name }}</h3>
                                 <p class="text-gray-600 mb-2">{{ book.author }}</p>
                                 <div class="flex items-center mb-2">
-                                    <div class="flex text-yellow-400">
-                                        ★★★★☆
+                                    <div class="flex text-yellow-400">★★★★☆</div>
+                                </div>
+                        
+                                <!-- Price Section -->
+                                <div class="flex justify-between items-center relative">
+                                    <span class="text-green-600 font-bold">₹{{ book.offer_price }}</span>
+                                    <span class="text-red-400 line-through">₹{{ book.base_price }}</span>
+                        
+                                    <!-- Floating Icons -->
+                                    <div
+                                        class="absolute inset-0 flex justify-center items-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                        <div class="flex gap-2">
+                                            <!-- Floating Cart Icon -->
+                                            <button
+                                                class="add-to-cart-btn w-10 h-10 bg-yellow-400 text-black flex justify-center items-center rounded-full shadow-md transform translate-y-[20px] group-hover:translate-y-0 transition-transform duration-500 hover:bg-yellow-500"
+                                                data-url="{% url 'add_to_cart' book.id %}"
+                                                data-success-redirect="{% url 'cart_page' %}">
+                                                <i class="fa fa-shopping-cart"></i>
+                                            </button>
+                        
+                                            <!-- Floating Wishlist Icon -->
+                                            <button
+                                                class="add-to-wishlist-btn w-10 h-10 bg-yellow-400 text-black flex justify-center items-center rounded-full shadow-md transform translate-y-[20px] group-hover:translate-y-0 transition-transform duration-500 hover:bg-yellow-500"
+                                                data-url="{% url 'add_to_whishlist' book.id %}">
+                                                <i class="fa fa-heart"></i>
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
-                                <div class="flex justify-between items-center">
-                                    <span class="text-green-600 font-bold">₹{{ book.offer_price }}</span>
-                                    <span class="text-gray-400 line-through">₹{{ book.base_price }}</span>
-                                </div>
                             </div>
-                    
-                            <!-- Floating Icons -->
-                            <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                                <div class="flex gap-5">
-                                    <!-- Cart Icon -->
-                                    <button 
-                                        class="add-to-cart-btn w-10 h-10 bg-yellow-400 text-black flex justify-center items-center rounded-full shadow-md transform translate-x-[-50px] group-hover:translate-x-0 transition-transform duration-500 hover:bg-yellow-500"
-                                        data-url="{% url 'add_to_cart' book.id %}"
-                                        data-success-redirect="{% url 'cart_page' %}">
-                                        <i class="fa fa-shopping-cart"></i>
-                                    </button>
-                                    
-                                    <!-- Wishlist Icon -->
-                                    <button 
-                                        class="add-to-wishlist-btn w-10 h-10 bg-yellow-400 text-black flex justify-center items-center rounded-full shadow-md transform translate-x-[50px] group-hover:translate-x-0 transition-transform duration-500 hover:bg-yellow-500"
-                                        data-url="{% url 'add_to_whishlist' book.id %}"
-                                        data-success-redirect="">
-                                        <i class="fa fa-heart"></i>
-                                    </button>
-                                </div>
-                            </div>
-                            
                         </div>
                         {% endif %}
                         {% endfor %}

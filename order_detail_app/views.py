@@ -63,7 +63,7 @@ def create_order(request):
                 # Create order items
                 for cart_item in cart_items:
                     if cart_item.book.stock_quantity < cart_item.quantity:
-                        raise ValueError(f"Insufficient stock for {cart_item.book.title}")
+                        raise ValueError(f"Insufficient stock for {cart_item.book.book_name}")
                     
                     OrderItem.objects.create(
                         order=order,
@@ -79,10 +79,11 @@ def create_order(request):
 
                 # Clear cart
                 cart_items.delete()
+                redirect_url = request.build_absolute_uri(reverse('order_success', kwargs={'order_id': order.order_id}))
                 return JsonResponse({
                     'status': 'success',
                     'message': 'Order placed successfully!',
-                    'redirect_url': reverse('order_success', kwargs={'order_id': order.order_id})
+                    'redirect_url': redirect_url
                 })
 
         except AddressTable.DoesNotExist:

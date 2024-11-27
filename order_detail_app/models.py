@@ -64,6 +64,7 @@ class OrderDetails(models.Model):
     order_status = models.CharField(max_length=20, 
                                     choices=[('Pending', 'Pending'),
                                              ('Shipped', 'Shipped'),
+                                             ('Out of delivery','Out of delivery'),
                                              ('Delivered', 'Delivered'),
                                              ('Canceled','Canceled')], 
                                              default='Pending')
@@ -93,6 +94,7 @@ class OrderItem(models.Model):
                                     choices=[('Pending', 'Pending'),
                                              ('Shipped', 'Shipped'),
                                              ('Delivered', 'Delivered'),
+                                             ('Out of delivery','Out of delivery'),
                                              ('Canceled','Canceled')], 
                                              default='Pending')
     def __str__(self):

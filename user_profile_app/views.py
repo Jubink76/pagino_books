@@ -187,7 +187,39 @@ def delete_address(request, address_id):
         return JsonResponse({'success': False, 'error': str(e)})
 
 #######################################################################################################################
-
+def edit_address(request,address_id):
+    address = get_object_or_404(AddressTable, id=address_id, user=request.user)
+    if request.method == 'POST':
+        try:
+            # Update address fields
+            address.address_name = request.POST.get('address_name')
+            address.street_name = request.POST.get('street_name')
+            address.building_no = request.POST.get('building_no')
+            address.landmark = request.POST.get('landmark')
+            address.city = request.POST.get('city')
+            address.pincode = request.POST.get('pincode')
+            address.address_phone = request.POST.get('address_phone')
+            address.state = request.POST.get('state')
+            address.address_type = request.POST.get('address_type', 'home')
+            
+            # Save the updated address
+            address.save()
+            
+            # Return success response
+            return JsonResponse({
+                'success': True,
+                'message': 'Address updated successfully',
+                'redirect_url': reverse('user_address')
+            })
+            
+        except Exception as e:
+            # Return error response
+            return JsonResponse({
+                'success': False,
+                'message': str(e)
+            })
+    return render(request, 'edit_address.html',{'address':address})
+#######################################################################################################################
 @login_required
 def user_password_reset(request):
     if request.method == "POST":

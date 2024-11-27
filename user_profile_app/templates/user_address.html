@@ -2,7 +2,6 @@
 {% load static %}
 
 {% block css_link %}
-
 {% endblock %}
 
 {% block content %}
@@ -58,33 +57,56 @@
                     </div>
                     {% if addresses %}
                     <!-- Address Grid -->
-                    {% for address in addresses%}
-                    <div class="border border-gray-200 rounded-lg p-6 relative" data-address-id="{{ address.id }}">
-                        {% if address.is_default %}
-                        <span class="absolute top-4 right-4 bg-green-500 text-white text-sm px-3 py-1 rounded">Default</span>
-                        {% endif %}
-                        <div class="flex">
-                            <!-- Address Content -->
+                    {% for address in addresses %}
+                    <div class="border border-gray-200 rounded-lg p-6 relative mb-4" data-address-id="{{ address.id }}">
+                        <div class="flex justify-between">
+                            <!-- Left side: Address Content -->
                             <div class="flex-1">
                                 <h3 class="text-lg font-semibold text-gray-800 mb-2">{{ address.address_name }}</h3>
-                                <div class="text-gray-600 mb-4 space-y-1">
+                                <div class="text-gray-600 space-y-1">
+                                    <!-- Street Address -->
+                                    {% if address.street_name %}
                                     <p>{{ address.street_name }}</p>
-                                    <p>{% if address.building_no %}{{ address.apartment }}<br>{% endif %}</p>
-                                    <p>{% if address.landmark %}{{ address.landmark }}<br>{% endif %}</p>
+                                    {% endif %}
+                                    
+                                    <!-- Building/Apartment -->
+                                    {% if address.building_no %}
+                                    <p>{{ address.building_no }}</p>
+                                    {% endif %}
+                                    
+                                    <!-- Landmark -->
+                                    {% if address.landmark %}
+                                    <p>{{ address.landmark }}</p>
+                                    {% endif %}
+                                    
+                                    <!-- City, State, Pincode -->
                                     <p>{{ address.city }}, {{ address.state }} {{ address.pincode }}</p>
-                                </div>
-                                <div class="text-gray-600">
-                                    <i class="fas fa-phone-alt mr-2"></i>{{ address.address_phone }}
+                                    
+                                    <!-- Phone Number -->
+                                    <p class="mt-2">
+                                        <i class="fas fa-phone-alt mr-2"></i>
+                                        {{ address.address_phone }}
+                                    </p>
                                 </div>
                             </div>
-                            <div class="flex flex-col gap-3 ml-4 mt-12 min-w-[140px]">
+
+                            <!-- Middle: Default Tag -->
+                            <div class="flex items-center mx-4">
+                                {% if address.is_default %}
+                                <span class="bg-green-500 text-white text-sm px-3 py-1 rounded whitespace-nowrap">Default</span>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Right side: Buttons -->
+                            <div class="flex flex-col gap-3 min-w-[140px]">
                                 {% if addresses.count > 1 %}
                                     {% if address.is_default %}
                                         <button class="w-full bg-gray-200 text-gray-700 px-4 py-2 rounded cursor-not-allowed" disabled>
                                             Default Address
                                         </button>
                                     {% else %}
-                                        <button class="w-full bg-gray-200 text-gray-700 px-4 py-2 rounded hover:bg-gray-300" onclick="setDefaultAddress({{ address.id }})">
+                                        <button class="w-full bg-gray-200 text-gray-700 px-4 py-2 rounded hover:bg-gray-300 transition-colors" 
+                                                onclick="setDefaultAddress({{ address.id }})">
                                             Set as Default
                                         </button>
                                     {% endif %}
@@ -93,14 +115,21 @@
                                         Default Address
                                     </button>
                                 {% endif %}
-                                <button class="w-full bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700" onclick="showDeleteConfirmation({{ address.id }})">
+                                
+                                <button class="w-full bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition-colors"
+                                        onclick="showDeleteConfirmation({{ address.id }})">
                                     Delete Address
                                 </button>
+                                
+                                <a href="{% url 'edit_address' address.id %}" class="w-full">
+                                    <button class="w-full bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors">
+                                        Edit Address
+                                    </button>
+                                </a>
                             </div>
                         </div>
                     </div>
                     {% endfor %}
-                    </div>
 
                     <!-- Delete Modal -->
                     <div id="deleteModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50">
@@ -164,29 +193,36 @@
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                // Remove existing default badges
-                document.querySelectorAll('[class*="bg-green-500"].absolute').forEach(badge => badge.remove());
+                // Get all address cards
+                const allAddressCards = document.querySelectorAll('[data-address-id]');
                 
-                // Reset all "Set as Default" buttons
-                document.querySelectorAll('[onclick^="setDefaultAddress"]').forEach(btn => {
-                    btn.className = 'bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600';
-                    btn.textContent = 'Set as Default';
+                // Update all address cards
+                allAddressCards.forEach(card => {
+                    const currentId = card.getAttribute('data-address-id');
+                    const defaultTagContainer = card.querySelector('.flex.items-center.mx-4');
+                    const defaultButton = card.querySelector('.flex.flex-col.gap-3.min-w-\\[140px\\] button:first-child');
+                    
+                    if (currentId === addressId.toString()) {
+                        // This is the new default address
+                        // Add default tag
+                        defaultTagContainer.innerHTML = '<span class="bg-green-500 text-white text-sm px-3 py-1 rounded whitespace-nowrap">Default</span>';
+                        
+                        // Update button to "Default Address"
+                        defaultButton.className = 'w-full bg-gray-200 text-gray-700 px-4 py-2 rounded cursor-not-allowed';
+                        defaultButton.textContent = 'Default Address';
+                        defaultButton.disabled = true;
+                    } else {
+                        // This is not the default address
+                        // Remove default tag
+                        defaultTagContainer.innerHTML = '';
+                        
+                        // Update button to "Set as Default"
+                        defaultButton.className = 'w-full bg-gray-200 text-gray-700 px-4 py-2 rounded hover:bg-gray-300 transition-colors';
+                        defaultButton.textContent = 'Set as Default';
+                        defaultButton.disabled = false;
+                        defaultButton.onclick = () => setDefaultAddress(currentId);
+                    }
                 });
-                
-                // Update selected address
-                const selectedCard = document.querySelector(`[data-address-id="${addressId}"]`);
-                
-                // Add default badge
-                const badge = document.createElement('span');
-                badge.className = 'absolute top-4 right-4 bg-green-500 text-white text-sm px-3 py-1 rounded';
-                badge.textContent = 'Default';
-                selectedCard.insertBefore(badge, selectedCard.firstChild);
-                
-                // Update button
-                const btn = selectedCard.querySelector('[onclick^="setDefaultAddress"]');
-                btn.className = 'bg-gray-200 text-gray-700 px-4 py-2 rounded cursor-not-allowed';
-                btn.textContent = 'Default Address';
-                btn.disabled = true;
             }
         })
         .catch(error => console.error('Error:', error));

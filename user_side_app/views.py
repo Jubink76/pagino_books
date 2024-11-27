@@ -413,7 +413,8 @@ def checkout_add_address(request):
         pincode = request.POST.get('pincode', '').strip()
         address_phone = request.POST.get('address_phone', '').strip()
         state = request.POST.get('state', '').strip()
-        address_type = request.POST.get('address_type', 'Home')  # Default to Home if not specified
+        address_type = request.POST.get('address_type', 'home')  # Changed default to lowercase
+
         # Initialize errors dictionary
         errors = {}
 
@@ -441,24 +442,29 @@ def checkout_add_address(request):
 
         if not address_phone:
             errors['address_phone'] = 'Phone number is required'
-        elif not re.match(r'^\d{10}$', address_phone):
-            errors['address_phone'] = 'Phone number must be 10 digits'
+        elif not re.match(r'^[6-9]\d{9}$', address_phone):  # Updated to match client-side validation
+            errors['address_phone'] = 'Please enter a valid 10-digit Indian phone number'
 
         if not state:
             errors['state'] = 'State is required'
         elif not re.match(r'^[a-zA-Z\s]*$', state):
             errors['state'] = 'State should only contain letters and spaces'
 
-        # If there are any errors, return them
-        print(errors)
         if errors:
             return JsonResponse({
                 'status': 'error',
                 'message': 'Please correct the errors below.',
                 'errors': errors
-            })
+            }, status=400)  # Added status code
 
         try:
+            # Check if user is authenticated
+            if not request.user.is_authenticated:
+                return JsonResponse({
+                    'status': 'error',
+                    'message': 'Please log in to add an address.'
+                }, status=403)
+
             # Create and save the address
             address = AddressTable(
                 user=request.user,
@@ -470,25 +476,27 @@ def checkout_add_address(request):
                 pincode=pincode,
                 address_phone=address_phone,
                 state=state,
-                address_type=address_type
+                address_type=address_type.lower()  # Ensure lowercase storage
             )
             address.save()
+            
             return JsonResponse({
                 'status': 'success',
                 'message': 'Address added successfully!',
-                'redirect_url': reverse('user_address')  
+                'redirect_url': reverse('checkout_page')
             })
 
         except Exception as e:
+            print(f"Error saving address: {str(e)}")  # Add logging
             return JsonResponse({
                 'status': 'error',
                 'message': 'An error occurred while saving the address.'
-            })
+            }, status=500)
 
     return JsonResponse({
         'status': 'error',
         'message': 'Invalid request method'
-    })
+    }, status=405)
 
 ###################################################################################################################
 
