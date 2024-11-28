@@ -9,11 +9,13 @@ from django.db import transaction
 from django.contrib.auth.decorators import login_required
 from django.urls import reverse
 from django.http import JsonResponse
+from django.conf import settings
 # generating unique order id
 def generate_order_id():
     return ''.join(random.choices(string.ascii_uppercase + string.ascii_lowercase + string.digits, k=10))
 
 def create_order(request):
+     
     if request.method != "POST":
         return JsonResponse({'status': 'error', 'message': 'Invalid request method'})
     
@@ -30,8 +32,7 @@ def create_order(request):
         # Validate payment method
         valid_payment_methods = ['COD', 'ONLINE', 'WALLET']
         if payment_method not in valid_payment_methods:
-            messages.error(request, "Invalid payment method selected.")
-            return redirect('checkout_page')
+            return JsonResponse({'status': 'error', 'message': 'Invalid payment method selected.'})
         
         try:
             with transaction.atomic():
@@ -39,8 +40,7 @@ def create_order(request):
                 cart_items = CartTable.objects.filter(user=request.user)
 
                 if not cart_items.exists():
-                    messages.error(request, "Your cart is empty.")
-                    return redirect('checkout_page')
+                    return JsonResponse({'status': 'error', 'message': 'Your cart is empty.'})
 
                 # Generate single order ID
                 single_order_id = generate_order_id()
@@ -79,6 +79,7 @@ def create_order(request):
 
                 # Clear cart
                 cart_items.delete()
+
                 redirect_url = request.build_absolute_uri(reverse('order_success', kwargs={'order_id': order.order_id}))
                 return JsonResponse({
                     'status': 'success',
@@ -119,5 +120,24 @@ def cancel_order(request,order_id):
             'message': f"Order {order.order_id} is already canceled."
             })
     return redirect('user_orders')
+
+################################################################################################################################
+@login_required
+def user_single_item_cancel(request, order_id, order_item_id):
+    if request.method == "POST":
+        # Fetch the related order and order item
+        order_detail = get_object_or_404(OrderDetails, order_id=order_id, user=request.user)
+        order_item = get_object_or_404(OrderItem, order=order_detail, id=order_item_id)
+
+        # Delete the item
+        order_item.delete()
+
+        # Update the order status if all items are deleted
+        if not OrderItem.objects.filter(order=order_detail).exists():
+            order_detail.order_status = 'Canceled'
+            order_detail.save()
+
+        messages.success(request, f"Item has been successfully removed from Order {order_id}.")
+    return redirect('user_orders', order_id=order_id)
 
 ################################################################################################################################

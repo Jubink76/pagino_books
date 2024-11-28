@@ -254,24 +254,26 @@
                                         <span class="text-red-400 line-through">₹{{ book.base_price }}</span>
                             
                                         <!-- Floating Icons -->
-                                        <div
-                                            class="absolute inset-0 flex justify-center items-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                                            <div class="flex gap-2">
-                                                <!-- Floating Cart Icon -->
-                                                <button
-                                                    class="add-to-cart-btn w-10 h-10 bg-yellow-400 text-black flex justify-center items-center rounded-full shadow-md transform translate-y-[20px] group-hover:translate-y-0 transition-transform duration-500 hover:bg-yellow-500"
+                                        <div class="absolute inset-x-0 top-1/2 transform -translate-y-1/2 flex justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10">
+                                            <form class="m-0 z-20">
+                                                {% csrf_token %}
+                                                <button type="submit"
+                                                    class="add-to-cart-btn w-10 h-10 bg-yellow-400 text-black flex justify-center items-center rounded-full shadow-md hover:bg-yellow-500"
                                                     data-url="{% url 'add_to_cart' book.id %}"
                                                     data-success-redirect="{% url 'cart_page' %}">
                                                     <i class="fa fa-shopping-cart"></i>
                                                 </button>
-                            
-                                                <!-- Floating Wishlist Icon -->
-                                                <button
-                                                    class="add-to-wishlist-btn w-10 h-10 bg-yellow-400 text-black flex justify-center items-center rounded-full shadow-md transform translate-y-[20px] group-hover:translate-y-0 transition-transform duration-500 hover:bg-yellow-500"
-                                                    data-url="{% url 'add_to_whishlist' book.id %}">
+                                            </form>
+                                        
+                                            <form class="m-0 z-20">
+                                                {% csrf_token %}
+                                                <button type="submit"
+                                                    class="add-to-wishlist-btn w-10 h-10 bg-yellow-400 text-black flex justify-center items-center rounded-full shadow-md hover:bg-yellow-500"
+                                                    data-url="{% url 'add_to_whishlist' book.id %}"
+                                                    data-success-redirect="{% url 'whishlist_page' %}">
                                                     <i class="fa fa-heart"></i>
                                                 </button>
-                                            </div>
+                                            </form>
                                         </div>
                                     </div>
                                 </div>
@@ -375,22 +377,26 @@
                                             <span class="text-red-400 line-through">₹{{ book.base_price }}</span>
                                 
                                             <!-- Floating Icons -->
-                                            <div
-                                                class="absolute inset-x-0 top-1/2 transform -translate-y-1/2 flex justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                                                <!-- Floating Cart Icon -->
-                                                <button
-                                                    class="add-to-cart-btn w-10 h-10 bg-yellow-400 text-black flex justify-center items-center rounded-full shadow-md hover:bg-yellow-500"
-                                                    data-url="{% url 'add_to_cart' book.id %}"
-                                                    data-success-redirect="{% url 'cart_page' %}">
-                                                    <i class="fa fa-shopping-cart"></i>
-                                                </button>
-                                                <!-- Floating Wishlist Icon -->
-                                                <button
-                                                    class="add-to-wishlist-btn w-10 h-10 bg-yellow-400 text-black flex justify-center items-center rounded-full shadow-md hover:bg-yellow-500"
-                                                    data-url="{% url 'add_to_whishlist' book.id %}"
-                                                    data-success-redirect="{% url 'whishlist_page' %}">
-                                                    <i class="fa fa-heart"></i>
-                                                </button>
+                                            <div class="absolute inset-x-0 top-1/2 transform -translate-y-1/2 flex justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10">
+                                                <form class="m-0 z-20">
+                                                    {% csrf_token %}
+                                                    <button type="submit"
+                                                        class="add-to-cart-btn w-10 h-10 bg-yellow-400 text-black flex justify-center items-center rounded-full shadow-md hover:bg-yellow-500"
+                                                        data-url="{% url 'add_to_cart' book.id %}"
+                                                        data-success-redirect="{% url 'cart_page' %}">
+                                                        <i class="fa fa-shopping-cart"></i>
+                                                    </button>
+                                                </form>
+                                            
+                                                <form class="m-0 z-20">
+                                                    {% csrf_token %}
+                                                    <button type="submit"
+                                                        class="add-to-wishlist-btn w-10 h-10 bg-yellow-400 text-black flex justify-center items-center rounded-full shadow-md hover:bg-yellow-500"
+                                                        data-url="{% url 'add_to_whishlist' book.id %}"
+                                                        data-success-redirect="{% url 'whishlist_page' %}">
+                                                        <i class="fa fa-heart"></i>
+                                                    </button>
+                                                </form>
                                             </div>
                                         </div>
                                     </div>
@@ -504,24 +510,26 @@
                                     <span class="text-red-400 line-through">₹{{ book.base_price }}</span>
                         
                                     <!-- Floating Icons -->
-                                    <div
-                                        class="absolute inset-0 flex justify-center items-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                                        <div class="flex gap-2">
-                                            <!-- Floating Cart Icon -->
-                                            <button
-                                                class="add-to-cart-btn w-10 h-10 bg-yellow-400 text-black flex justify-center items-center rounded-full shadow-md transform translate-y-[20px] group-hover:translate-y-0 transition-transform duration-500 hover:bg-yellow-500"
+                                    <div class="absolute inset-x-0 top-1/2 transform -translate-y-1/2 flex justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10">
+                                        <form class="m-0 z-20">
+                                            {% csrf_token %}
+                                            <button type="submit"
+                                                class="add-to-cart-btn w-10 h-10 bg-yellow-400 text-black flex justify-center items-center rounded-full shadow-md hover:bg-yellow-500"
                                                 data-url="{% url 'add_to_cart' book.id %}"
                                                 data-success-redirect="{% url 'cart_page' %}">
                                                 <i class="fa fa-shopping-cart"></i>
                                             </button>
-                        
-                                            <!-- Floating Wishlist Icon -->
-                                            <button
-                                                class="add-to-wishlist-btn w-10 h-10 bg-yellow-400 text-black flex justify-center items-center rounded-full shadow-md transform translate-y-[20px] group-hover:translate-y-0 transition-transform duration-500 hover:bg-yellow-500"
-                                                data-url="{% url 'add_to_whishlist' book.id %}">
+                                        </form>
+                                    
+                                        <form class="m-0 z-20">
+                                            {% csrf_token %}
+                                            <button type="submit"
+                                                class="add-to-wishlist-btn w-10 h-10 bg-yellow-400 text-black flex justify-center items-center rounded-full shadow-md hover:bg-yellow-500"
+                                                data-url="{% url 'add_to_whishlist' book.id %}"
+                                                data-success-redirect="{% url 'whishlist_page' %}">
                                                 <i class="fa fa-heart"></i>
                                             </button>
-                                        </div>
+                                        </form>
                                     </div>
                                 </div>
                             </div>

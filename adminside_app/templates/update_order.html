@@ -192,7 +192,7 @@
                                 <td class="px-6 py-4 text-sm">
                                     <form method="POST" action="{% url 'admin_single_item_cancel' order_detail.order_id item.id %}" id="cancelItemForm-{{ item.id }}">
                                         {% csrf_token %}
-                                        <button type="button" class="p-1 hover:text-red-500" data-toggle="tooltip" title="Cancel item" id="cancelItemButton-{{ item.id }}">
+                                        <button type="submit" class="p-1 hover:text-red-500" data-toggle="tooltip" title="Cancel item" id="cancelItemButton-{{ item.id }}">
                                             ❌
                                         </button>
                                     </form>
@@ -258,6 +258,32 @@
             }
         });
     });
+</script>
+<script>
+    document.querySelectorAll('[id^="cancelItemButton-"]').forEach(button => {
+        const itemId = button.id.split('-')[1]; // Extract item ID
+        const cancelForm = document.getElementById(`cancelItemForm-${itemId}`);
+    
+        button.addEventListener('click', function (event) {
+            event.preventDefault(); // Prevent immediate form submission
+    
+            Swal.fire({
+                title: 'Are you sure?',
+                text: "Do you really want to cancel this item?",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Yes, cancel it!',
+                cancelButtonText: 'No, keep it'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    cancelForm.submit(); // Submit the form if confirmed
+                }
+            });
+        });
+    });
+    
 </script>
 <script>
     document.addEventListener("DOMContentLoaded", function () {

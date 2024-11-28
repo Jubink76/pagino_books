@@ -337,23 +337,26 @@
                             <span class="text-gray-400 line-through">₹{{ book.base_price }}</span>
                             
                             <!-- Floating Icons -->
-                            <div 
-                                class="absolute inset-x-0 top-1/2 transform -translate-y-1/2 flex justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                                <!-- Cart Icon -->
-                                <button 
-                                    class="add-to-cart-btn w-10 h-10 bg-yellow-400 text-black flex justify-center items-center rounded-full shadow-md hover:bg-yellow-500"
-                                    data-url="{% url 'add_to_cart' book.id %}"
-                                    data-success-redirect="{% url 'cart_page' %}">
-                                    <i class="fa fa-shopping-cart"></i>
-                                </button>
-                                
-                                <!-- Wishlist Icon -->
-                                <button 
-                                    class="add-to-wishlist-btn w-10 h-10 bg-yellow-400 text-black flex justify-center items-center rounded-full shadow-md hover:bg-yellow-500"
-                                    data-url="{% url 'add_to_whishlist' book.id %}"
-                                    data-success-redirect="">
-                                    <i class="fa fa-heart"></i>
-                                </button>
+                            <div class="absolute inset-x-0 top-1/2 transform -translate-y-1/2 flex justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10">
+                                <form class="m-0 z-20">
+                                    {% csrf_token %}
+                                    <button type="submit"
+                                        class="add-to-cart-btn w-10 h-10 bg-yellow-400 text-black flex justify-center items-center rounded-full shadow-md hover:bg-yellow-500"
+                                        data-url="{% url 'add_to_cart' book.id %}"
+                                        data-success-redirect="{% url 'cart_page' %}">
+                                        <i class="fa fa-shopping-cart"></i>
+                                    </button>
+                                </form>
+                            
+                                <form class="m-0 z-20">
+                                    {% csrf_token %}
+                                    <button type="submit"
+                                        class="add-to-wishlist-btn w-10 h-10 bg-yellow-400 text-black flex justify-center items-center rounded-full shadow-md hover:bg-yellow-500"
+                                        data-url="{% url 'add_to_whishlist' book.id %}"
+                                        data-success-redirect="{% url 'whishlist_page' %}">
+                                        <i class="fa fa-heart"></i>
+                                    </button>
+                                </form>
                             </div>
                         </div>
                     </div>

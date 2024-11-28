@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const orderForm = document.getElementById('orderForm');
     const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
 
+    
     // Function to show alerts (using SweetAlert2)
     function showAlert(type, message) {
         Swal.fire({

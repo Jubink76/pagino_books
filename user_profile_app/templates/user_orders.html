@@ -82,28 +82,42 @@
                     <!-- Order Items -->
                     <div class="space-y-4 mb-8">
                         {% for item in selected_order.orderitem_set.all %}
-                        <div class="flex items-center justify-between border border-gray-200 rounded-lg p-4">
-                            <div class="flex items-center gap-4">
-                                {% if item.book.images.first %}
-                                <img src="{{ item.book.images.first.image.url }}" alt="{{ item.book.book_name }}" 
-                                     class="w-24 h-24 object-cover rounded">
-                                {% endif %}
-                                <div>
-                                    <h3 class="text-lg font-medium text-gray-900">{{ item.book.book_name }}</h3>
-                                    <div class="text-sm text-gray-600">
-                                        <p>Quantity: {{ item.quantity }}</p>
-                                        <p>₹{{ item.book.offer_price }}</p>
+                            <div class="flex items-center justify-between border border-gray-200 rounded-lg p-4">
+                                <div class="flex items-center gap-4">
+                                    {% if item.book.images.first %}
+                                    <img src="{{ item.book.images.first.image.url }}" alt="{{ item.book.book_name }}" 
+                                        class="w-24 h-24 object-cover rounded">
+                                    {% endif %}
+                                    <div>
+                                        <h3 class="text-lg font-medium text-gray-900">{{ item.book.book_name }}</h3>
+                                        <div class="text-sm text-gray-600">
+                                            <p>Quantity: {{ item.quantity }}</p>
+                                            <p>₹{{ item.book.offer_price }}</p>
+                                        </div>
                                     </div>
                                 </div>
+                                <div>
+                                    {% if selected_order.item_count > 1 and selected_order.order_status == 'Pending' %}
+                                    <form method="POST" action="{% url 'user_single_item_cancel' selected_order.order_id item.id %}" id="cancelItemForm-{{ item.id }}">
+                                        {% csrf_token %}
+                                        <button type="button" 
+                                                class="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600" 
+                                                onclick="confirmCancelItem('{{ item.id }}')">
+                                            Cancel Item
+                                        </button>
+                                    </form>
+                                    {% elif selected_order.item_count == 1 and selected_order.order_status == 'Pending' %}
+                                        <form method="POST" action="{% url 'cancel_order' selected_order.order_id %}" class="mr-4">
+                                            {% csrf_token %}
+                                            <button 
+                                                type="submit" 
+                                                class="action-btn bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition">
+                                                Cancel Order
+                                            </button>
+                                        </form>
+                                    {% endif %}
+                                </div>
                             </div>
-                            <div>
-                                {% if item.order.order_status == 'Pending' %}
-                                <a href="" class="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600">
-                                    Cancel
-                                </a>
-                                {% endif %}
-                            </div>
-                        </div>
                         {% endfor %}
                     </div>
 
@@ -237,8 +251,17 @@
                                         {% endwith %}
                                     </div>
                                 </div>
-
-                                {% if order.order_status != 'Canceled' %}
+                                {% if order.order_status == 'Delivered' %}
+                                <form method="POST" action="" class="mr-4">
+                                    {% csrf_token %}
+                                    <button 
+                                        type="button" 
+                                        class="action-btn bg-yellow-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition" 
+                                        data-url="">
+                                        Return Order
+                                    </button>
+                                </form>
+                                {% elif order.order_status != 'Canceled' %}
                                 <form method="POST" action="{% url 'cancel_order' order.order_id %}" class="mr-4">
                                     {% csrf_token %}
                                     <button 
@@ -246,6 +269,16 @@
                                         class="action-btn bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition" 
                                         data-url="{% url 'cancel_order' order.order_id %}">
                                         Cancel Order
+                                    </button>
+                                </form>
+                                {% else %}
+                                <form method="POST" action="" class="mr-4">
+                                    {% csrf_token %}
+                                    <button 
+                                        type="button" 
+                                        class="action-btn bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition" 
+                                        data-url="">
+                                
                                     </button>
                                 </form>
                                 {% endif %}
@@ -287,4 +320,24 @@
 
 {% block script %}
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    function confirmCancelItem(itemId) {
+        // SweetAlert confirmation dialog
+        Swal.fire({
+            title: 'Are you sure?',
+            text: "Do you really want to cancel this item?",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Yes, cancel it!',
+            cancelButtonText: 'No, keep it'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Submit the corresponding form
+                document.getElementById(`cancelItemForm-${itemId}`).submit();
+            }
+        });
+    }
+</script>
 {% endblock %}

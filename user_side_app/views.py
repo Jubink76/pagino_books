@@ -160,6 +160,8 @@ def cart_page(request):
 
 
 def add_to_cart(request, book_id):
+    print(request)
+    print(book_id)
     book = get_object_or_404(BookTable, id=book_id)
     item_price = book.offer_price if book.offer_price else book.base_price
 

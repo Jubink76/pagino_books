@@ -259,10 +259,11 @@ def user_orders(request, order_id=None):
     )
 
     if order_id:
-        # Ensure only valid related fields are used
+        # Combine select_related, prefetch_related, and annotate
         selected_order = get_object_or_404(
-            OrderDetails.objects.select_related('user', 'address')  # Adjust this
-                                .prefetch_related('orderitem_set__book__images'),
+            OrderDetails.objects.select_related('user', 'address')  # Fetch user and address in one query
+                                  .prefetch_related('orderitem_set__book__images')  # Prefetch related images
+                                  .annotate(item_count=Count('orderitem')),  # Count related order items
             order_id=order_id,
             user=request.user
         )
@@ -271,10 +272,8 @@ def user_orders(request, order_id=None):
             'order_stats': order_stats,
         }
     else:
-        user_orders = OrderDetails.objects.filter(
-            user=request.user
-        ).order_by('-order_date')
-
+        # Apply annotate to all user orders
+        user_orders = OrderDetails.objects.filter(user=request.user).annotate(item_count=Count('orderitem')).order_by('-order_date')
         context = {
             'orders': user_orders,
             'order_stats': order_stats,
@@ -283,7 +282,21 @@ def user_orders(request, order_id=None):
     return render(request, 'user_orders.html', context)
 
 #######################################################################################################################
+def admin_single_item_cancel(request,order_id,order_item_id):
+    if request.method == "POST":
+        order_detail= get_object_or_404(OrderDetails, order_id=order_id)
+        order_item = get_object_or_404(OrderItem, order=order_detail, id=order_item_id)
 
+        order_item.is_canceled = True
+        order_item.order_status = 'Canceled'
+        order_item.save()
+
+        #update the order status if all items are canceled
+        if not OrderItem.objects.filter(order=order_detail, is_canceled=False).exists():
+            order_detail.order_status = 'Canceled'
+            order_detail.save()
+
+        messages.success(request, f"Item has been canceled in Order {order_detail.order_id}.")
+    return redirect('update_order',order_id=order_id)
 
 ########################################################################################################################
-
