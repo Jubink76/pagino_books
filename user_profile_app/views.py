@@ -300,3 +300,11 @@ def admin_single_item_cancel(request,order_id,order_item_id):
     return redirect('update_order',order_id=order_id)
 
 ########################################################################################################################
+
+def user_wallet(request):
+    return render(request,'user_wallet.html')
+
+########################################################################################################################
+
+def user_coupon(request):
+    return render(request,'user_coupon.html')

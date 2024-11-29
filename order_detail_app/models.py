@@ -3,7 +3,8 @@ import random
 import string
 from log_reg_app.models import UserTable
 from user_profile_app.models import AddressTable
-from adminside_app.models import BookTable
+from adminside_app.models import BookTable,CategoryTable
+
 import uuid 
 
 def generate_order_id():
@@ -14,37 +15,51 @@ def generate_order_id():
             return order_id
 
 # Create your models here.
-def generate_coupon_code():
-    return str(uuid.uuid4()).replace('-', '').upper()[:10] 
 
 class CouponTable(models.Model):
-    code = models.CharField(max_length=20, default=generate_coupon_code, unique=True)  # Unique code for the coupon
+    code = models.CharField(max_length=20, unique=True)  # Unique code for the coupon
     coupon_type = models.CharField(
         max_length=20,
-        choices=[('flat', 'Flat'), ('percentage', 'Percentage')],
-        default='flat'
+        choices=[('percentage', 'Percentage'), ('fixed', 'Vat Amount')],
+        default='percentage'
     )
-    created_at = models.DateTimeField(auto_now_add=True)
+    discount_value = models.DecimalField(max_digits=10, decimal_places=2,null=True, blank=True)
+    min_purchase_amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    max_uses = models.PositiveIntegerField(null=True, blank=True)
     valid_from = models.DateTimeField()
     valid_to = models.DateTimeField()
     is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"Coupon {self.code} ({self.discount_percentage}% or ₹{self.discount_amount})"
+        return f"Coupon {self.code} ({self.coupon_type}: {self.discount_value})"
 
 
 
 class OfferTable(models.Model):
-    name = models.CharField(max_length=50)
-    offer_type = models.CharField(
-        max_length=20,
-        choices=[('flat', 'Flat'), ('percentage', 'Percentage')],
-        default='flat'
-    )
-    created_at = models.DateTimeField(auto_now_add=True)
+    offer_name = models.CharField(max_length=50)
+    OFFER_TYPES = [
+        ('category', 'Category Offer'),
+        ('product', 'Single Product Offer'),
+        ('special', 'Special Day Offer'),
+        ('seasonal', 'Seasonal Offer'),
+    ]
+    DISCOUNT_TYPES = [
+        ('percentage', 'Percentage'),
+        ('fixed', 'Fixed Amount'),
+        ('bogo', 'Buy One Get One'),
+        ('bundle', 'Bundle Discount'),
+    ]
+    offer_type = models.CharField(max_length=20, choices=OFFER_TYPES)
+    product = models.ForeignKey(BookTable, on_delete=models.CASCADE, null=True,blank=True)
+    category = models.ForeignKey(CategoryTable, on_delete=models.CASCADE, null=True, blank=True)
+    discount_type = models.CharField(max_length=20, choices=DISCOUNT_TYPES,null=True,blank=True)
+    discount_value = models.DecimalField(max_digits=10, decimal_places=2,null=True,blank=True)
     valid_from = models.DateTimeField()
     valid_to = models.DateTimeField()
+    description = models.TextField(blank=True, null=True)
     is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f"Offer {self.name} ({self.discount_percentage}% or ₹{self.discount_amount})"

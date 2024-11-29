@@ -10,4 +10,6 @@ urlpatterns = [
     path('user_orders/',views.user_orders,name='user_orders'),
     path('user_password_reset',views.user_password_reset,name='user_password_reset'),
     path('user_order_detail/<str:order_id>/', views.user_orders, name='user_order_detail'),
+    path('user_wallet',views.user_wallet,name='user_wallet'),
+    path('user_coupon',views.user_coupon,name='user_coupon'),
 ]

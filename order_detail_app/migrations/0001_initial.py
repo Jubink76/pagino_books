@@ -21,7 +21,7 @@ class Migration(migrations.Migration):
             name='CouponTable',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('code', models.CharField(default=order_detail_app.models.generate_coupon_code, max_length=20, unique=True)),
+                ('code', models.CharField(max_length=20, unique=True)),
                 ('coupon_type', models.CharField(choices=[('flat', 'Flat'), ('percentage', 'Percentage')], max_length=20)),
                 ('created_at', models.DateTimeField(auto_now_add=True)),
                 ('valid_from', models.DateTimeField()),

@@ -42,9 +42,15 @@
                                 </a>
                             </li>
                             <li>
-                                <a href="#" class="flex items-center px-5 py-3 rounded-lg text-gray-700 hover:bg-gray-200">
+                                <a href="{% url 'user_wallet' %}" class="flex items-center px-5 py-3 rounded-lg text-gray-700 hover:bg-gray-200">
+                                    <span class="mr-3 text-xl">💰</span>
+                                    Wallet
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{% url 'user_coupon' %}" class="flex items-center px-5 py-3 rounded-lg text-gray-700 hover:bg-gray-200">
                                     <span class="mr-3 text-xl">💳</span>
-                                    Payment Options
+                                    Coupon
                                 </a>
                             </li>
                         </ul>

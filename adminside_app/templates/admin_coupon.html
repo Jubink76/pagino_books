@@ -1,0 +1,166 @@
+{% extends 'admin_base.html' %}
+{% load static %}
+
+{% block csslink %}
+<link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="col-md-9 ms-sm-auto col-lg-10 offset-md-3 offset-lg-2">
+    <div class="bg-gray-800 rounded-lg shadow-lg p-6">
+        <!-- Header Section -->
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-white text-2xl font-medium">Coupon Management</h1>
+            <nav aria-label="breadcrumb">
+                <ol class="flex space-x-2 text-sm text-gray-400">
+                    <li><a href="#" class="hover:text-white">Admin</a></li>
+                    <li>/</li>
+                    <li><a href="#" class="hover:text-white">Marketing</a></li>
+                    <li>/</li>
+                    <li class="text-white">Coupons</li>
+                </ol>
+            </nav>
+        </div>
+
+        <!-- Coupon Form -->
+        <form class="space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Code -->
+                <div>
+                    <label class="block text-gray-300 font-medium mb-2">Code</label>
+                    <input type="text" class="bg-gray-700 text-gray-300 rounded-md px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Enter coupon code">
+                </div>
+
+                <!-- Discount Type -->
+                <div>
+                    <label class="block text-gray-300 font-medium mb-2">Discount Type</label>
+                    <select class="bg-gray-700 text-gray-300 rounded-md px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="percentage">Percentage</option>
+                        <option value="fixed">Vat Amount</option>
+                    </select>
+                </div>
+
+                <!-- Discount Value -->
+                <div>
+                    <label class="block text-gray-300 font-medium mb-2">Discount Value</label>
+                    <input type="number" class="bg-gray-700 text-gray-300 rounded-md px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Enter value">
+                </div>
+
+                <!-- Min Purchase Amount -->
+                <div>
+                    <label class="block text-gray-300 font-medium mb-2">Min Purchase Amount</label>
+                    <input type="number" class="bg-gray-700 text-gray-300 rounded-md px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Enter minimum amount">
+                </div>
+
+                <!-- Valid From -->
+                <div>
+                    <label class="block text-gray-300 font-medium mb-2">Valid From</label>
+                    <input type="datetime-local" class="bg-gray-700 text-gray-300 rounded-md px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+
+                <!-- Valid Until -->
+                <div>
+                    <label class="block text-gray-300 font-medium mb-2">Valid Until</label>
+                    <input type="datetime-local" class="bg-gray-700 text-gray-300 rounded-md px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+
+                <!-- Max Uses -->
+                <div>
+                    <label class="block text-gray-300 font-medium mb-2">Max Uses</label>
+                    <input type="number" class="bg-gray-700 text-gray-300 rounded-md px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Enter maximum uses">
+                </div>
+
+                <!-- Is Active -->
+                <div class="flex items-center space-x-3">
+                    <input type="checkbox" class="bg-gray-700 text-blue-500 rounded focus:ring-blue-500 h-5 w-5">
+                    <label class="text-gray-300 font-medium">Is Active</label>
+                </div>
+            </div>
+
+            <!-- Form Buttons -->
+            <div class="flex justify-end space-x-4">
+                <button type="button" class="bg-gray-600 hover:bg-gray-700 text-white font-medium py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-600">Cancel</button>
+                <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">Save Coupon</button>
+            </div>
+        </form>
+
+        <!-- Coupon List Section -->
+        <div class="mt-8">
+            <h2 class="text-white text-xl font-medium mb-4">Active Coupons</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Coupon Card 1 -->
+                <div class="bg-gray-700 rounded-lg p-4 border border-gray-600">
+                    <div class="flex justify-between items-start mb-3">
+                        <div>
+                            <span class="bg-blue-500 text-white px-2 py-1 rounded-full text-sm">50% OFF</span>
+                            <h3 class="text-white font-bold mt-2">WELCOME50</h3>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button class="text-gray-400 hover:text-white">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                </svg>
+                            </button>
+                            <button class="text-gray-400 hover:text-white">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="space-y-2 text-sm">
+                        <div class="flex justify-between text-gray-400">
+                            <span>Min Purchase:</span>
+                            <span class="text-gray-300">₹1000</span>
+                        </div>
+                        <div class="flex justify-between text-gray-400">
+                            <span>Valid Until:</span>
+                            <span class="text-gray-300">Dec 31, 2024</span>
+                        </div>
+                        <div class="flex justify-between text-gray-400">
+                            <span>Uses Left:</span>
+                            <span class="text-gray-300">45/100</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Coupon Card 2 -->
+                <div class="bg-gray-700 rounded-lg p-4 border border-gray-600">
+                    <div class="flex justify-between items-start mb-3">
+                        <div>
+                            <span class="bg-green-500 text-white px-2 py-1 rounded-full text-sm">₹500 OFF</span>
+                            <h3 class="text-white font-bold mt-2">HOLIDAY500</h3>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button class="text-gray-400 hover:text-white">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                </svg>
+                            </button>
+                            <button class="text-gray-400 hover:text-white">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="space-y-2 text-sm">
+                        <div class="flex justify-between text-gray-400">
+                            <span>Min Purchase:</span>
+                            <span class="text-gray-300">₹2000</span>
+                        </div>
+                        <div class="flex justify-between text-gray-400">
+                            <span>Valid Until:</span>
+                            <span class="text-gray-300">Jan 15, 2025</span>
+                        </div>
+                        <div class="flex justify-between text-gray-400">
+                            <span>Uses Left:</span>
+                            <span class="text-gray-300">98/100</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

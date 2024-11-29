@@ -913,3 +913,13 @@ def status_update(request,order_id):
             messages.warning(request, f"Order {order.order_id} is already in the {new_status} status.")
 
     return redirect('update_order', order_id=order_id)
+
+#########################################################################################################################################
+
+def admin_coupon(request):
+    return render(request,'admin_coupon.html')
+
+#########################################################################################################################################
+
+def admin_offer(request):
+    return render(request,'admin_offer.html')

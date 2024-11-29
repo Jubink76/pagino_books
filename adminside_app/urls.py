@@ -20,4 +20,6 @@ urlpatterns = [
     path('admin_cancel_order/<str:order_id>/', views.admin_cancel_order, name='admin_cancel_order'),
     path('admin_single_item_cancel/<str:order_id>/item/<int:order_item_id>/cancel/', views.admin_single_item_cancel, name='admin_single_item_cancel'),
     path('order_status_update/<str:order_id>/',views.status_update, name='order_status_update'),
+    path('admin_coupon',views.admin_coupon,name='admin_coupon'),
+    path('admin_offer',views.admin_offer,name='admin_offer'),
 ]
