@@ -214,6 +214,9 @@ SESSION_COOKIE_AGE = 60 * 60 * 24 * 7
 # Session data is kept on the server side even if the browser session is closed
 SESSION_EXPIRE_AT_BROWSER_CLOSE = False
 
+RAZORPAY_KEY_ID = 'rzp_test_COptAFlNCi9Fdi'
+RAZORPAY_KEY_SECRET = 'sZNZcjvDRenuZqD45113Rstu'
+
 
 # LOGGING = {
 #     'version': 1,

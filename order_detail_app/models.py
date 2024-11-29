@@ -78,7 +78,9 @@ class OrderDetails(models.Model):
     cancel_date = models.DateTimeField(blank=True, null=True)
     is_refund = models.BooleanField(default=False)
     refund_date = models.DateTimeField(blank=True, null=True)
-
+    razorpay_order_id = models.CharField(max_length=100, null=True, blank=True)
+    razorpay_payment_id = models.CharField(max_length=100, null=True, blank=True)
+    
     def __str__(self):
         return f"Order {self.order_id} by {self.user.username}"
     

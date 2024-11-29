@@ -7,7 +7,6 @@ document.addEventListener('DOMContentLoaded', function () {
     const orderForm = document.getElementById('orderForm');
     const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
 
-    
     // Function to show alerts (using SweetAlert2)
     function showAlert(type, message) {
         Swal.fire({
@@ -35,40 +34,88 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    // Add event listeners to payment method containers
-    document.querySelectorAll('.payment-option').forEach((container) => {
-        container.addEventListener('click', function () {
-            const radio = this.querySelector('input[type="radio"]');
-            if (radio) {
-                radio.checked = true;
-                checkOrderEligibility();
+    // Function to handle Razorpay payment verification
+    async function verifyRazorpayPayment(response, redirectUrl) {
+        try {
+            const verificationData = new FormData();
+            verificationData.append('razorpay_payment_id', response.razorpay_payment_id);
+            verificationData.append('razorpay_order_id', response.razorpay_order_id);
+            verificationData.append('razorpay_signature', response.razorpay_signature);
+            verificationData.append('csrfmiddlewaretoken', csrfToken);
+
+            const verificationResponse = await fetch('/verify-payment/', {
+                method: 'POST',
+                body: verificationData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': csrfToken
+                },
+                credentials: 'same-origin'
+            });
+
+            const verificationResult = await verificationResponse.json();
+
+            if (verificationResult.status === 'success') {
+                await Swal.fire({
+                    icon: 'success',
+                    title: 'Payment Successful!',
+                    text: 'Your order has been placed successfully.',
+                    showConfirmButton: false,
+                    timer: 2000,
+                    timerProgressBar: true
+                });
+                window.location.href = redirectUrl || verificationResult.redirect_url;
+            } else {
+                throw new Error(verificationResult.message || 'Payment verification failed');
             }
-        });
-    });
+        } catch (error) {
+            showAlert('error', error.message || 'Payment verification failed');
+            resetOrderButton();
+        }
+    }
 
-    // Add event listeners to payment method inputs
-    paymentMethodInputs.forEach((input) => {
-        input.addEventListener('change', checkOrderEligibility);
-    });
+    // Function to initialize Razorpay
+    function initializeRazorpay(data) {
+        const options = {
+            key: data.razorpay_key,
+            amount: data.amount,
+            currency: data.currency,
+            name: data.store_name || "Your Store Name",
+            description: "Order Payment",
+            order_id: data.razorpay_order_id,
+            handler: async function (response) {
+                await verifyRazorpayPayment(response, data.redirect_url);
+            },
+            prefill: {
+                name: data.customer_name,
+                email: data.email,
+                contact: data.phone
+            },
+            theme: {
+                color: "#3399cc"
+            },
+            method:{
+                upi:true,
+                card:true,
+                netbanking:true,
+                wallet:true,
+                emi:false
+            }
+        };
 
-    // Event listener for the change address link
-    if (changeAddressLink) {
-        changeAddressLink.addEventListener('click', function (e) {
-            e.preventDefault();
-            document.querySelector('#savedAddressesSection').scrollIntoView({ behavior: 'smooth' });
-        });
+        const rzp = new Razorpay(options);
+        rzp.open();
     }
 
     // Function to handle order submission
     async function handleOrderSubmission(e) {
         e.preventDefault();
 
-        // Get the payment method
+        // Get the payment method and address
         const selectedPayment = document.querySelector('input[name="payment"]:checked');
-
-        // Get the default/selected address ID from the data attribute
         const addressId = currentDeliveryAddress?.getAttribute('data-address-id');
 
+        // Validate selections
         if (!addressId) {
             showAlert('error', 'Please select a delivery address');
             return;
@@ -89,9 +136,7 @@ document.addEventListener('DOMContentLoaded', function () {
             formData.append('payment', selectedPayment.value);
             formData.append('csrfmiddlewaretoken', csrfToken);
 
-            // Use action or data-url for the fetch URL
             const url = orderForm.getAttribute('data-url') || orderForm.action;
-
             const response = await fetch(url, {
                 method: 'POST',
                 body: formData,
@@ -102,12 +147,10 @@ document.addEventListener('DOMContentLoaded', function () {
                 credentials: 'same-origin'
             });
 
-            // Check if response is ok
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
 
-            // Verify response is JSON
             const contentType = response.headers.get("content-type");
             if (!contentType || !contentType.includes("application/json")) {
                 throw new TypeError("Response was not JSON");
@@ -116,17 +159,21 @@ document.addEventListener('DOMContentLoaded', function () {
             const data = await response.json();
 
             if (data.status === 'success') {
-                await Swal.fire({
-                    icon: 'success',
-                    title: 'Order Placed Successfully!',
-                    text: 'You will be redirected to the order confirmation page.',
-                    showConfirmButton: false,
-                    timer: 2000,
-                    timerProgressBar: true,
-                });
-
-                // Redirect to success page
-                window.location.href = data.redirect_url;
+                if (data.payment_method === 'ONLINE') {
+                    // Handle Razorpay payment
+                    initializeRazorpay(data);
+                } else {
+                    // Handle COD or other payment methods
+                    await Swal.fire({
+                        icon: 'success',
+                        title: 'Order Placed Successfully!',
+                        text: 'You will be redirected to the order confirmation page.',
+                        showConfirmButton: false,
+                        timer: 2000,
+                        timerProgressBar: true,
+                    });
+                    window.location.href = data.redirect_url;
+                }
             } else {
                 showAlert('error', data.message || 'An error occurred while placing your order');
                 resetOrderButton();
@@ -144,11 +191,32 @@ document.addEventListener('DOMContentLoaded', function () {
         placeOrderButton.innerHTML = 'Place Order <i class="fas fa-arrow-right ml-2"></i>';
     }
 
-    // Add event listener to order form
+    // Add event listeners
+    paymentMethodInputs.forEach((input) => {
+        input.addEventListener('change', checkOrderEligibility);
+    });
+
+    document.querySelectorAll('.payment-option').forEach((container) => {
+        container.addEventListener('click', function () {
+            const radio = this.querySelector('input[type="radio"]');
+            if (radio) {
+                radio.checked = true;
+                checkOrderEligibility();
+            }
+        });
+    });
+
+    if (changeAddressLink) {
+        changeAddressLink.addEventListener('click', function (e) {
+            e.preventDefault();
+            document.querySelector('#savedAddressesSection').scrollIntoView({ behavior: 'smooth' });
+        });
+    }
+
     if (orderForm) {
         orderForm.addEventListener('submit', handleOrderSubmission);
     }
 
-    // Initial check to set button state correctly
+    // Initial check
     checkOrderEligibility();
 });
