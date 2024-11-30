@@ -16,6 +16,7 @@ from decimal import Decimal, InvalidOperation
 import re
 from django.views.decorators.csrf import csrf_exempt
 import json
+from order_detail_app.models import CouponTable,OfferTable
 
 # Create your views here.
 
@@ -917,9 +918,71 @@ def status_update(request,order_id):
 #########################################################################################################################################
 
 def admin_coupon(request):
-    return render(request,'admin_coupon.html')
+    if request.method == 'POST':
+        # Get form data
+        code = request.POST.get('code')
+        coupon_type = request.POST.get('coupon_type')
+        discount_value = request.POST.get('discount_value')
+        min_purchase_amount = request.POST.get('min_purchase_amount')
+        max_uses = request.POST.get('max_uses')
+        valid_from = request.POST.get('valid_from')
+        valid_to = request.POST.get('valid_to')
+        is_active = 'is_active' in request.POST
+
+        # Create a new coupon
+        coupon = CouponTable(
+            code=code,
+            coupon_type=coupon_type,
+            discount_value=discount_value,
+            min_purchase_amount=min_purchase_amount,
+            max_uses=max_uses,
+            valid_from=valid_from,
+            valid_to=valid_to,
+            is_active=is_active
+        )
+        coupon.save()
+
+        messages.success(request, 'Coupon created successfully.')
+        return redirect('admin_coupon')
+    else:
+        return render(request, 'admin_coupon.html')
 
 #########################################################################################################################################
 
 def admin_offer(request):
-    return render(request,'admin_offer.html')
+
+    if request.method == 'POST':
+        # Get form data
+        offer_name = request.POST.get('offer_name')
+        offer_type = request.POST.get('offer_type')
+        product = request.POST.get('product')
+        category = request.POST.get('category')
+        discount_type = request.POST.get('discount_type')
+        discount_value = request.POST.get('discount_value')
+        valid_from = request.POST.get('valid_from')
+        valid_to = request.POST.get('valid_to')
+        description = request.POST.get('description')
+        is_active = 'is_active' in request.POST
+
+        # Create a new offer
+        offer = OfferTable(
+            offer_name=offer_name,
+            offer_type=offer_type,
+            product_id=product,
+            category_id=category,
+            discount_type=discount_type,
+            discount_value=discount_value,
+            valid_from=valid_from,
+            valid_to=valid_to,
+            description=description,
+            is_active=is_active
+        )
+        offer.save()
+
+        messages.success(request, 'Offer created successfully.')
+        return redirect('admin_offer')
+    
+    else:
+        categories = CategoryTable.objects.all()
+        products = BookTable.objects.all()
+        return render(request, 'admin_offer.html',{'categories': categories,'products':products})

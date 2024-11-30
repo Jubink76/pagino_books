@@ -81,20 +81,31 @@
                     <!-- Add Money Section -->
                     <div class="bg-white rounded-xl p-6 shadow-sm mb-8">
                       <h2 class="text-xl font-bold text-gray-800 mb-4">Add Money to Wallet</h2>
-                      <div class="space-y-4">
-                        <div class="flex items-center gap-4">
-                          <input type="text" placeholder="Enter amount (₹)" class="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors" />
-                          <button class="px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors font-medium">
-                            Add Money
-                          </button>
-                        </div>
-                        <div class="flex gap-3">
-                          <button class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">₹100</button>
-                          <button class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">₹500</button>
-                          <button class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">₹1000</button>
-                        </div>
-                      </div>
-                    </div>
+                        <form action="{% url 'add_money_via_paypal' %}" method="POST" class="space-y-4">
+                          {% csrf_token %}
+                          <div class="flex items-center gap-4">
+                              <input 
+                                  type="number" 
+                                  name="amount" 
+                                  step="0.01" 
+                                  placeholder="Enter amount" 
+                                  class="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+                                  required />
+                              <select 
+                                  name="currency" 
+                                  class="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+                                  required>
+                                  <option value="EUR">EUR</option>
+                                  <option value="USD">USD</option>
+                                  <!-- Add more currencies as needed -->
+                              </select>
+                              <button type="submit" 
+                                  class="px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors font-medium">
+                                  Add Money with PayPal
+                              </button>
+                          </div>
+                      </form>
+                  </div>
                   
                     <!-- Transaction History -->
                     <div class="bg-white rounded-xl p-6 shadow-sm">

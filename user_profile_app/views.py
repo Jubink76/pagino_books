@@ -1,5 +1,5 @@
 from django.shortcuts import render,redirect,get_object_or_404
-from user_profile_app.models import AddressTable
+from user_profile_app.models import AddressTable,WalletTable
 from django.contrib import messages
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
@@ -10,6 +10,10 @@ from order_detail_app.models import OrderDetails,OrderItem
 from django.db.models import Count
 from django.db.models import Q
 from django.urls import reverse
+from paypalrestsdk import Payment
+from django.conf import settings
+from decimal import Decimal
+import paypalrestsdk
 # Create your views here.
 #######################################################################################################################
 def user_profile(request):
@@ -301,10 +305,140 @@ def admin_single_item_cancel(request,order_id,order_item_id):
 
 ########################################################################################################################
 
-def user_wallet(request):
-    return render(request,'user_wallet.html')
-
-########################################################################################################################
 
 def user_coupon(request):
     return render(request,'user_coupon.html')
+
+########################################################################################################################
+paypalrestsdk.configure({
+    "mode": "sandbox",  # Change to "live" for production
+    "client_id": settings.PAYPAL_CLIENT_ID,
+    "client_secret": settings.PAYPAL_CLIENT_SECRET
+})
+
+@login_required
+def user_wallet(request):
+        return render(request, 'user_wallet.html')
+
+#########################################################################################################################
+@login_required
+def add_money_via_paypal(request):
+    if request.method == "POST":
+        try:
+            amount = request.POST.get("amount")
+            currency = request.POST.get("currency", "USD")
+            
+            # Validation
+            try:
+                amount = Decimal(amount)
+                if amount <= Decimal('0'):
+                    raise ValueError
+            except (TypeError, ValueError):
+                messages.error(request, "Please enter a valid amount.")
+                return redirect("user_wallet")
+
+            if currency not in settings.ACCEPTED_CURRENCIES:
+                messages.error(request, "Invalid currency selected.")
+                return redirect("user_wallet")
+
+            # Create PayPal payment
+            payment = Payment({
+                "intent": "sale",
+                "payer": {
+                    "payment_method": "paypal"
+                },
+                "redirect_urls": {
+                    "return_url": request.build_absolute_uri(reverse('paypal_success')),
+                    "cancel_url": request.build_absolute_uri(reverse('paypal_cancel'))
+                },
+                "transactions": [{
+                    "amount": {
+                        "total": str(amount),
+                        "currency": currency
+                    },
+                    "description": f"Add {currency} {amount} to wallet"
+                }]
+            })
+
+            if payment.create():
+                request.session['paypal_payment_id'] = payment.id
+                request.session['payment_amount'] = str(amount)
+                request.session['payment_currency'] = currency
+                
+                # Find approval URL and redirect
+                approval_url = next(
+                    (link.href for link in payment.links if link.rel == "approval_url"),
+                    None
+                )
+                if approval_url:
+                    return redirect(approval_url)
+            
+            messages.error(request, "Failed to create PayPal payment. Please try again.")
+            
+        except Exception as e:
+            messages.error(request, f"An error occurred: {str(e)}")
+        
+        return redirect("user_wallet")
+
+    return redirect("user_wallet")
+
+###################################################################################################################
+
+@login_required
+def paypal_success(request):
+    try:
+        payment_id = request.GET.get("paymentId")
+        payer_id = request.GET.get("PayerID")
+        
+        # Security verification
+        stored_payment_id = request.session.get('paypal_payment_id')
+        if not payment_id or payment_id != stored_payment_id:
+            messages.error(request, "Invalid payment session.")
+            return redirect("user_wallet")
+
+        payment = Payment.find(payment_id)
+        
+        if payment.execute({"payer_id": payer_id}):
+            amount = Decimal(request.session.get('payment_amount'))
+            currency = request.session.get('payment_currency')
+            
+            try:
+                wallet = WalletTable.objects.get(user=request.user)
+                wallet.update_balance(
+                    transaction_type="add",
+                    amount=amount,
+                    description=f"PayPal Payment ({payment_id})"
+                )
+                
+                # Clear session data
+                for key in ['paypal_payment_id', 'payment_amount', 'payment_currency']:
+                    request.session.pop(key, None)
+                
+                messages.success(
+                    request, 
+                    f"Successfully added {currency} {amount:,.2f} to your wallet!"
+                )
+            except WalletTable.DoesNotExist:
+                messages.error(request, "Wallet not found.")
+            except Exception as e:
+                messages.error(request, f"Failed to update wallet: {str(e)}")
+        else:
+            messages.error(request, "Payment execution failed. Please try again.")
+            
+    except Exception as e:
+        messages.error(request, f"Payment processing error: {str(e)}")
+    
+    return redirect("user_wallet")
+
+#############################################################################################################################
+
+@login_required
+def paypal_cancel(request):
+    # Clear session data
+    for key in ['paypal_payment_id', 'payment_amount', 'payment_currency']:
+        request.session.pop(key, None)
+    
+    messages.warning(request, "Payment was cancelled.")
+    return redirect("user_wallet")
+
+##############################################################################################################################

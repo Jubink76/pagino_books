@@ -11,5 +11,8 @@ urlpatterns = [
     path('user_password_reset',views.user_password_reset,name='user_password_reset'),
     path('user_order_detail/<str:order_id>/', views.user_orders, name='user_order_detail'),
     path('user_wallet',views.user_wallet,name='user_wallet'),
+    path('wallet/add-money/paypal/', views.add_money_via_paypal, name='add_money_via_paypal'),
+    path('wallet/paypal-success/', views.paypal_success, name='paypal_success'),
+    path('wallet/paypal-cancel/', views.paypal_cancel, name='paypal_cancel'),
     path('user_coupon',views.user_coupon,name='user_coupon'),
 ]

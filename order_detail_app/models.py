@@ -17,7 +17,7 @@ def generate_order_id():
 # Create your models here.
 
 class CouponTable(models.Model):
-    code = models.CharField(max_length=20, unique=True)  # Unique code for the coupon
+    code = models.CharField(max_length=20, unique=True,null=True, blank=True)  # Unique code for the coupon
     coupon_type = models.CharField(
         max_length=20,
         choices=[('percentage', 'Percentage'), ('fixed', 'Vat Amount')],

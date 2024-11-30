@@ -2,7 +2,7 @@ from django.db import models
 from log_reg_app.models import UserTable
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
-
+from django.utils.timezone import now
 
 # Create your models here.
 class AddressTable(models.Model):
@@ -49,3 +49,42 @@ def set_new_default_after_delete(sender, instance, **kwargs):
         if first_address:
             first_address.is_default = True
             first_address.save()
+
+
+class WalletTable(models.Model):
+    TRANCATION_TYPE_CHOICES = [
+        ('add', 'Added to wallet'),
+        ('deduct','Deducted from wallet'),
+        ('refund','Refunded'),
+    ]
+
+    user = models.OneToOneField('log_reg_app.UserTable', on_delete=models.CASCADE, related_name='wallet')
+    available_balance = models.DecimalField(max_digits=10,decimal_places=2,default=0.00)
+    transaction_type = models.CharField(max_length=10,choices=TRANCATION_TYPE_CHOICES,null=True,blank=True)
+    transaction_amount = models.DecimalField(max_digits=10,decimal_places=2,null=True,blank=True)
+    description = models.TextField(blank=True, null=True)
+    transaction_time= models.DateTimeField(default=now)
+
+    def __str__(self):
+        return f"Wallet of {self.user.phone_number}"
+
+    def update_balance(self, transaction_type, amount, description=None):
+        """
+        Updates the wallet balance based on the transaction type.
+        """
+        if transaction_type == 'add':
+            self.available_balance += amount
+        elif transaction_type == 'deduct' and self.available_balance >= amount:
+            self.available_balance -= amount
+        elif transaction_type == 'refund':
+            self.available_balance += amount
+        else:
+            raise ValueError("Invalid transaction or insufficient balance")
+
+        # Log the transaction
+        self.transaction_type = transaction_type
+        self.amount = amount
+        self.description = description
+        self.timestamp = now()
+
+        self.save()

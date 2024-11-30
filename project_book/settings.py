@@ -44,6 +44,8 @@ INSTALLED_APPS = [
     # Optional -- requires install using `django-allauth[socialaccount]`.
     'allauth.socialaccount',
     'allauth.socialaccount.providers.google',
+    #payment 
+    'paypal.standard.ipn',
     
 
     # apps
@@ -216,6 +218,16 @@ SESSION_EXPIRE_AT_BROWSER_CLOSE = False
 
 RAZORPAY_KEY_ID = 'rzp_test_COptAFlNCi9Fdi'
 RAZORPAY_KEY_SECRET = 'sZNZcjvDRenuZqD45113Rstu'
+
+
+PAYPAL_MODE = "sandbox"  # Change to "live" for production
+PAYPAL_CLIENT_ID = "AX92J9UuypZLnwqtgakDAcNj_iN0-ZBgE6VKF_va7SXlMP0HxQULMTZmhlgBw1bQpaFazhtyXnaDLNFn"
+PAYPAL_CLIENT_SECRET = "EGRH5H_j9uO9InlsbzORSvwQh9IecikRjK1CtSvHrpJpCwFih0t-DBWmEP764ZSM8LuSoyeirXgrUCdS"
+
+ACCEPTED_CURRENCIES = [
+    'USD',
+    'EUR',
+]
 
 
 # LOGGING = {

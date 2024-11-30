@@ -23,76 +23,79 @@
         </div>
 
         <!-- Offer Form -->
-        <form class="space-y-6">
+        <form class="space-y-6" method="post">
+            {% csrf_token %}
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                
                 <!-- Offer Title -->
                 <div>
                     <label class="block text-gray-300 font-medium mb-2">Offer Title</label>
-                    <input type="text" class="bg-gray-700 text-gray-300 rounded-md px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Enter offer title">
+                    <input type="text" class="bg-gray-700 text-gray-300 rounded-md px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Enter offer title" name="offer_name">
                 </div>
-
+        
                 <!-- Offer Type -->
                 <div>
                     <label class="block text-gray-300 font-medium mb-2">Offer Type</label>
-                    <select class="bg-gray-700 text-gray-300 rounded-md px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <select class="bg-gray-700 text-gray-300 rounded-md px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500" name="offer_type">
                         <option value="category">Category Offer</option>
                         <option value="product">Single Product Offer</option>
                         <option value="special">Special Day Offer</option>
                         <option value="seasonal">Seasonal Offer</option>
                     </select>
                 </div>
-
+        
                 <!-- Category/Product Selection -->
                 <div>
                     <label class="block text-gray-300 font-medium mb-2">Select Category/Product</label>
-                    <select class="bg-gray-700 text-gray-300 rounded-md px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <select class="bg-gray-700 text-gray-300 rounded-md px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500" name="category">
                         <option value="">Choose option</option>
+                        {% for category in categories %}
+                        <option value="{{ category.id }}">{{ category.category_name }}</option>
+                        {% endfor %}
                     </select>
                 </div>
-
+        
                 <!-- Discount Type -->
                 <div>
                     <label class="block text-gray-300 font-medium mb-2">Discount Type</label>
-                    <select class="bg-gray-700 text-gray-300 rounded-md px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <select class="bg-gray-700 text-gray-300 rounded-md px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500" name="discount_type">
                         <option value="percentage">Percentage</option>
                         <option value="fixed">Fixed Amount</option>
                         <option value="bogo">Buy One Get One</option>
                         <option value="bundle">Bundle Discount</option>
                     </select>
                 </div>
-
+        
                 <!-- Discount Value -->
                 <div>
                     <label class="block text-gray-300 font-medium mb-2">Discount Value</label>
-                    <input type="number" class="bg-gray-700 text-gray-300 rounded-md px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Enter value">
+                    <input type="number" class="bg-gray-700 text-gray-300 rounded-md px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Enter value" name="discount_value">
                 </div>
-
+        
                 <!-- Valid From -->
                 <div>
                     <label class="block text-gray-300 font-medium mb-2">Valid From</label>
-                    <input type="datetime-local" class="bg-gray-700 text-gray-300 rounded-md px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <input type="datetime-local" class="bg-gray-700 text-gray-300 rounded-md px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500" name="valid_from">
                 </div>
-
+        
                 <!-- Valid Until -->
                 <div>
                     <label class="block text-gray-300 font-medium mb-2">Valid Until</label>
-                    <input type="datetime-local" class="bg-gray-700 text-gray-300 rounded-md px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <input type="datetime-local" class="bg-gray-700 text-gray-300 rounded-md px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500" name="valid_to">
                 </div>
-
+        
                 <!-- Description -->
                 <div class="md:col-span-2">
                     <label class="block text-gray-300 font-medium mb-2">Offer Description</label>
-                    <textarea class="bg-gray-700 text-gray-300 rounded-md px-4 py-2 w-full h-24 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Enter offer description"></textarea>
+                    <textarea class="bg-gray-700 text-gray-300 rounded-md px-4 py-2 w-full h-24 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Enter offer description" name="description"></textarea>
                 </div>
-
+        
                 <!-- Is Active -->
                 <div class="flex items-center space-x-3">
-                    <input type="checkbox" class="bg-gray-700 text-blue-500 rounded focus:ring-blue-500 h-5 w-5">
+                    <input type="checkbox" class="bg-gray-700 text-blue-500 rounded focus:ring-blue-500 h-5 w-5" name="is_active">
                     <label class="text-gray-300 font-medium">Is Active</label>
                 </div>
             </div>
-
+        
             <!-- Form Buttons -->
             <div class="flex justify-end space-x-4">
                 <button type="button" class="bg-gray-600 hover:bg-gray-700 text-white font-medium py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-600">Cancel</button>
