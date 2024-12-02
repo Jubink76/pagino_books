@@ -1,0 +1,163 @@
+{% extends 'admin_base.html' %}
+{% load static %}
+
+{% block csslink %}
+<link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+{% endblock %}
+{% block content %}
+<div class="col-md-9 ms-sm-auto col-lg-10 offset-md-3 offset-lg-2">
+    <div class="bg-gray-800 rounded-lg shadow-lg p-6">
+        <!-- Header Section -->
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-white text-2xl font-medium">
+                Edit Product Offer to {{ product.book_name }}
+            </h1>
+            <nav aria-label="breadcrumb">
+                <ol class="flex space-x-2 text-sm text-gray-400">
+                    <li><a href="#" class="hover:text-white">Admin</a></li>
+                    <li>/</li>
+                    <li><a href="#" class="hover:text-white">offers</a></li>
+                    <li>/</li>
+                    <li class="text-white">Edit Product Offers</li>
+                </ol>
+            </nav>
+        </div>
+
+        <!-- Offer Form -->
+        <form id="offer-form" method="post" class="space-y-6" data-url="{% url 'edit_product_offer' product.id %}">
+            {% csrf_token %}
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Offer Title -->
+                <div>
+                    <label class="block text-gray-300 font-medium mb-2">Offer Title</label>
+                    <input type="text" class="bg-gray-700 text-gray-300 rounded-md px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                           placeholder="Enter offer title" 
+                           name="offer_name"
+                           value="{{ offer.offer_name }}">
+                </div>
+        
+                <!-- Offer Type -->
+                <div>
+                    <label class="block text-gray-300 font-medium mb-2">Offer Type</label>
+                    <select class="bg-gray-700 text-gray-300 rounded-md px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500" name="offer_type">
+                        {% for value, display in OFFER_TYPES %}
+                            <option value="{{ value }}" 
+                                {% if value == default_offer_type %}selected{% endif %}>
+                                {{ display }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <!-- Discount Type -->
+                <div>
+                    <label class="block text-gray-300 font-medium mb-2">Discount Type</label>
+                    <select class="bg-gray-700 text-gray-300 rounded-md px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500" name="discount_type">
+                        <option value="percentage" {% if offer.discount_type == 'percentage' %}selected{% endif %}>Percentage</option>
+                        <option value="fixed" {% if offer.discount_type == 'fixed' %}selected{% endif %}>Fixed Amount</option>
+                        <option value="bogo" {% if offer.discount_type == 'bogo' %}selected{% endif %}>Buy One Get One</option>
+                        <option value="bundle" {% if offer.discount_type == 'bundle' %}selected{% endif %}>Bundle Discount</option>
+                    </select>
+                </div>
+        
+                <!-- Discount Value -->
+                <div>
+                    <label class="block text-gray-300 font-medium mb-2">Discount Value</label>
+                    <input type="number" class="bg-gray-700 text-gray-300 rounded-md px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                           placeholder="Enter value" 
+                           name="discount_value"
+                           value="{{ offer.discount_value }}">
+                </div>
+        
+                <!-- Valid From -->
+                <div>
+                    <label class="block text-gray-300 font-medium mb-2">Valid From</label>
+                    <input type="datetime-local" class="bg-gray-700 text-gray-300 rounded-md px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                           name="valid_from"
+                           value="{{ offer.valid_from|date:'Y-m-d\TH:i' }}">
+                </div>
+        
+                <!-- Valid Until -->
+                <div>
+                    <label class="block text-gray-300 font-medium mb-2">Valid Until</label>
+                    <input type="datetime-local" class="bg-gray-700 text-gray-300 rounded-md px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                           name="valid_to"
+                           value="{{ offer.valid_to|date:'Y-m-d\TH:i' }}">
+                </div>
+        
+                <!-- Description -->
+                <div class="md:col-span-2">
+                    <label class="block text-gray-300 font-medium mb-2">Offer Description</label>
+                    <textarea class="bg-gray-700 text-gray-300 rounded-md px-4 py-2 w-full h-24 focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                              placeholder="Enter offer description" 
+                              name="description">{{ offer.description }}</textarea>
+                </div>
+        
+                <!-- Is Active -->
+                <div class="flex items-center space-x-3">
+                    <input type="checkbox" class="bg-gray-700 text-blue-500 rounded focus:ring-blue-500 h-5 w-5" 
+                        name="is_active"
+                        {% if offer.is_active %}checked{% endif %}>
+                </div>
+            </div>
+        
+            <!-- Form Buttons -->
+            <div class="flex justify-end space-x-4">
+                <button type="button" onclick="window.location.href='{% url 'admin_products' %}'" class="bg-gray-600 hover:bg-gray-700 text-white font-medium py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-600">Cancel</button>
+                <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    Update Offer
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+{% block script %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        document.getElementById("offer-form").addEventListener("submit", function (e) {
+            e.preventDefault();
+            const form = this;
+            const url = form.getAttribute("data-url");
+            const formData = new FormData(form);
+
+            fetch(url, {
+                method: "POST",
+                body: formData,
+                headers: {
+                    "X-CSRFToken": form.querySelector("[name=csrfmiddlewaretoken]").value
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === "success") {
+                    Swal.fire({
+                        title: "Success!",
+                        text: data.message,
+                        icon: "success",
+                        confirmButtonText: "OK",
+                    }).then(() => {
+                        window.location.href = data.redirect_url;
+                    });
+                } else {
+                    Swal.fire({
+                        title: "Error!",
+                        text: data.message,
+                        icon: "error",
+                        confirmButtonText: "Try Again",
+                    });
+                }
+            })
+            .catch(error => {
+                Swal.fire({
+                    title: "Error!",
+                    text: "Something went wrong. Please try again later.",
+                    icon: "error",
+                    confirmButtonText: "OK",
+                });
+            });
+        });
+    });
+</script>
+{% endblock %}

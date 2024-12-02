@@ -1,8 +1,9 @@
 from django.shortcuts import render,redirect,get_object_or_404
+from django.views.decorators.http import require_http_methods
 from log_reg_app.models import UserTable
 from django.contrib import messages
 from django.core.paginator import Paginator
-from django.db.models import Q
+from django.db.models import Q, Count
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.cache import cache_control,never_cache
 from .models import CategoryTable,Language,Author,BookTable,BookImage
@@ -17,6 +18,10 @@ import re
 from django.views.decorators.csrf import csrf_exempt
 import json
 from order_detail_app.models import CouponTable,OfferTable
+from django.utils import timezone
+from datetime import datetime
+from django.urls import reverse
+from django.utils.timezone import now
 
 # Create your views here.
 
@@ -161,8 +166,7 @@ def view_users(request, pk):
 #######################################################################################################################
 @login_required(login_url='admin_login')
 def admin_category(request):
-
-    categories = CategoryTable.objects.all()
+    categories = CategoryTable.objects.annotate(product_count=Count('booktable'))
 
     categories_per_page = request.GET.get('categories_per_page', 5)
     try:
@@ -170,34 +174,43 @@ def admin_category(request):
     except ValueError:
         categories_per_page = 5
 
-    search_query = request.GET.get('search','')
+    search_query = request.GET.get('search', '')
     if search_query:
         if search_query.isdigit():
             categories = categories.filter(id=search_query)
         else:
-            categories = CategoryTable.objects.filter(
-                Q(category_name__icontains=search_query) | 
+            categories = categories.filter(
+                Q(category_name__icontains=search_query) |
                 Q(description__icontains=search_query)
             ).order_by('id')
     else:
-        categories = CategoryTable.objects.all().order_by('id')
+        categories = categories.order_by('id')
+
+    # Check if any active offer is associated with the category
+    for category in categories:
+        category.has_offer = category.category_offers.filter(is_active=True).exists()
 
     paginator = Paginator(categories, categories_per_page)
     page_number = request.GET.get('page')
     categories = paginator.get_page(page_number)
-    
+
+    # If it's an AJAX request, return JSON response
     if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-        categories_data = [{
-            "counter": index + 1 + (categories.number - 1) * categories.paginator.per_page,
-            "id": category.id,
-            "category_name": category.category_name,
-            "description": category.description or '',
-            "is_available": category.is_available, 
-            'is_deleted':category.is_deleted 
-        } for index, category in enumerate(categories)]
+        categories_data = [
+            {
+                "counter": index + 1 + (categories.number - 1) * categories.paginator.per_page,
+                "id": category.id,
+                "category_name": category.category_name,
+                "description": category.description or '',
+                "is_available": category.is_available,
+                "has_offer": category.has_offer,
+                "product_count": category.product_count,  # Include product count
+            }
+            for index, category in enumerate(categories)
+        ]
         return JsonResponse({"categories": categories_data})
 
-    return render(request,'admin_category.html',{'categories':categories,'categories_per_page':categories_per_page})
+    return render(request, 'admin_category.html', {'categories': categories, 'categories_per_page': categories_per_page})
 
 ##############################################################################################################################
 @login_required(login_url='admin_login')
@@ -296,6 +309,9 @@ def admin_products(request):
     else:
         books = BookTable.objects.all().order_by('id')
 
+    # Check if any active offer is associated with the category
+    for book in books:
+        book.has_offer = book.product_offer.filter(is_active=True).exists()
     paginator = Paginator(books, products_per_page)
     page_number = request.GET.get('page')
     books = paginator.get_page(page_number)
@@ -917,72 +933,581 @@ def status_update(request,order_id):
 
 #########################################################################################################################################
 
-def admin_coupon(request):
-    if request.method == 'POST':
-        # Get form data
-        code = request.POST.get('code')
-        coupon_type = request.POST.get('coupon_type')
-        discount_value = request.POST.get('discount_value')
-        min_purchase_amount = request.POST.get('min_purchase_amount')
-        max_uses = request.POST.get('max_uses')
-        valid_from = request.POST.get('valid_from')
-        valid_to = request.POST.get('valid_to')
-        is_active = 'is_active' in request.POST
-
-        # Create a new coupon
-        coupon = CouponTable(
-            code=code,
-            coupon_type=coupon_type,
-            discount_value=discount_value,
-            min_purchase_amount=min_purchase_amount,
-            max_uses=max_uses,
-            valid_from=valid_from,
-            valid_to=valid_to,
-            is_active=is_active
-        )
-        coupon.save()
-
-        messages.success(request, 'Coupon created successfully.')
-        return redirect('admin_coupon')
+@require_http_methods(["GET", "POST"])
+def admin_coupon(request, coupon_id=None):
+    # If editing an existing coupon
+    if coupon_id:
+        coupon = get_object_or_404(CouponTable, id=coupon_id)
     else:
-        return render(request, 'admin_coupon.html')
+        coupon = None
+
+    if request.method == 'POST':
+        try:
+            # Get form data
+            code = request.POST.get('code').strip()
+            coupon_type = request.POST.get('coupon_type').strip()
+            discount_value = request.POST.get('discount_value').strip()
+            min_purchase_amount = request.POST.get('min_purchase_amount').strip()
+            max_uses = request.POST.get('max_uses').strip()
+            valid_from = request.POST.get('valid_from').strip()
+            valid_to = request.POST.get('valid_to').strip()
+            description = request.POST.get('description').strip()
+            is_active = request.POST.get('is_active') == 'on'
+
+            # Perform validations
+            errors = []
+
+            # Validate required fields
+            if not code:
+                errors.append("Coupon code is required.")
+            
+            if not coupon_type:
+                errors.append("Coupon type is required.")
+            
+            if not discount_value:
+                errors.append("Discount value is required.")
+            else:
+                try:
+                    discount_value = float(discount_value)
+                    if discount_value <= 0:
+                        errors.append("Discount value must be greater than 0.")
+                except (ValueError, TypeError):
+                    errors.append("Invalid discount value.")
+            
+            if not min_purchase_amount:
+                errors.append("Minimum purchase amount is required.")
+            else:
+                try:
+                    min_purchase_amount = float(min_purchase_amount)
+                    if min_purchase_amount <= 0:
+                        errors.append("Minimum purchase amount must be greater than 0.")
+                except (ValueError, TypeError):
+                    errors.append("Invalid minimum purchase amount.")
+            
+            if not max_uses:
+                errors.append("Maximum uses is required.")
+            else:
+                try:
+                    max_uses = int(max_uses)
+                    if max_uses <= 0:
+                        errors.append("Maximum uses must be greater than 0.")
+                except (ValueError, TypeError):
+                    errors.append("Invalid maximum uses.")
+            
+            # Validate date range
+            try:
+                valid_from = timezone.datetime.fromisoformat(valid_from)
+                valid_to = timezone.datetime.fromisoformat(valid_to)
+                
+                if valid_from >= valid_to:
+                    errors.append("Valid from date must be before valid to date.")
+            except (ValueError, TypeError):
+                errors.append("Invalid date range.")
+
+            # If there are validation errors, return them
+            if errors:
+                return JsonResponse({
+                    'status': 'error', 
+                    'message': '; '.join(errors)
+                }, status=400)
+
+            # Create or update the coupon
+            if coupon:
+                # Update existing coupon
+                coupon.code = code
+                coupon.coupon_type = coupon_type
+                coupon.discount_value = discount_value
+                coupon.min_purchase_amount = min_purchase_amount
+                coupon.max_uses = max_uses
+                coupon.valid_from = valid_from
+                coupon.valid_to = valid_to
+                coupon.description = description
+                coupon.is_active = is_active
+                coupon.save()
+                return JsonResponse({
+                    'status': 'success', 
+                    'message': 'Coupon updated successfully!',
+                    'redirect_url': reverse('admin_coupon')  # Adjust as needed
+                })
+            else:
+                # Create new coupon
+                CouponTable.objects.create(
+                    code=code,
+                    coupon_type=coupon_type,
+                    discount_value=discount_value,
+                    min_purchase_amount=min_purchase_amount,
+                    max_uses=max_uses,
+                    valid_from=valid_from,
+                    valid_to=valid_to,
+                    description=description,
+                    is_active=is_active
+                )
+                return JsonResponse({
+                    'status': 'success', 
+                    'message': 'Coupon created successfully!',
+                    'redirect_url': reverse('admin_coupon')  # Adjust as needed
+                })
+
+        except Exception as e:
+            return JsonResponse({
+                'status': 'error', 
+                'message': str(e)
+            }, status=500)
+    coupons = CouponTable.objects.all().order_by('-valid_to')
+    # GET request - render the form for both adding and editing
+    context = {
+        'coupon': coupon,
+        'COUPON_TYPES': CouponTable._meta.get_field('coupon_type').choices,  # Correct way to access the choices
+        'default_coupon_type': 'percentage',  # Default value
+        'coupons':coupons
+    }
+    return render(request, 'admin_coupon.html', context)
+
+
 
 #########################################################################################################################################
 
 def admin_offer(request):
+        
+        active_offers = OfferTable.objects.filter(is_active=True, valid_to__gte=now())
+
+        return render(request, 'admin_offer.html',{'active_offers':active_offers})
+
+##################################################################################################################################3
+
+@require_http_methods(["GET", "POST"])
+def add_category_offer(request, category_id):
+    category = get_object_or_404(CategoryTable, id=category_id)
+    if request.method == 'POST':
+        try:
+            # Validate form data
+            offer_name = request.POST.get('offer_name')
+            offer_type = request.POST.get('offer_type')
+            discount_type = request.POST.get('discount_type')
+            discount_value = request.POST.get('discount_value')
+            valid_from = request.POST.get('valid_from')
+            valid_to = request.POST.get('valid_to')
+            description = request.POST.get('description')
+            is_active = request.POST.get('is_active') == 'on'
+
+            # Perform validations
+            errors = []
+
+            if not offer_name:
+                errors.append("Offer name is required.")
+            
+            if not discount_type:
+                errors.append("Discount type is required.")
+            
+            # Validate discount value based on discount type
+            try:
+                discount_value = float(discount_value)
+                if discount_type == 'percentage' and (discount_value < 0 or discount_value > 100):
+                    errors.append("Percentage discount must be between 0 and 100.")
+                elif discount_type in ['fixed', 'bundle'] and discount_value <= 0:
+                    errors.append("Discount value must be greater than 0.")
+            except (ValueError, TypeError):
+                errors.append("Invalid discount value.")
+            
+            # Validate date range
+            try:
+                valid_from = timezone.datetime.fromisoformat(valid_from)
+                valid_to = timezone.datetime.fromisoformat(valid_to)
+                
+                if valid_from >= valid_to:
+                    errors.append("Valid from date must be before valid to date.")
+            except (ValueError, TypeError):
+                errors.append("Invalid date range.")
+
+            # If there are validation errors, return them
+            if errors:
+                return JsonResponse({
+                    'status': 'error', 
+                    'message': '; '.join(errors)
+                }, status=400)
+
+           
+            # Create new offer
+            OfferTable.objects.create(
+                category=category,
+                offer_name=offer_name,
+                offer_type=offer_type,
+                discount_type=discount_type,
+                discount_value=discount_value,
+                valid_from=valid_from,
+                valid_to=valid_to,
+                description=description,
+                is_active=is_active
+            )
+
+            # Redirect URL (adjust as needed)
+            return JsonResponse({
+                'status': 'success', 
+                'message': 'Offer added successfully!',
+                'redirect_url': reverse('admin_category')  # Make sure to import reverse
+            })
+
+        except Exception as e:
+            return JsonResponse({
+                'status': 'error', 
+                'message': str(e)
+            }, status=500)
+
+    # GET request - render the form
+    context = {
+        'category': category,
+        'OFFER_TYPES': OfferTable.OFFER_TYPES,
+        'default_offer_type': 'category',
+    }
+    return render(request, 'add_category_offer.html', context)
+
+#################################################################################################################
+
+@require_http_methods(["GET", "POST"])
+def edit_category_offer(request, category_id):
+    # Get the specific category
+    category = get_object_or_404(CategoryTable, id=category_id)
+
+    # Get the existing active offer for the category
+    offer = category.category_offers.filter(is_active=True).first()
+
+    if not offer:
+        # Handle case when no active offer exists for the category
+        return JsonResponse({
+            'status': 'error', 
+            'message': 'No active offer exists for this category.'
+        }, status=404)
 
     if request.method == 'POST':
-        # Get form data
-        offer_name = request.POST.get('offer_name')
-        offer_type = request.POST.get('offer_type')
-        product = request.POST.get('product')
-        category = request.POST.get('category')
-        discount_type = request.POST.get('discount_type')
-        discount_value = request.POST.get('discount_value')
-        valid_from = request.POST.get('valid_from')
-        valid_to = request.POST.get('valid_to')
-        description = request.POST.get('description')
-        is_active = 'is_active' in request.POST
+        try:
+            # Get form data from POST request
+            offer_name = request.POST.get('offer_name')
+            offer_type = request.POST.get('offer_type')
+            discount_type = request.POST.get('discount_type')
+            discount_value = request.POST.get('discount_value')
+            valid_from = request.POST.get('valid_from')
+            valid_to = request.POST.get('valid_to')
+            description = request.POST.get('description')
+            is_active = request.POST.get('is_active') == 'on'
 
-        # Create a new offer
-        offer = OfferTable(
-            offer_name=offer_name,
-            offer_type=offer_type,
-            product_id=product,
-            category_id=category,
-            discount_type=discount_type,
-            discount_value=discount_value,
-            valid_from=valid_from,
-            valid_to=valid_to,
-            description=description,
-            is_active=is_active
-        )
-        offer.save()
+            # Perform form validation
+            errors = []
 
-        messages.success(request, 'Offer created successfully.')
-        return redirect('admin_offer')
+            if not offer_name:
+                errors.append("Offer name is required.")
+            
+            if not discount_type:
+                errors.append("Discount type is required.")
+            
+            # Validate discount value
+            try:
+                discount_value = float(discount_value)
+                if discount_type == 'percentage' and (discount_value < 0 or discount_value > 100):
+                    errors.append("Percentage discount must be between 0 and 100.")
+                elif discount_type in ['fixed', 'bundle'] and discount_value <= 0:
+                    errors.append("Discount value must be greater than 0.")
+            except (ValueError, TypeError):
+                errors.append("Invalid discount value.")
+            
+            # Validate date range
+            try:
+                valid_from = timezone.datetime.fromisoformat(valid_from)
+                valid_to = timezone.datetime.fromisoformat(valid_to)
+                
+                if valid_from >= valid_to:
+                    errors.append("Valid from date must be before valid to date.")
+            except (ValueError, TypeError):
+                errors.append("Invalid date range.")
+
+            if errors:
+                return JsonResponse({
+                    'status': 'error', 
+                    'message': '; '.join(errors)
+                }, status=400)
+
+            # Update the existing offer details
+            offer.offer_name = offer_name
+            offer.offer_type = offer_type
+            offer.discount_type = discount_type
+            offer.discount_value = discount_value
+            offer.valid_from = valid_from
+            offer.valid_to = valid_to
+            offer.description = description
+            offer.is_active = is_active  # Use the checkbox value
+            offer.save()
+
+            return JsonResponse({
+                'status': 'success', 
+                'message': 'Offer updated successfully!',
+                'redirect_url': reverse('admin_category')  # Adjust the redirect URL as necessary
+            })
+
+        except Exception as e:
+            return JsonResponse({
+                'status': 'error', 
+                'message': str(e)
+            }, status=500)
+
+    # For GET request - Render the form with existing offer details
+    context = {
+        'category': category,
+        'offer': offer,  # Pass the existing offer to the template
+        'OFFER_TYPES': OfferTable.OFFER_TYPES,
+    }
+    return render(request, 'edit_category_offer.html', context)
+
+################################################################################################################
+def delete_category_offer(request, category_id):
+    category = get_object_or_404(CategoryTable, id=category_id)
+    offer = get_object_or_404(OfferTable, category=category)
     
-    else:
-        categories = CategoryTable.objects.all()
-        products = BookTable.objects.all()
-        return render(request, 'admin_offer.html',{'categories': categories,'products':products})
+    if request.method == 'POST':
+        try:
+            offer.delete()
+            return JsonResponse({
+                'status': 'success', 
+                'message': 'Offer deleted successfully!',
+                'redirect_url': reverse('admin_category')
+            })
+        except Exception as e:
+            return JsonResponse({
+                'status': 'error', 
+                'message': str(e)
+            }, status=500)
+    
+    # If not a POST request, return error
+    return JsonResponse({
+        'status': 'error', 
+        'message': 'Invalid request method'
+    }, status=400)
+
+##############################################################################################
+
+@require_http_methods(["GET", "POST"])
+def add_product_offer(request, product_id):
+    product = get_object_or_404(BookTable, id=product_id)
+    if request.method == 'POST':
+        try:
+            # Validate form data
+            offer_name = request.POST.get('offer_name')
+            discount_type = request.POST.get('discount_type')
+            discount_value = request.POST.get('discount_value')
+            valid_from = request.POST.get('valid_from')
+            valid_to = request.POST.get('valid_to')
+            description = request.POST.get('description')
+            is_active = request.POST.get('is_active') == 'on'
+
+            # Perform validations
+            errors = []
+
+            if not offer_name:
+                errors.append("Offer name is required.")
+
+            if not discount_type:
+                errors.append("Discount type is required.")
+
+            # Validate discount value based on discount type
+            try:
+                discount_value = float(discount_value)
+                if discount_type == 'percentage' and (discount_value < 0 or discount_value > 100):
+                    errors.append("Percentage discount must be between 0 and 100.")
+                elif discount_type in ['fixed', 'bundle'] and discount_value <= 0:
+                    errors.append("Discount value must be greater than 0.")
+            except (ValueError, TypeError):
+                errors.append("Invalid discount value.")
+
+            # Validate date range
+            try:
+                valid_from = timezone.datetime.fromisoformat(valid_from)
+                valid_to = timezone.datetime.fromisoformat(valid_to)
+
+                if valid_from >= valid_to:
+                    errors.append("Valid from date must be before valid to date.")
+            except (ValueError, TypeError):
+                errors.append("Invalid date range.")
+
+            # If there are validation errors, return them
+            if errors:
+                return JsonResponse({
+                    'status': 'error',
+                    'message': '; '.join(errors)
+                }, status=400)
+
+            # Create new offer
+            OfferTable.objects.create(
+                product=product,
+                offer_name=offer_name,
+                offer_type='product',  # Default to "Single Product Offer"
+                discount_type=discount_type,
+                discount_value=discount_value,
+                valid_from=valid_from,
+                valid_to=valid_to,
+                description=description,
+                is_active=is_active
+            )
+
+            # Redirect URL (adjust as needed)
+            return JsonResponse({
+                'status': 'success',
+                'message': 'Product offer added successfully!',
+                'redirect_url': reverse('admin_products')  # Adjust this to your admin products page
+            })
+
+        except Exception as e:
+            return JsonResponse({
+                'status': 'error',
+                'message': str(e)
+            }, status=500)
+
+    # GET request - render the form
+    context = {
+        'product': product,
+        'OFFER_TYPES': OfferTable.OFFER_TYPES,
+        'default_offer_type': 'product',
+    }
+    return render(request, 'add_product_offer.html', context)
+
+##############################################################################################
+
+@require_http_methods(["GET", "POST"])
+def edit_product_offer(request, product_id):
+    # Get the specific product
+    product = get_object_or_404(BookTable, id=product_id)
+
+    # Get the existing active offer for the product
+    offer = product.product_offer.filter(is_active=True).first()
+
+    if not offer:
+        # Handle case when no active offer exists for the product
+        return JsonResponse({
+            'status': 'error', 
+            'message': 'No active offer exists for this product.'
+        }, status=404)
+
+    if request.method == 'POST':
+        try:
+            # Get form data from POST request
+            offer_name = request.POST.get('offer_name')
+            offer_type = request.POST.get('offer_type')
+            discount_type = request.POST.get('discount_type')
+            discount_value = request.POST.get('discount_value')
+            valid_from = request.POST.get('valid_from')
+            valid_to = request.POST.get('valid_to')
+            description = request.POST.get('description')
+            is_active = request.POST.get('is_active') == 'on'
+
+            # Perform form validation
+            errors = []
+
+            if not offer_name:
+                errors.append("Offer name is required.")
+            
+            if not discount_type:
+                errors.append("Discount type is required.")
+            
+            # Validate discount value
+            try:
+                discount_value = float(discount_value)
+                if discount_type == 'percentage' and (discount_value < 0 or discount_value > 100):
+                    errors.append("Percentage discount must be between 0 and 100.")
+                elif discount_type in ['fixed', 'bundle'] and discount_value <= 0:
+                    errors.append("Discount value must be greater than 0.")
+            except (ValueError, TypeError):
+                errors.append("Invalid discount value.")
+            
+            # Validate date range
+            try:
+                valid_from = timezone.datetime.fromisoformat(valid_from)
+                valid_to = timezone.datetime.fromisoformat(valid_to)
+                
+                if valid_from >= valid_to:
+                    errors.append("Valid from date must be before valid to date.")
+            except (ValueError, TypeError):
+                errors.append("Invalid date range.")
+
+            if errors:
+                return JsonResponse({
+                    'status': 'error', 
+                    'message': '; '.join(errors)
+                }, status=400)
+
+            # Update the existing offer details
+            offer.offer_name = offer_name
+            offer.offer_type = offer_type
+            offer.discount_type = discount_type
+            offer.discount_value = discount_value
+            offer.valid_from = valid_from
+            offer.valid_to = valid_to
+            offer.description = description
+            offer.is_active = is_active  # Use the checkbox value
+            offer.save()
+
+            return JsonResponse({
+                'status': 'success', 
+                'message': 'Offer updated successfully!',
+                'redirect_url': reverse('admin_products')  # Adjust the redirect URL as necessary
+            })
+
+        except Exception as e:
+            return JsonResponse({
+                'status': 'error', 
+                'message': str(e)
+            }, status=500)
+
+    # For GET request - Render the form with existing offer details
+    context = {
+        'product': product,
+        'offer': offer,  # Pass the existing offer to the template
+        'OFFER_TYPES': OfferTable.OFFER_TYPES,
+    }
+    return render(request, 'edit_product_offer.html', context)
+
+
+
+##############################################################################################
+def delete_product_offer(request, product_id):
+    # Get the specific product
+    product = get_object_or_404(BookTable, id=product_id)
+
+    # Get the existing offer for the product
+    offer = product.product_offers.filter(is_active=True).first()
+
+    if not offer:
+        return JsonResponse({
+            'status': 'error', 
+            'message': 'No active offer found for this product.'
+        }, status=404)
+
+    try:
+        # Delete the offer
+        offer.delete()
+        return JsonResponse({
+            'status': 'success', 
+            'message': 'Offer deleted successfully!',
+            'redirect_url': reverse('admin_products')  # Adjust the redirect URL as necessary
+        })
+    except Exception as e:
+        return JsonResponse({
+            'status': 'error', 
+            'message': str(e)
+        }, status=500)
+    
+####################################################################################################
+
+@require_http_methods(["GET"])
+def get_coupon_details(request, coupon_id):
+    try:
+        coupon = get_object_or_404(CouponTable,id=coupon_id)
+        return JsonResponse({
+            'id': coupon.id,
+            'code': coupon.code,
+            'coupon_type': coupon.coupon_type,
+            'discount_value': coupon.discount_value,
+            'min_purchase_amount': coupon.min_purchase_amount,
+            'max_uses': coupon.max_uses,
+            'valid_from': coupon.valid_from.isoformat(),
+            'valid_to': coupon.valid_to.isoformat(),
+            'is_active': coupon.is_active
+        })
+    except CouponTable.DoesNotExist:
+        return JsonResponse({'error': 'Coupon not found'}, status=404)

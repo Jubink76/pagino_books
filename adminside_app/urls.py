@@ -22,4 +22,11 @@ urlpatterns = [
     path('order_status_update/<str:order_id>/',views.status_update, name='order_status_update'),
     path('admin_coupon',views.admin_coupon,name='admin_coupon'),
     path('admin_offer',views.admin_offer,name='admin_offer'),
+    path('add_category_offer/<int:category_id>/',views.add_category_offer,name='add_category_offer'),
+    path('edit_category_offer/<int:category_id>/', views.edit_category_offer, name='edit_category_offer'),
+    path('delete_category_offer/<int:category_id>/', views.delete_category_offer, name='delete_category_offer'),
+    path('add_product_offer/<int:product_id>/',views.add_product_offer,name='add_product_offer'),
+    path('edit_product_offer/<int:product_id>/',views.edit_product_offer,name='edit_product_offer'),
+    path('delete_product_offer/<int:product_id>/',views.delete_product_offer,name='delete_product_offer'),
+    path('admin/coupon/<int:coupon_id>/', views.get_coupon_details, name='get_coupon_details'),
 ]
