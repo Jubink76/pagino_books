@@ -22,7 +22,7 @@ from django.utils import timezone
 from datetime import datetime
 from django.urls import reverse
 from django.utils.timezone import now
-
+from django.utils.dateparse import parse_datetime
 # Create your views here.
 
 ##############################################################################################################
@@ -935,134 +935,143 @@ def status_update(request,order_id):
 
 @require_http_methods(["GET", "POST"])
 def admin_coupon(request, coupon_id=None):
-    # If editing an existing coupon
-    if coupon_id:
-        coupon = get_object_or_404(CouponTable, id=coupon_id)
-    else:
-        coupon = None
+    try:
+        if request.method == 'POST':
+            coupon_id = request.POST.get('code_id')
+            
+        if coupon_id:
+            coupon = get_object_or_404(CouponTable, id=coupon_id)
+        else:
+            coupon = None
 
-    if request.method == 'POST':
-        try:
-            # Get form data
-            code = request.POST.get('code').strip()
-            coupon_type = request.POST.get('coupon_type').strip()
-            discount_value = request.POST.get('discount_value').strip()
-            min_purchase_amount = request.POST.get('min_purchase_amount').strip()
-            max_uses = request.POST.get('max_uses').strip()
-            valid_from = request.POST.get('valid_from').strip()
-            valid_to = request.POST.get('valid_to').strip()
-            description = request.POST.get('description').strip()
-            is_active = request.POST.get('is_active') == 'on'
-
-            # Perform validations
-            errors = []
-
-            # Validate required fields
-            if not code:
-                errors.append("Coupon code is required.")
-            
-            if not coupon_type:
-                errors.append("Coupon type is required.")
-            
-            if not discount_value:
-                errors.append("Discount value is required.")
-            else:
-                try:
-                    discount_value = float(discount_value)
-                    if discount_value <= 0:
-                        errors.append("Discount value must be greater than 0.")
-                except (ValueError, TypeError):
-                    errors.append("Invalid discount value.")
-            
-            if not min_purchase_amount:
-                errors.append("Minimum purchase amount is required.")
-            else:
-                try:
-                    min_purchase_amount = float(min_purchase_amount)
-                    if min_purchase_amount <= 0:
-                        errors.append("Minimum purchase amount must be greater than 0.")
-                except (ValueError, TypeError):
-                    errors.append("Invalid minimum purchase amount.")
-            
-            if not max_uses:
-                errors.append("Maximum uses is required.")
-            else:
-                try:
-                    max_uses = int(max_uses)
-                    if max_uses <= 0:
-                        errors.append("Maximum uses must be greater than 0.")
-                except (ValueError, TypeError):
-                    errors.append("Invalid maximum uses.")
-            
-            # Validate date range
+        if request.method == 'POST':
             try:
-                valid_from = timezone.datetime.fromisoformat(valid_from)
-                valid_to = timezone.datetime.fromisoformat(valid_to)
+                # Get form data
+                code = request.POST.get('code', '').strip()
+                coupon_type = request.POST.get('coupon_type', '').strip()
+                discount_value = request.POST.get('discount_value', '').strip()
+                min_purchase_amount = request.POST.get('min_purchase_amount', '').strip()
+                max_uses = request.POST.get('max_uses', '').strip()
+                valid_from = request.POST.get('valid_from', '').strip()
+                valid_to = request.POST.get('valid_to', '').strip()
+                is_active = request.POST.get('is_active') == 'on'
+
+                # Perform validations
+                errors = []
+
+                # Validate required fields
+                if not code:
+                    errors.append("Coupon code is required.")
                 
-                if valid_from >= valid_to:
-                    errors.append("Valid from date must be before valid to date.")
-            except (ValueError, TypeError):
-                errors.append("Invalid date range.")
+                if not coupon_type:
+                    errors.append("Coupon type is required.")
+                
+                if not discount_value:
+                    errors.append("Discount value is required.")
+                else:
+                    try:
+                        discount_value = float(discount_value)
+                        if discount_value <= 0:
+                            errors.append("Discount value must be greater than 0.")
+                    except (ValueError, TypeError):
+                        errors.append("Invalid discount value.")
+                
+                if not min_purchase_amount:
+                    errors.append("Minimum purchase amount is required.")
+                else:
+                    try:
+                        min_purchase_amount = float(min_purchase_amount)
+                        if min_purchase_amount <= 0:
+                            errors.append("Minimum purchase amount must be greater than 0.")
+                    except (ValueError, TypeError):
+                        errors.append("Invalid minimum purchase amount.")
+                
+                if not max_uses:
+                    errors.append("Maximum uses is required.")
+                else:
+                    try:
+                        max_uses = int(max_uses)
+                        if max_uses <= 0:
+                            errors.append("Maximum uses must be greater than 0.")
+                    except (ValueError, TypeError):
+                        errors.append("Invalid maximum uses.")
+                
+                # Validate date range
+                try:
+                    # Make datetime timezone-aware
+                    valid_from = timezone.make_aware(timezone.datetime.fromisoformat(valid_from))
+                    valid_to = timezone.make_aware(timezone.datetime.fromisoformat(valid_to))
+                    
+                    if valid_from >= valid_to:
+                        errors.append("Valid from date must be before valid to date.")
+                except (ValueError, TypeError) as e:
+                    errors.append(f"Invalid date range: {str(e)}")
 
-            # If there are validation errors, return them
-            if errors:
-                return JsonResponse({
-                    'status': 'error', 
-                    'message': '; '.join(errors)
-                }, status=400)
+                # If there are validation errors, return them
+                if errors:
+                    return JsonResponse({
+                        'status': 'error', 
+                        'message': '; '.join(errors)
+                    }, status=400)
 
-            # Create or update the coupon
-            if coupon:
-                # Update existing coupon
-                coupon.code = code
-                coupon.coupon_type = coupon_type
-                coupon.discount_value = discount_value
-                coupon.min_purchase_amount = min_purchase_amount
-                coupon.max_uses = max_uses
-                coupon.valid_from = valid_from
-                coupon.valid_to = valid_to
-                coupon.description = description
-                coupon.is_active = is_active
-                coupon.save()
-                return JsonResponse({
-                    'status': 'success', 
-                    'message': 'Coupon updated successfully!',
-                    'redirect_url': reverse('admin_coupon')  # Adjust as needed
-                })
-            else:
-                # Create new coupon
-                CouponTable.objects.create(
-                    code=code,
-                    coupon_type=coupon_type,
-                    discount_value=discount_value,
-                    min_purchase_amount=min_purchase_amount,
-                    max_uses=max_uses,
-                    valid_from=valid_from,
-                    valid_to=valid_to,
-                    description=description,
-                    is_active=is_active
-                )
-                return JsonResponse({
-                    'status': 'success', 
-                    'message': 'Coupon created successfully!',
-                    'redirect_url': reverse('admin_coupon')  # Adjust as needed
-                })
+                # Proceed with creation/update if validation passes
+                if coupon:  # Editing existing coupon
+                    coupon.code = code
+                    coupon.coupon_type = coupon_type
+                    coupon.discount_value = discount_value
+                    coupon.min_purchase_amount = min_purchase_amount
+                    coupon.max_uses = max_uses
+                    coupon.valid_from = valid_from
+                    coupon.valid_to = valid_to
+                    coupon.is_active = is_active
+                    coupon.save()
+                    
+                    return JsonResponse({
+                        'status': 'success',
+                        'message': 'Coupon updated successfully!',
+                        'redirect_url': reverse('admin_coupon')
+                    })
+                else:  # Creating new coupon
+                    CouponTable.objects.create(
+                        code=code,
+                        coupon_type=coupon_type,
+                        discount_value=discount_value,
+                        min_purchase_amount=min_purchase_amount,
+                        max_uses=max_uses,
+                        valid_from=valid_from,
+                        valid_to=valid_to,
+                        is_active=is_active
+                    )
+                    return JsonResponse({
+                        'status': 'success',
+                        'message': 'Coupon created successfully!',
+                        'redirect_url': reverse('admin_coupon')
+                    })
 
-        except Exception as e:
+            except Exception as e:
+                return JsonResponse({
+                    'status': 'error',
+                    'message': f'Form processing error: {str(e)}'
+                }, status=400)  # Changed from 500 to 400 for form processing errors
+
+        # GET request - render the form
+        context = {
+            'coupon': coupon,
+            'COUPON_TYPES': CouponTable._meta.get_field('coupon_type').choices,
+            'default_coupon_type': 'percentage',
+            'coupons': CouponTable.objects.all().order_by('-valid_to')
+        }
+        return render(request, 'admin_coupon.html', context)
+
+    except Exception as e:
+        if request.method == 'POST':
             return JsonResponse({
-                'status': 'error', 
-                'message': str(e)
+                'status': 'error',
+                'message': f'Server error: {str(e)}'
             }, status=500)
-    coupons = CouponTable.objects.all().order_by('-valid_to')
-    # GET request - render the form for both adding and editing
-    context = {
-        'coupon': coupon,
-        'COUPON_TYPES': CouponTable._meta.get_field('coupon_type').choices,  # Correct way to access the choices
-        'default_coupon_type': 'percentage',  # Default value
-        'coupons':coupons
-    }
-    return render(request, 'admin_coupon.html', context)
-
+        # For GET requests, you might want to render an error template or redirect
+        messages.error(request, f'An error occurred: {str(e)}')
+        return redirect('admin_coupon') 
 
 
 #########################################################################################################################################
@@ -1497,7 +1506,8 @@ def delete_product_offer(request, product_id):
 @require_http_methods(["GET"])
 def get_coupon_details(request, coupon_id):
     try:
-        coupon = get_object_or_404(CouponTable,id=coupon_id)
+        coupon = get_object_or_404(CouponTable, id=coupon_id)
+        print(coupon)
         return JsonResponse({
             'id': coupon.id,
             'code': coupon.code,
@@ -1511,3 +1521,27 @@ def get_coupon_details(request, coupon_id):
         })
     except CouponTable.DoesNotExist:
         return JsonResponse({'error': 'Coupon not found'}, status=404)
+    
+####################################################################################################################
+    
+def delete_coupon(request, coupon_id):
+    coupon = get_object_or_404(CouponTable, id=coupon_id)
+    
+    if request.method == 'POST':
+        try:
+            coupon.delete()
+            return JsonResponse({
+                'status': 'success', 
+                'message': 'Coupon deleted successfully!',
+                'redirect_url': reverse('admin_coupon')
+            })
+        except Exception as e:
+            return JsonResponse({
+                'status': 'error', 
+                'message': str(e)
+            }, status=500)
+    
+    return JsonResponse({
+        'status': 'error', 
+        'message': 'Invalid request method'
+    }, status=400)

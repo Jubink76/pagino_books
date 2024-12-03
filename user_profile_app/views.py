@@ -311,14 +311,19 @@ def user_coupon(request):
 
 ########################################################################################################################
 paypalrestsdk.configure({
-    "mode": "sandbox",  # Change to "live" for production
+    "mode": settings.PAYPAL_MODE,  # Change to "live" for production
     "client_id": settings.PAYPAL_CLIENT_ID,
     "client_secret": settings.PAYPAL_CLIENT_SECRET
 })
 
 @login_required
 def user_wallet(request):
-        return render(request, 'user_wallet.html')
+        try:
+            wallet = WalletTable.objects.get(user=request.user)  # Fetch wallet for the logged-in user
+            transactions = WalletTable.objects.filter(user=request.user).order_by('-transaction_time') 
+        except WalletTable.DoesNotExist:
+            wallet = None
+        return render(request, 'user_wallet.html',{'wallet':wallet,'transactions':transactions})
 
 #########################################################################################################################
 @login_required
@@ -337,9 +342,9 @@ def add_money_via_paypal(request):
                 messages.error(request, "Please enter a valid amount.")
                 return redirect("user_wallet")
 
-            if currency not in settings.ACCEPTED_CURRENCIES:
-                messages.error(request, "Invalid currency selected.")
-                return redirect("user_wallet")
+            # if currency not in settings.ACCEPTED_CURRENCIES:
+            #     messages.error(request, "Invalid currency selected.")
+            #     return redirect("user_wallet")
 
             # Create PayPal payment
             payment = Payment({
@@ -397,13 +402,13 @@ def paypal_success(request):
             return redirect("user_wallet")
 
         payment = Payment.find(payment_id)
-        
+        print(payment)
         if payment.execute({"payer_id": payer_id}):
             amount = Decimal(request.session.get('payment_amount'))
             currency = request.session.get('payment_currency')
             
             try:
-                wallet = WalletTable.objects.get(user=request.user)
+                wallet, created = WalletTable.objects.get_or_create(user=request.user)
                 wallet.update_balance(
                     transaction_type="add",
                     amount=amount,
@@ -418,8 +423,8 @@ def paypal_success(request):
                     request, 
                     f"Successfully added {currency} {amount:,.2f} to your wallet!"
                 )
-            except WalletTable.DoesNotExist:
-                messages.error(request, "Wallet not found.")
+            except ValueError as e:
+                messages.error(request, str(e))
             except Exception as e:
                 messages.error(request, f"Failed to update wallet: {str(e)}")
         else:

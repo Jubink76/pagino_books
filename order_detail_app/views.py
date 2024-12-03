@@ -1,6 +1,6 @@
 from django.shortcuts import render,redirect,get_object_or_404
 from django.contrib import messages
-from user_profile_app.models import AddressTable
+from user_profile_app.models import AddressTable,WalletTable
 from user_side_app.models import CartTable
 from .models import OrderDetails, OrderItem
 import random
@@ -13,9 +13,9 @@ import json
 import razorpay
 from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
-import time
-import hmac
-import hashlib
+from django.utils.timezone import now
+from django.utils import timezone
+from decimal import Decimal
 
 # Initialize Razorpay client
 razorpay_client = razorpay.Client(
@@ -147,44 +147,112 @@ def create_order(request):
         })
 #################################################################################################################################
 @login_required
-def cancel_order(request,order_id):
+def cancel_order(request, order_id):
     if request.method == "POST":
         order = get_object_or_404(OrderDetails, order_id=order_id, user=request.user)
 
+        # Check if the order is already canceled
         if order.order_status != 'Canceled':
+            # Set order status to canceled
             order.order_status = 'Canceled'
             order.is_canceled = True
             order.save()
-            return JsonResponse({
-            'status': 'success',
-            'message': f"Order {order.order_id} has been canceled.",
-            'redirect_url': reverse('user_orders')
-            })
+
+            # Refund to wallet if the payment method is ONLINE
+            if order.payment_method == 'ONLINE':
+                # Get the user's current wallet balance
+                wallet, created = WalletTable.objects.get_or_create(user=request.user)
+
+                
+                # Create a new transaction entry for the refund
+                new_wallet_entry = WalletTable(
+                    user=request.user,
+                    available_balance=wallet.available_balance + order.total_amount,  # Add the refunded amount to the existing balance
+                    transaction_type='refund',
+                    transaction_amount=order.total_amount,
+                    description=f"Refund for canceled order {order.order_id}",
+                    transaction_time=timezone.now()
+                )
+                new_wallet_entry.save()  # Save the new record
+
+                return JsonResponse({
+                    'status': 'success',
+                    'message': f"Order {order.order_id} has been canceled and refunded.",
+                    'redirect_url': reverse('user_orders')
+                })
+            else:
+                return JsonResponse({
+                    'status': 'success',
+                    'message': f"Order {order.order_id} has been canceled (COD).",
+                    'redirect_url': reverse('user_orders')
+                })
+
         else:
             return JsonResponse({
-            'status': 'info',
-            'message': f"Order {order.order_id} is already canceled."
+                'status': 'info',
+                'message': f"Order {order.order_id} is already canceled."
             })
+
     return redirect('user_orders')
 
 ################################################################################################################################
 @login_required
 def user_single_item_cancel(request, order_id, order_item_id):
     if request.method == "POST":
-        # Fetch the related order and order item
+        # Fetch the order and order item
         order_detail = get_object_or_404(OrderDetails, order_id=order_id, user=request.user)
         order_item = get_object_or_404(OrderItem, order=order_detail, id=order_item_id)
 
-        # Delete the item
-        order_item.delete()
+        # Prevent cancellation if the item or order has already shipped
+        if order_item.order_status in ['Shipped', 'Delivered'] or order_detail.order_status in ['Shipped', 'Delivered']:
+            messages.error(request, "You cannot cancel items from an order that has already been shipped or delivered.")
+            return redirect('user_orders', order_id=order_id)
 
-        # Update the order status if all items are deleted
-        if not OrderItem.objects.filter(order=order_detail).exists():
+        # Calculate refund amount
+        refund_amount = order_item.total_price
+
+        # Update the order item status to canceled
+        order_item.is_canceled = True
+        order_item.order_status = 'Canceled'
+        order_item.save()
+
+        # Check if all items in the order are canceled
+        all_items_canceled = not OrderItem.objects.filter(order=order_detail, is_canceled=False).exists()
+
+        if all_items_canceled:
+            # Update order status to canceled
             order_detail.order_status = 'Canceled'
-            order_detail.save()
+            order_detail.is_canceled = True
+            order_detail.cancel_date = now()
+            order_detail.cancel_description = f"Order {order_id} canceled by user. All items were canceled."
+        else:
+            # Adjust the total order amount for remaining items
+            order_detail.total_amount -= refund_amount
+            order_detail.cancel_description = f"Item {order_item_id} canceled by user."
 
-        messages.success(request, f"Item has been successfully removed from Order {order_id}.")
+        # Handle refund logic
+        if order_detail.payment_method == 'ONLINE':
+            try:
+                wallet = WalletTable.objects.get(user=request.user)
+                wallet.update_balance(
+                    transaction_type='refund',
+                    amount=refund_amount,
+                    description=f"Refund for canceled item in Order {order_id}"
+                )
+                order_detail.is_refund = True
+                order_detail.refund_date = now()
+                messages.success(request, f"₹{refund_amount:.2f} has been refunded to your wallet.")
+            except WalletTable.DoesNotExist:
+                messages.error(request, "Refund failed: Wallet not found.")
+        elif order_detail.payment_method == 'COD':
+            messages.success(request, f"The total amount for Order {order_id} has been updated.")
+
+        # Save changes to the order
+        order_detail.save()
+
+        messages.success(request, f"Item {order_item_id} has been successfully canceled.")
     return redirect('user_orders', order_id=order_id)
+
 
 ################################################################################################################################
 
@@ -252,3 +320,5 @@ def verify_payment(request):
         'status': 'error',
         'message': 'Invalid request method'
     })
+
+########################################################################################################################################

@@ -69,7 +69,7 @@
                           <div class="space-y-2">
                             <div class="w-12 h-8 bg-yellow-400 rounded-md"></div>
                             <p class="text-gray-100 text-sm">Available Balance</p>
-                            <h2 class="text-white text-4xl font-bold">₹100.00</h2>
+                            <h2 class="text-white text-4xl font-bold">₹{{ wallet.available_balance }}</h2>
                           </div>
                         </div>
                         <div class="absolute bottom-6 left-6">
@@ -110,32 +110,58 @@
                     <!-- Transaction History -->
                     <div class="bg-white rounded-xl p-6 shadow-sm">
                       <h2 class="text-xl font-bold text-gray-800 mb-4">Transaction History</h2>
-                      <div class="overflow-x-auto">
-                        <table class="w-full">
-                          <thead>
-                            <tr class="border-b border-gray-200">
-                              <th class="text-left py-3 px-4 text-gray-600">Date & Time</th>
-                              <th class="text-left py-3 px-4 text-gray-600">Description</th>
-                              <th class="text-right py-3 px-4 text-gray-600">Amount</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            <tr class="border-b border-gray-100 hover:bg-gray-50">
-                              <td class="py-3 px-4 text-gray-800">November 29, 2024</td>
-                              <td class="py-3 px-4 text-gray-800">
-                                <div class="flex items-center gap-2">
-                                  <svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path>
-                                  </svg>
-                                  Money added to wallet
-                                </div>
-                              </td>
-                              <td class="py-3 px-4 text-right text-green-500 font-medium">+₹100.00</td>
-                            </tr>
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
+                      {% if transactions %}
+                          <div class="overflow-x-auto">
+                              <table class="w-full">
+                                  <thead>
+                                      <tr class="border-b border-gray-200">
+                                          <th class="text-left py-3 px-4 text-gray-600">Date & Time</th>
+                                          <th class="text-left py-3 px-4 text-gray-600">Description</th>
+                                          <th class="text-right py-3 px-4 text-gray-600">Amount</th>
+                                      </tr>
+                                  </thead>
+                                  <tbody>
+                                      {% for transaction in transactions %}
+                                          <tr class="border-b border-gray-100 hover:bg-gray-50">
+                                              <td class="py-3 px-4 text-gray-800">
+                                                  {{ transaction.transaction_time|date:"F d, Y, h:i A" }}
+                                              </td>
+                                              <td class="py-3 px-4 text-gray-800">
+                                                  <div class="flex items-center gap-2">
+                                                      {% if wallet.transaction_type == 'add' %}
+                                                          <svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path>
+                                                          </svg>
+                                                          <span class="text-green-500"> Money added to wallet </span>
+                                                      {% elif transaction.transaction_type == 'deduct' %}
+                                                          <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
+                                                          </svg>
+                                                          <span class="text-red-500"> Money deducted </span>
+                                                      {% elif transaction.transaction_type == 'refund' %}
+                                                          <svg class="w-4 h-4 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l-7-7 7-7m5 14l7-7-7-7"></path>
+                                                          </svg>
+                                                          <span class="text-yellow-500"> Refund money collected </span>
+                                                      {% endif %}
+                                                  </div>
+                                              </td>
+                                              <td class="py-3 px-4 text-right font-medium {% if transaction.transaction_type == 'deduct' %}text-red-500{% else %}text-green-500{% endif %}">
+                                                  {% if transaction.transaction_type == 'deduct' %}
+                                                      -₹{{ transaction.transaction_amount }}
+                                                  {% else %}
+                                                      +₹{{ transaction.transaction_amount }}
+                                                  {% endif %}
+                                              </td>
+                                          </tr>
+                                      {% endfor %}
+                                  </tbody>
+                              </table>
+                          </div>
+                      {% else %}
+                          <p class="text-gray-600">No transactions found.</p>
+                      {% endif %}
+                  </div>                  
                 </div>
             </div>
         </div>

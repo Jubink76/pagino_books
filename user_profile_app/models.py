@@ -68,23 +68,22 @@ class WalletTable(models.Model):
     def __str__(self):
         return f"Wallet of {self.user.phone_number}"
 
-    def update_balance(self, transaction_type, amount, description=None):
-        """
-        Updates the wallet balance based on the transaction type.
-        """
-        if transaction_type == 'add':
+    def update_balance(self, transaction_type, amount, description=""):
+        # Adjust the balance
+        if transaction_type == "add":
             self.available_balance += amount
-        elif transaction_type == 'deduct' and self.available_balance >= amount:
+        elif transaction_type == "deduct":
+            if self.available_balance < amount:
+                raise ValueError("Insufficient balance")
             self.available_balance -= amount
-        elif transaction_type == 'refund':
+        elif transaction_type == "refund":
             self.available_balance += amount
-        else:
-            raise ValueError("Invalid transaction or insufficient balance")
 
-        # Log the transaction
+        # Update transaction details
         self.transaction_type = transaction_type
-        self.amount = amount
+        self.transaction_amount = amount
         self.description = description
-        self.timestamp = now()
+        self.transaction_time = now()  # Ensure the transaction time is updated
 
+        # Save all updates
         self.save()

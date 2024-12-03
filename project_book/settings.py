@@ -220,14 +220,14 @@ RAZORPAY_KEY_ID = 'rzp_test_COptAFlNCi9Fdi'
 RAZORPAY_KEY_SECRET = 'sZNZcjvDRenuZqD45113Rstu'
 
 
-PAYPAL_MODE = "sandbox"  # Change to "live" for production
-PAYPAL_CLIENT_ID = "AX92J9UuypZLnwqtgakDAcNj_iN0-ZBgE6VKF_va7SXlMP0HxQULMTZmhlgBw1bQpaFazhtyXnaDLNFn"
-PAYPAL_CLIENT_SECRET = "EGRH5H_j9uO9InlsbzORSvwQh9IecikRjK1CtSvHrpJpCwFih0t-DBWmEP764ZSM8LuSoyeirXgrUCdS"
+# PAYPAL_MODE = "sandbox"  # Change to "live" for production
+# PAYPAL_CLIENT_ID = "AX92J9UuypZLnwqtgakDAcNj_iN0-ZBgE6VKF_va7SXlMP0HxQULMTZmhlgBw1bQpaFazhtyXnaDLNFn"
+# PAYPAL_CLIENT_SECRET = "EGRH5H_j9uO9InlsbzORSvwQh9IecikRjK1CtSvHrpJpCwFih0t-DBWmEP764ZSM8LuSoyeirXgrUCdS"
+PAYPAL_CLIENT_ID = 'Ab49v3vyytYGhK6E-FIJh8qUfQqmZRuH4nNiNjvxJrZiD7yGXXe2VAQ_w0YRhFqjYezMx1A0DyrkNoWs' 
+PAYPAL_CLIENT_SECRET = 'EBNicjhxbNeCn-tQ4uZ7-yI-9efwtPBucVbnJYP0Er8BEqe9mkTeiC1nqjBkyyu1ggAo-QSYaEIob9AM'
+PAYPAL_MODE = 'sandbox'
 
-ACCEPTED_CURRENCIES = [
-    'USD',
-    'EUR',
-]
+
 
 
 # LOGGING = {

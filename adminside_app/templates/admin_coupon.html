@@ -23,8 +23,9 @@
         </div>
 
         <!-- Coupon Form -->
-        <form class="space-y-6" method="post" data-url="{% if coupon %}{% url 'admin_coupon' coupon.id %}{% else %}{% url 'admin_coupon' %}{% endif %}">
+        <form id="couponForm" method="post" {% if coupon %}data-edit="{{ coupon.id }}"{% endif %}>
             {% csrf_token %}
+            <input type="hidden" name="code_id" value="{{ coupon.id|default:'' }}">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <!-- Code -->
                 <div>
@@ -125,13 +126,14 @@
                                     <h3 class="text-white font-bold mt-2">{{ coupon.code|upper }}</h3>
                                 </div>
                                 <div class="flex space-x-2">
-                                    <button class="text-gray-400 hover:text-white edit-coupon-btn" data-coupon-id="{{ coupon.id }}">
+                                    <button class="text-gray-400 hover:text-white edit-coupon-btn" 
+                                        data-url="{% url 'get_coupon_details' coupon.id %}">
                                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                                         </svg>
                                     </button>
-                                    <button 
-                                        class="text-gray-400 hover:text-white">
+                                    <button class="delete-coupon-btn text-gray-400 hover:text-white"
+                                        data-url="{% url 'delete_coupon' coupon.id %}">
                                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                                         </svg>
@@ -179,20 +181,31 @@
 <script>
     
     document.addEventListener('DOMContentLoaded', function() {
-        document.querySelector('form').addEventListener("submit", function (e) {
+        
+        document.querySelector('#couponForm').addEventListener("submit", function (e) {
             e.preventDefault();
             const form = this;
-            const url = form.getAttribute("data-url");
             const formData = new FormData(form);
-
-            fetch(url, {
+            const couponId = form.getAttribute('data-edit');
+            
+            // Determine URL based on whether we're editing or creating
+            const submitUrl = couponId 
+                ? `/admin_coupon/${couponId}/`  // Edit URL
+                : '/admin_coupon/';             // Create URL
+        
+            fetch(submitUrl, {
                 method: "POST",
                 body: formData,
                 headers: {
                     "X-CSRFToken": form.querySelector("[name=csrfmiddlewaretoken]").value
                 },
             })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
             .then(data => {
                 if (data.status === "success") {
                     Swal.fire({
@@ -213,6 +226,7 @@
                 }
             })
             .catch(error => {
+                console.error("Error:", error);  // For debugging
                 Swal.fire({
                     title: "Error!",
                     text: "Something went wrong. Please try again later.",
@@ -221,16 +235,74 @@
                 });
             });
         });
-        // Add event listeners to all edit buttons
+        // Add delete coupon functionality
+        document.querySelectorAll('.delete-coupon-btn').forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                const deleteUrl = this.getAttribute('data-url');
+                
+                // Show confirmation dialog
+                Swal.fire({
+                    title: "Are you sure?",
+                    text: "This coupon will be permanently deleted!",
+                    icon: "warning",
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#3085d6',
+                    confirmButtonText: 'Yes, delete it!',
+                    cancelButtonText: 'Cancel'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        // Proceed with deletion
+                        fetch(deleteUrl, {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                            }
+                        })
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error('Network response was not ok');
+                            }
+                            return response.json();
+                        })
+                        .then(data => {
+                            if (data.status === 'success') {
+                                Swal.fire({
+                                    title: "Deleted!",
+                                    text: data.message,
+                                    icon: "success",
+                                    confirmButtonText: "OK"
+                                }).then(() => {
+                                    window.location.href = data.redirect_url;
+                                });
+                            } else {
+                                throw new Error(data.message);
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            Swal.fire({
+                                title: "Error!",
+                                text: error.message || "Failed to delete coupon",
+                                icon: "error",
+                                confirmButtonText: "OK"
+                            });
+                        });
+                    }
+                });
+            });
+        });
+
         document.querySelectorAll('.edit-coupon-btn').forEach(button => {
             button.addEventListener('click', function() {
-                const couponId = this.getAttribute('data-coupon-id');
-                fetchCouponDetails(couponId);
+                const url = this.getAttribute('data-url');
+                fetchCouponDetails(url);
             });
         });
     
-        function fetchCouponDetails(couponId) {
-            fetch(`/admin_coupon/${couponId}/`)  // Note the change from /admin/coupon/ to /admin_coupon/
+        function fetchCouponDetails(url) {
+            fetch(url)
             .then(response => {
                 if (!response.ok) {
                     throw new Error('Network response was not ok');
@@ -244,7 +316,7 @@
                 document.querySelector('form input[name="discount_value"]').value = data.discount_value;
                 document.querySelector('form input[name="min_purchase_amount"]').value = data.min_purchase_amount;
                 document.querySelector('form input[name="max_uses"]').value = data.max_uses;
-                
+        
                 // Convert datetime to local datetime-local input format
                 const formatDateTime = (dateString) => {
                     const date = new Date(dateString);
@@ -253,12 +325,12 @@
         
                 document.querySelector('form input[name="valid_from"]').value = formatDateTime(data.valid_from);
                 document.querySelector('form input[name="valid_to"]').value = formatDateTime(data.valid_to);
-                
+        
                 document.querySelector('form input[name="is_active"]').checked = data.is_active;
         
                 // Update form action and submit button text
                 const form = document.querySelector('form');
-                form.setAttribute('data-url', `/admin_coupon/${couponId}/`);
+                form.setAttribute('data-url', url.replace('/get_coupon_details/', '/admin_coupon/'));
                 form.querySelector('button[type="submit"]').textContent = 'Update Coupon';
             })
             .catch(error => {
@@ -270,7 +342,7 @@
                     confirmButtonText: "OK"
                 });
             });
-        }
+        }  
     });
 </script>
 {% endblock %}
