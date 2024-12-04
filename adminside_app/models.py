@@ -32,12 +32,14 @@ class BookTable(models.Model):
     base_price = models.DecimalField(max_digits=10, decimal_places=2)
     discount_percentage = models.DecimalField(max_digits=5, decimal_places=2, default=0)
     offer_price = models.DecimalField(max_digits=10, decimal_places=2, editable=False, default=0)
+    previous_offer_price = models.DecimalField(max_digits=10, decimal_places=2,null=True, blank=True)
     publication_date = models.DateField(auto_now_add=True)
     author = models.ForeignKey(Author, on_delete=models.CASCADE, null=True, blank=True)
     language = models.ForeignKey(Language, on_delete=models.CASCADE, null=True, blank=True)
     category = models.ForeignKey(CategoryTable, on_delete=models.CASCADE, null=True, blank=True)
     is_available = models.BooleanField(default=True)
     is_deleted = models.BooleanField(default=False)
+    additional_offer_applied = models.BooleanField(default=False)
 
     def save(self, *args, **kwargs):
         # Ensure both base_price and discount_percentage are Decimal

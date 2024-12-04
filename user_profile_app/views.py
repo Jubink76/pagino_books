@@ -1,12 +1,12 @@
 from django.shortcuts import render,redirect,get_object_or_404
-from user_profile_app.models import AddressTable,WalletTable
+from user_profile_app.models import AddressTable,WalletTable,WalletTransaction
 from django.contrib import messages
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
 import re
 from log_reg_app.models import UserTable
 from django.contrib.auth import update_session_auth_hash
-from order_detail_app.models import OrderDetails,OrderItem
+from order_detail_app.models import OrderDetails,OrderItem,CouponTable,CouponUsage
 from django.db.models import Count
 from django.db.models import Q
 from django.urls import reverse
@@ -14,6 +14,7 @@ from paypalrestsdk import Payment
 from django.conf import settings
 from decimal import Decimal
 import paypalrestsdk
+from django.utils import timezone
 # Create your views here.
 #######################################################################################################################
 def user_profile(request):
@@ -305,9 +306,18 @@ def admin_single_item_cancel(request,order_id,order_item_id):
 
 ########################################################################################################################
 
-
 def user_coupon(request):
-    return render(request,'user_coupon.html')
+
+    current_time = timezone.now()
+    # Fetch active coupons that are within the valid date range and still active
+    available_coupons = CouponTable.objects.filter(
+            is_active=True,
+            valid_from__lte=current_time,
+            valid_to__gte=current_time
+        )
+    used_coupons = CouponUsage.objects.filter(user=request.user).order_by('-used_at')   
+
+    return render(request,'user_coupon.html',{'coupons':available_coupons,'used_coupons':used_coupons})
 
 ########################################################################################################################
 paypalrestsdk.configure({
@@ -319,11 +329,20 @@ paypalrestsdk.configure({
 @login_required
 def user_wallet(request):
         try:
-            wallet = WalletTable.objects.get(user=request.user)  # Fetch wallet for the logged-in user
-            transactions = WalletTable.objects.filter(user=request.user).order_by('-transaction_time') 
+            wallet = WalletTable.objects.get(user=request.user)
+            
+            # Retrieve transactions related to this wallet, ordered by transaction_time (latest first)
+            transactions = wallet.transactions.order_by('-transaction_time')  # Use related_name defined in WalletTransaction
+            
         except WalletTable.DoesNotExist:
             wallet = None
-        return render(request, 'user_wallet.html',{'wallet':wallet,'transactions':transactions})
+            transactions = []
+
+        context = {
+            'wallet': wallet,
+            'transactions': transactions,
+        }
+        return render(request, 'user_wallet.html',context)
 
 #########################################################################################################################
 @login_required
@@ -408,10 +427,18 @@ def paypal_success(request):
             currency = request.session.get('payment_currency')
             
             try:
+                # Get or create the wallet for the user
                 wallet, created = WalletTable.objects.get_or_create(user=request.user)
-                wallet.update_balance(
+                
+                # Update the wallet's available balance
+                wallet.available_balance += amount
+                wallet.save()
+
+                # Log the transaction
+                WalletTransaction.objects.create(
+                    wallet=wallet,
                     transaction_type="add",
-                    amount=amount,
+                    transaction_amount=amount,
                     description=f"PayPal Payment ({payment_id})"
                 )
                 
@@ -419,12 +446,13 @@ def paypal_success(request):
                 for key in ['paypal_payment_id', 'payment_amount', 'payment_currency']:
                     request.session.pop(key, None)
                 
+                # Notify the user
                 messages.success(
                     request, 
                     f"Successfully added {currency} {amount:,.2f} to your wallet!"
                 )
-            except ValueError as e:
-                messages.error(request, str(e))
+            except Exception as e:
+                messages.error(request, f"Failed to update wallet: {str(e)}")
             except Exception as e:
                 messages.error(request, f"Failed to update wallet: {str(e)}")
         else:

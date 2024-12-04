@@ -79,6 +79,8 @@
                         <h4 class="text-xl font-semibold mb-6 text-center">Add New Address</h4>
                         <form id="addressForm" data-url="{% url 'checkout_add_address' %}" method="post" class="space-y-6">
                             {% csrf_token %}
+                            <input type="hidden" id="applied-coupon-code" name="coupon_code" value="">
+                            <input type="hidden" id="grand_total" name="grand_total" value="{{ grand_total }}">
                             <!-- Address Type Selector -->
                             <div class="flex gap-5 mb-8">
                                 <div class="flex-1 p-4 border rounded-lg text-center cursor-pointer transition-all type-option active" name="home" data-type="home">
@@ -192,7 +194,7 @@
                             </div>
                             <div class="flex justify-between text-green-600">
                                 <span>Coupon Discount:</span>
-                                <span>- ₹0</span>
+                                <span id="coupon-discount">- ₹0</span>
                             </div>
                             <div class="flex justify-between text-green-600">
                                 <span>Shipping:</span>
@@ -204,7 +206,7 @@
 
                         <div class="flex justify-between font-semibold text-lg">
                             <span>Total:</span>
-                            <span>₹{{ grand_total }}</span>
+                            <span id="total-amount">₹{{ grand_total }}</span>
                         </div>
 
                         <div class="mt-8">
@@ -267,10 +269,12 @@
 
                         <div class="mt-6">
                             <div class="flex gap-2">
-                                <input type="text" placeholder="Enter coupon code" class="flex-1 p-3 border rounded-md">
-                                <button type="button" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">Apply</button>
+                                <input type="text" id="coupon-code" placeholder="Enter coupon code" class="flex-1 p-3 border rounded-md">
+                                <button type="button" id="coupon-button" data-action="apply" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">
+                                    Apply
+                                </button>
                             </div>
-                        </div>
+                        </div>                        
 
                         <button type="submit" id="place-order-button"  class="w-full mt-6 py-3 bg-gray-400 text-white rounded-md font-medium disabled:cursor-not-allowed disabled:opacity-75 transition-colors">
                             Place Order <i class="fas fa-arrow-right ml-2"></i>
@@ -291,4 +295,93 @@
 <script src="{% static 'user/js/place_order.js' %}"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+    function loadRazorpayScript(callback) {
+        const script = document.createElement("script");
+        script.src = "https://checkout.razorpay.com/v1/checkout.js";
+        script.onload = callback;
+        document.body.appendChild(script);
+    }
+    
+    document.getElementById('coupon-button').addEventListener('click', function () {
+        const button = this;
+        const action = button.getAttribute('data-action'); // Check current action
+        const couponCodeInput = document.getElementById('coupon-code');
+        const couponCode = couponCodeInput.value;
+    
+        if (action === 'apply') {
+            // Apply coupon logic
+            if (couponCode) {
+                fetch("{% url 'apply_coupon' %}", {
+                    method: "POST",
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: JSON.stringify({ coupon_code: couponCode })
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'success') {
+                            // Update UI on success
+                            document.getElementById('total-amount').innerText = '₹' + data.new_total;
+                            document.getElementById('coupon-discount').innerText = '- ₹' + data.discount_amount;
+    
+                            // Change button to "Remove Coupon"
+                            button.textContent = 'Remove';
+                            button.setAttribute('data-action', 'remove');
+                            button.classList.replace('bg-red-600', 'bg-green-600');
+                            button.classList.replace('hover:bg-red-700', 'hover:bg-green-700');
+    
+                            couponCodeInput.disabled = true; // Disable input
+                            Swal.fire('Coupon Applied!', 'Discount applied successfully.', 'success');
+                        } else {
+                            Swal.fire('Error', data.message, 'error');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error applying coupon:', error);
+                        Swal.fire('Error', 'An error occurred while applying the coupon.', 'error');
+                    });
+            } else {
+                Swal.fire('Error', 'Please enter a coupon code.', 'error');
+            }
+        } else if (action === 'remove') {
+            // Remove coupon logic
+            fetch("{% url 'remove_coupon' %}", {
+                method: "POST",
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}'
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        // Update UI on success
+                        document.getElementById('total-amount').innerText = '₹{{ grand_total }}'; // Original total
+                        document.getElementById('coupon-discount').innerText = '- ₹0';
+    
+                        // Change button back to "Apply Coupon"
+                        button.textContent = 'Apply';
+                        button.setAttribute('data-action', 'apply');
+                        button.classList.replace('bg-green-600', 'bg-red-600');
+                        button.classList.replace('hover:bg-green-700', 'hover:bg-red-700');
+    
+                        couponCodeInput.disabled = false; // Enable input
+                        couponCodeInput.value = ''; // Clear input
+                        Swal.fire('Coupon Removed', 'The coupon has been removed.', 'info');
+                    } else {
+                        Swal.fire('Error', data.message, 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error removing coupon:', error);
+                    Swal.fire('Error', 'An error occurred while removing the coupon.', 'error');
+                });
+        }
+    });
+    
+</script>
+
+
 {% endblock %}

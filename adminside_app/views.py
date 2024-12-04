@@ -1082,7 +1082,37 @@ def admin_offer(request):
 
         return render(request, 'admin_offer.html',{'active_offers':active_offers})
 
-##################################################################################################################################3
+#########################################################################################################################################
+
+#function to apply the discount to the product's price
+def apply_discount(base_price, discount_type, discount_value):
+    if discount_type == 'percentage':
+        return base_price - (base_price * (discount_value / 100))
+    elif discount_type == 'fixed':
+        return base_price - discount_value
+    return base_price
+
+# function to reset the expired offers
+def reset_expired_offers():
+    now = timezone.now()
+    
+    # Fetch all active offers
+    active_offers = OfferTable.objects.filter(is_active=True)
+
+    for offer in active_offers:
+        if offer.valid_to < now:  # Offer has expired
+            products_in_offer = BookTable.objects.filter(category=offer.category)
+
+            for product in products_in_offer:
+                if product.additional_offer_applied:  # Only reset if offer was applied
+                    product.offer_price = product.previous_offer_price  # Revert to previous price
+                    product.additional_offer_applied = False  # Reset the flag
+                    product.save()
+
+            # Deactivate the expired offer
+            offer.is_active = False
+            offer.save()
+#########################################################################################################################################
 
 @require_http_methods(["GET", "POST"])
 def add_category_offer(request, category_id):
@@ -1148,7 +1178,24 @@ def add_category_offer(request, category_id):
                 description=description,
                 is_active=is_active
             )
+            
+            # Apply offer to products in the category
+            products_in_category = BookTable.objects.filter(category=category)
+            for product in products_in_category:
+                if not product.additional_offer_applied:
+                    # Store the previous offer price before applying the new offer
+                    if product.previous_offer_price is None:
+                        product.previous_offer_price = product.offer_price  # Store the existing price
 
+                # Apply the discount to the book's price based on the discount type
+                new_offer_price = apply_discount(product.base_price, discount_type, discount_value)
+
+                # If the new offer price is lower than the existing offer price, update it
+                if new_offer_price < product.offer_price:
+                    product.offer_price = new_offer_price
+                    product.additional_offer_applied = True  # Mark that an additional offer has been applied
+                    product.save()
+                    
             # Redirect URL (adjust as needed)
             return JsonResponse({
                 'status': 'success', 

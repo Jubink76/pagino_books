@@ -58,6 +58,7 @@
                 </div>
 
                 <!-- Main Content -->
+                
                 <div class="flex-1 px-5 py-8 bg-gray-50">
                     <h1 class="text-3xl font-bold text-gray-800 mb-2">My Wallet</h1>
                     <p class="text-gray-600 mb-8">Manage your funds and track transactions</p>
@@ -95,7 +96,6 @@
                                   name="currency" 
                                   class="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
                                   required>
-                                  <option value="EUR">EUR</option>
                                   <option value="USD">USD</option>
                                   <!-- Add more currencies as needed -->
                               </select>
@@ -128,7 +128,7 @@
                                               </td>
                                               <td class="py-3 px-4 text-gray-800">
                                                   <div class="flex items-center gap-2">
-                                                      {% if wallet.transaction_type == 'add' %}
+                                                      {% if transaction.transaction_type == 'add' %}
                                                           <svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path>
                                                           </svg>

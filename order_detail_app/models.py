@@ -33,6 +33,15 @@ class CouponTable(models.Model):
 
     def __str__(self):
         return f"Coupon {self.code} ({self.coupon_type}: {self.discount_value})"
+    
+class CouponUsage(models.Model):
+    user = models.ForeignKey('log_reg_app.UserTable', on_delete=models.CASCADE) 
+    coupon = models.ForeignKey(CouponTable, on_delete=models.CASCADE)  
+    discount_value = models.DecimalField(max_digits=10, decimal_places=2)  
+    used_at = models.DateTimeField(auto_now_add=True)  
+
+    def __str__(self):
+        return f"{self.user.username} used {self.coupon.code} on {self.used_at}"
 
 
 

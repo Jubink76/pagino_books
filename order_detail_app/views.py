@@ -1,8 +1,8 @@
 from django.shortcuts import render,redirect,get_object_or_404
 from django.contrib import messages
-from user_profile_app.models import AddressTable,WalletTable
+from user_profile_app.models import AddressTable,WalletTable, WalletTransaction
 from user_side_app.models import CartTable
-from .models import OrderDetails, OrderItem
+from .models import OrderDetails, OrderItem,CouponTable,CouponUsage
 import random
 import string
 from django.db import transaction
@@ -145,39 +145,41 @@ def create_order(request):
             'status': 'error',
             'message': 'An unexpected error occurred while processing your order'
         })
+
 #################################################################################################################################
 @login_required
 def cancel_order(request, order_id):
     if request.method == "POST":
+        # Retrieve the order
         order = get_object_or_404(OrderDetails, order_id=order_id, user=request.user)
 
         # Check if the order is already canceled
         if order.order_status != 'Canceled':
-            # Set order status to canceled
+            # Update order status
             order.order_status = 'Canceled'
             order.is_canceled = True
             order.save()
 
-            # Refund to wallet if the payment method is ONLINE
+            # Handle refund if payment method is ONLINE
             if order.payment_method == 'ONLINE':
-                # Get the user's current wallet balance
                 wallet, created = WalletTable.objects.get_or_create(user=request.user)
 
-                
-                # Create a new transaction entry for the refund
-                new_wallet_entry = WalletTable(
-                    user=request.user,
-                    available_balance=wallet.available_balance + order.total_amount,  # Add the refunded amount to the existing balance
+                # Update wallet balance
+                wallet.available_balance += order.total_amount
+                wallet.save()
+
+                # Log the transaction
+                WalletTransaction.objects.create(
+                    wallet=wallet,
                     transaction_type='refund',
                     transaction_amount=order.total_amount,
                     description=f"Refund for canceled order {order.order_id}",
                     transaction_time=timezone.now()
                 )
-                new_wallet_entry.save()  # Save the new record
 
                 return JsonResponse({
                     'status': 'success',
-                    'message': f"Order {order.order_id} has been canceled and refunded.",
+                    'message': f"Order {order.order_id} has been canceled and refunded to your wallet.",
                     'redirect_url': reverse('user_orders')
                 })
             else:
@@ -196,6 +198,7 @@ def cancel_order(request, order_id):
     return redirect('user_orders')
 
 ################################################################################################################################
+
 @login_required
 def user_single_item_cancel(request, order_id, order_item_id):
     if request.method == "POST":
@@ -203,13 +206,15 @@ def user_single_item_cancel(request, order_id, order_item_id):
         order_detail = get_object_or_404(OrderDetails, order_id=order_id, user=request.user)
         order_item = get_object_or_404(OrderItem, order=order_detail, id=order_item_id)
 
-        # Prevent cancellation if the item or order has already shipped
+        # Prevent cancellation if the item or order has already shipped or delivered
         if order_item.order_status in ['Shipped', 'Delivered'] or order_detail.order_status in ['Shipped', 'Delivered']:
-            messages.error(request, "You cannot cancel items from an order that has already been shipped or delivered.")
-            return redirect('user_orders', order_id=order_id)
+            return JsonResponse({
+                'status': 'error',
+                'message': "You cannot cancel items from an order that has already been shipped or delivered."
+            }, status=400)
 
         # Calculate refund amount
-        refund_amount = order_item.total_price
+        refund_amount = Decimal(order_item.total_price)
 
         # Update the order item status to canceled
         order_item.is_canceled = True
@@ -233,26 +238,59 @@ def user_single_item_cancel(request, order_id, order_item_id):
         # Handle refund logic
         if order_detail.payment_method == 'ONLINE':
             try:
-                wallet = WalletTable.objects.get(user=request.user)
-                wallet.update_balance(
+                # Retrieve or create the user's wallet
+                wallet, _ = WalletTable.objects.get_or_create(user=request.user)
+
+                # Update wallet balance
+                wallet.available_balance += refund_amount
+                wallet.save()
+
+                # Log the transaction
+                WalletTransaction.objects.create(
+                    wallet=wallet,
                     transaction_type='refund',
-                    amount=refund_amount,
-                    description=f"Refund for canceled item in Order {order_id}"
+                    transaction_amount=refund_amount,
+                    description=f"Refund for canceled item in Order {order_id}",
+                    transaction_time=now()
                 )
+
                 order_detail.is_refund = True
                 order_detail.refund_date = now()
-                messages.success(request, f"₹{refund_amount:.2f} has been refunded to your wallet.")
+
+                return JsonResponse({
+                    'status': 'success',
+                    'message': f"₹{refund_amount:.2f} has been refunded to your wallet.",
+                    'order_status': order_detail.order_status,
+                    'order_item_status': order_item.order_status,
+                    'refund_amount': float(refund_amount),
+                })
             except WalletTable.DoesNotExist:
-                messages.error(request, "Refund failed: Wallet not found.")
+                return JsonResponse({
+                    'status': 'error',
+                    'message': "Refund failed: Wallet not found."
+                }, status=500)
         elif order_detail.payment_method == 'COD':
-            messages.success(request, f"The total amount for Order {order_id} has been updated.")
+            return JsonResponse({
+                'status': 'success',
+                'message': f"Item {order_item_id} has been successfully canceled. The total amount for Order {order_id} has been updated.",
+                'order_status': order_detail.order_status,
+                'order_item_status': order_item.order_status,
+            })
 
         # Save changes to the order
         order_detail.save()
 
-        messages.success(request, f"Item {order_item_id} has been successfully canceled.")
-    return redirect('user_orders', order_id=order_id)
+        return JsonResponse({
+            'status': 'success',
+            'message': f"Item {order_item_id} has been successfully canceled.",
+            'order_status': order_detail.order_status,
+            'order_item_status': order_item.order_status,
+        })
 
+    return JsonResponse({
+        'status': 'error',
+        'message': "Invalid request method."
+    }, status=405)
 
 ################################################################################################################################
 
@@ -322,3 +360,136 @@ def verify_payment(request):
     })
 
 ########################################################################################################################################
+
+@login_required
+def return_order(request, order_id):
+    if request.method == "POST":
+        # Fetch the order
+        order = get_object_or_404(OrderDetails, order_id=order_id, user=request.user)
+
+        # Check if the order is delivered (only delivered orders can be returned)
+        if order.order_status != 'Delivered':
+            return JsonResponse({
+                'status': 'error',
+                'message': "Only delivered orders can be returned."
+            }, status=400)
+
+        # Handle return and refund logic
+        total_refund_amount = Decimal(order.total_amount)
+
+        try:
+            # Retrieve or create the user's wallet
+            wallet, created = WalletTable.objects.get_or_create(user=request.user)
+
+            # Update wallet balance by adding the refund amount
+            wallet.available_balance += total_refund_amount
+            wallet.save()
+
+            # Log the transaction for the refund
+            WalletTransaction.objects.create(
+                wallet=wallet,
+                transaction_type='refund',
+                transaction_amount=total_refund_amount,
+                description=f"Refund for returned order {order.order_id}",
+                transaction_time=now()
+            )
+
+            # Mark the order as refunded
+            order.is_refund = True
+            order.refund_date = now()  # Set the refund date
+            order.save()
+
+            return JsonResponse({
+                'status': 'success',
+                'message': f"₹{total_refund_amount:.2f} has been refunded to your wallet.",
+                'order_status': order.order_status,
+                'refund_amount': float(total_refund_amount),
+            })
+
+        except WalletTable.DoesNotExist:
+            return JsonResponse({
+                'status': 'error',
+                'message': "Refund failed: Wallet not found."
+            }, status=500)
+
+    return JsonResponse({
+        'status': 'error',
+        'message': "Invalid request method."
+    }, status=405)
+
+#############################################################################################################################
+
+def apply_coupon(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            coupon_code = data.get('coupon_code')
+
+            # Check if coupon exists and is active
+            coupon = CouponTable.objects.filter(code=coupon_code, is_active=True).first()
+
+            if not coupon:
+                return JsonResponse({'status': 'error', 'message': 'Invalid or expired coupon.'})
+
+            # Get cart items and calculate the total amount
+            cart_items = CartTable.objects.filter(user=request.user)
+            total_amount = sum(item.quantity * item.book.offer_price for item in cart_items)
+
+            # Apply the coupon discount
+            if coupon.coupon_type == 'PERCENTAGE':
+                discount_amount = total_amount * (coupon.discount_value / 100)
+                new_total = total_amount - discount_amount
+            elif coupon.coupon_type == 'fixed':
+                discount_amount = coupon.discount_value
+                new_total = total_amount - discount_amount
+            else:
+                return JsonResponse({'status': 'error', 'message': 'Invalid coupon type.'})
+
+            # Save coupon usage
+            CouponUsage.objects.create(
+                user=request.user,
+                coupon=coupon,
+                discount_value=round(discount_amount, 2),
+                used_at=now()
+            )
+
+            # Return the new total amount after discount
+            return JsonResponse({
+                'status': 'success',
+                'new_total': round(new_total, 2),
+                'discount_amount': round(discount_amount, 2)
+            })
+
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)})
+
+    return JsonResponse({'status': 'error', 'message': 'Invalid request method.'})
+###########################################################################################################################
+
+def remove_coupon(request):
+    if request.method == 'POST':
+        try:
+            # Check if coupon usage exists for the current user
+            coupon_usage = CouponUsage.objects.filter(user=request.user).last()
+
+            if not coupon_usage:
+                return JsonResponse({'status': 'error', 'message': 'No coupon applied.'})
+
+            # Get the cart items and calculate the original total amount
+            cart_items = CartTable.objects.filter(user=request.user)
+            original_total_amount = sum(item.quantity * item.book.offer_price for item in cart_items)
+
+            # Delete the coupon usage entry
+            coupon_usage.delete()
+
+            # Return the restored total amount (without discount)
+            return JsonResponse({
+                'status': 'success',
+                'original_total': round(original_total_amount, 2),
+                'discount_amount': 0
+            })
+
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)})
+
+    return JsonResponse({'status': 'error', 'message': 'Invalid request method.'})
