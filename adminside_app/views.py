@@ -1096,7 +1096,6 @@ def apply_discount(base_price, discount_type, discount_value):
 def reset_expired_offers():
     now = timezone.now()
     
-    # Fetch all active offers
     active_offers = OfferTable.objects.filter(is_active=True)
 
     for offer in active_offers:
@@ -1183,7 +1182,6 @@ def add_category_offer(request, category_id):
             products_in_category = BookTable.objects.filter(category=category)
             for product in products_in_category:
                 if not product.additional_offer_applied:
-                    # Store the previous offer price before applying the new offer
                     if product.previous_offer_price is None:
                         product.previous_offer_price = product.offer_price  # Store the existing price
 
@@ -1193,7 +1191,7 @@ def add_category_offer(request, category_id):
                 # If the new offer price is lower than the existing offer price, update it
                 if new_offer_price < product.offer_price:
                     product.offer_price = new_offer_price
-                    product.additional_offer_applied = True  # Mark that an additional offer has been applied
+                    product.additional_offer_applied = True  
                     product.save()
                     
             # Redirect URL (adjust as needed)

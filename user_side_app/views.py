@@ -9,12 +9,11 @@ from django.http import JsonResponse
 import json
 from user_profile_app.models import AddressTable
 from django.contrib.auth.decorators import login_required
-from order_detail_app.models import OrderDetails,OrderItem
+from order_detail_app.models import OrderDetails,OrderItem, OfferTable  
 from django.urls import reverse
 import re
 from django.db.models import Q
-
-
+from django.utils.timezone import now
 
 ##########################################################################################################
 
@@ -29,6 +28,7 @@ def shop_page(request):
 
     books = BookTable.objects.prefetch_related('images').filter(is_available=True, is_deleted=False)
 
+    active_offers = OfferTable.objects.filter(is_active=True, valid_from__lte=now(), valid_to__gte=now())
     if search_query:
         books = books.filter(Q(book_name__icontains=search_query) | Q(description__icontains=search_query))
 

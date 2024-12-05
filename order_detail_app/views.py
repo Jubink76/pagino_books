@@ -32,7 +32,8 @@ def create_order(request):
     try:
         address_id = request.POST.get("savedAddress")
         payment_method = request.POST.get("payment")
-        
+        coupon_code = request.session.get('coupon_code', None)
+        print(coupon_code)
         if not address_id:
             return JsonResponse({'status': 'error', 'message': 'Please select a delivery address'})
             
@@ -61,6 +62,35 @@ def create_order(request):
                     for item in cart_items
                 )
                 
+                 # Initialize discount details
+                discount_amount = 0
+                applied_coupon = None
+
+                # Apply coupon if provided
+                if coupon_code:
+                    coupon_usage = CouponUsage.objects.filter(
+                        user=request.user,
+                        coupon__code=coupon_code
+                    ).last()
+
+                    if coupon_usage and coupon_usage.coupon.is_active:
+                        coupon = coupon_usage.coupon
+                        if coupon.coupon_type == 'PERCENTAGE':
+                            discount_amount = grand_total * (coupon.discount_value / 100)
+                        elif coupon.coupon_type == 'fixed':
+                            discount_amount = coupon.discount_value
+                        else:
+                            return JsonResponse({'status': 'error', 'message': 'Invalid coupon type.'})
+
+                        applied_coupon = coupon
+                        grand_total -= discount_amount
+
+                        if grand_total < 0:
+                            grand_total = 0  # Ensure grand total doesn't go negative
+                    else:
+                        return JsonResponse({'status': 'error', 'message': 'Invalid or expired coupon.'})
+
+                    
                 # Create main order
                 order = OrderDetails.objects.create(
                     order_id=single_order_id,
@@ -124,15 +154,19 @@ def create_order(request):
                     # Clear cart immediately
                     cart_items.delete()
                     
-                    redirect_url = request.build_absolute_uri(
-                        reverse('order_success', kwargs={'order_id': order.order_id})
-                    )
-                    return JsonResponse({
-                        'status': 'success',
-                        'payment_method': payment_method,
-                        'message': 'Order placed successfully!',
-                        'redirect_url': redirect_url
-                    })
+                    if payment_method == 'COD':
+                        order.order_status = 'Pending'  # COD starts as Pending
+                        order.save()
+
+                        redirect_url = request.build_absolute_uri(
+                            reverse('order_success', kwargs={'order_id': order.order_id})
+                        )
+                        return JsonResponse({
+                            'status': 'success',
+                            'payment_method': 'COD',
+                            'message': 'Order placed successfully with Cash on Delivery!',
+                            'redirect_url': redirect_url
+                        })
                     
         except AddressTable.DoesNotExist:
             return JsonResponse({'status': 'error', 'message': 'Selected address not found.'})
@@ -364,24 +398,21 @@ def verify_payment(request):
 @login_required
 def return_order(request, order_id):
     if request.method == "POST":
-        # Fetch the order
+        
         order = get_object_or_404(OrderDetails, order_id=order_id, user=request.user)
 
-        # Check if the order is delivered (only delivered orders can be returned)
         if order.order_status != 'Delivered':
             return JsonResponse({
                 'status': 'error',
                 'message': "Only delivered orders can be returned."
             }, status=400)
 
-        # Handle return and refund logic
         total_refund_amount = Decimal(order.total_amount)
 
         try:
-            # Retrieve or create the user's wallet
+            
             wallet, created = WalletTable.objects.get_or_create(user=request.user)
 
-            # Update wallet balance by adding the refund amount
             wallet.available_balance += total_refund_amount
             wallet.save()
 
@@ -394,9 +425,8 @@ def return_order(request, order_id):
                 transaction_time=now()
             )
 
-            # Mark the order as refunded
             order.is_refund = True
-            order.refund_date = now()  # Set the refund date
+            order.refund_date = now()  
             order.save()
 
             return JsonResponse({
@@ -425,17 +455,15 @@ def apply_coupon(request):
             data = json.loads(request.body)
             coupon_code = data.get('coupon_code')
 
-            # Check if coupon exists and is active
             coupon = CouponTable.objects.filter(code=coupon_code, is_active=True).first()
 
             if not coupon:
                 return JsonResponse({'status': 'error', 'message': 'Invalid or expired coupon.'})
 
-            # Get cart items and calculate the total amount
+
             cart_items = CartTable.objects.filter(user=request.user)
             total_amount = sum(item.quantity * item.book.offer_price for item in cart_items)
 
-            # Apply the coupon discount
             if coupon.coupon_type == 'PERCENTAGE':
                 discount_amount = total_amount * (coupon.discount_value / 100)
                 new_total = total_amount - discount_amount
@@ -445,7 +473,6 @@ def apply_coupon(request):
             else:
                 return JsonResponse({'status': 'error', 'message': 'Invalid coupon type.'})
 
-            # Save coupon usage
             CouponUsage.objects.create(
                 user=request.user,
                 coupon=coupon,
@@ -453,7 +480,10 @@ def apply_coupon(request):
                 used_at=now()
             )
 
-            # Return the new total amount after discount
+            # Store the applied coupon code in the session
+            request.session['coupon_code'] = coupon_code
+
+
             return JsonResponse({
                 'status': 'success',
                 'new_total': round(new_total, 2),
@@ -469,20 +499,19 @@ def apply_coupon(request):
 def remove_coupon(request):
     if request.method == 'POST':
         try:
-            # Check if coupon usage exists for the current user
             coupon_usage = CouponUsage.objects.filter(user=request.user).last()
 
             if not coupon_usage:
                 return JsonResponse({'status': 'error', 'message': 'No coupon applied.'})
 
-            # Get the cart items and calculate the original total amount
             cart_items = CartTable.objects.filter(user=request.user)
             original_total_amount = sum(item.quantity * item.book.offer_price for item in cart_items)
 
-            # Delete the coupon usage entry
             coupon_usage.delete()
 
-            # Return the restored total amount (without discount)
+            if 'coupon_code' in request.session:
+                del request.session['coupon_code']
+
             return JsonResponse({
                 'status': 'success',
                 'original_total': round(original_total_amount, 2),
