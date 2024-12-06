@@ -98,14 +98,12 @@ def create_order(request):
                     address=address,
                     payment_method=payment_method,
                     total_amount=grand_total,
-                    order_status='Pending'
+                    order_status='Ordered'
                 )
 
                 # Create order items
                 for cart_item in cart_items:
-                    if cart_item.book.stock_quantity < cart_item.quantity:
-                        raise ValueError(f"Insufficient stock for {cart_item.book.book_name}")
-                    
+
                     OrderItem.objects.create(
                         order=order,
                         book=cart_item.book,
@@ -114,9 +112,15 @@ def create_order(request):
                         total_price=cart_item.quantity * cart_item.book.offer_price
                     )
                     
-                    # Update stock
-                    cart_item.book.stock_quantity -= cart_item.quantity
-                    cart_item.book.save()
+                    # Update stock after order is created
+                    if cart_item.book.stock_quantity >= cart_item.quantity:
+                        cart_item.book.stock_quantity -= cart_item.quantity
+                        cart_item.book.save()
+                    elif cart_item.book.stock_quantity == 0:
+                        cart_item.book.stock_quantity = 0
+                    else:
+                        raise ValueError(f"Not enough stock for {cart_item.book.book_name}")
+
 
                 # Handle different payment methods
                 if payment_method == 'ONLINE':
@@ -149,13 +153,51 @@ def create_order(request):
                         # If Razorpay order creation fails, delete the order and raise error
                         order.delete()
                         raise ValueError(f"Failed to create payment: {str(e)}")
+                    
+                    # For WALLET payments
+                elif payment_method == 'WALLET':
+                    # Check if the user has enough balance in their wallet
+                    wallet = request.user.wallet
+                    if wallet.available_balance < grand_total:
+                        return JsonResponse({'status': 'error', 'message': 'Insufficient amount in your wallet. Try another payment method.'})
+
+                    # Deduct the amount from the user's wallet
+                    wallet.available_balance -= grand_total
+                    wallet.save()
+
+                    # Create a wallet transaction
+                    WalletTransaction.objects.create(
+                        wallet=wallet,
+                        transaction_type='deduct',
+                        transaction_amount=grand_total,
+                        description=f"Order {order.order_id} payment deduction",
+                        transaction_time=timezone.now()
+                    )
+
+                    # Clear cart immediately after successful wallet payment
+                    cart_items.delete()
+
+                    # Update order status
+                    order.order_status = 'Ordered'
+                    order.save()
+
+                    redirect_url = request.build_absolute_uri(
+                        reverse('order_success', kwargs={'order_id': order.order_id})
+                    )
+                    return JsonResponse({
+                        'status': 'success',
+                        'payment_method': 'WALLET',
+                        'message': 'Order placed successfully using wallet!',
+                        'redirect_url': redirect_url
+                    })
+
+                    # FOR COD PAYEMENTS
                 else:
-                    # For COD and WALLET payments
                     # Clear cart immediately
                     cart_items.delete()
                     
                     if payment_method == 'COD':
-                        order.order_status = 'Pending'  # COD starts as Pending
+                        order.order_status = 'Ordered'  # COD starts as Pending
                         order.save()
 
                         redirect_url = request.build_absolute_uri(
@@ -195,7 +237,8 @@ def cancel_order(request, order_id):
             order.save()
 
             # Handle refund if payment method is ONLINE
-            if order.payment_method == 'ONLINE':
+            if order.payment_method in ['ONLINE', 'WALLET']:
+                # Get or create the user's wallet
                 wallet, created = WalletTable.objects.get_or_create(user=request.user)
 
                 # Update wallet balance

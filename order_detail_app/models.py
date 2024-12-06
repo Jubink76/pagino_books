@@ -86,7 +86,8 @@ class OrderDetails(models.Model):
                                                ('ONLINE', 'Online Payment'),
                                                ('WALLET', 'Wallet Payment')])
     order_status = models.CharField(max_length=20, 
-                                    choices=[('Pending', 'Pending'),
+                                    choices=[('Pending','Pending'),
+                                             ('Ordered', 'Ordered'),
                                              ('Shipped', 'Shipped'),
                                              ('Out of delivery','Out of delivery'),
                                              ('Delivered', 'Delivered'),
@@ -117,7 +118,8 @@ class OrderItem(models.Model):
     total_price = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     is_canceled = models.BooleanField(default=False)  
     order_status = models.CharField(max_length=20, 
-                                    choices=[('Pending', 'Pending'),
+                                    choices=[('Pending','Pending'),
+                                             ('Ordered', 'Ordered'),
                                              ('Shipped', 'Shipped'),
                                              ('Delivered', 'Delivered'),
                                              ('Out of delivery','Out of delivery'),
@@ -125,3 +127,23 @@ class OrderItem(models.Model):
                                              default='Pending')
     def __str__(self):
         return f"{self.quantity} x {self.product.name} in Order {self.order.order_id}"
+
+
+# class ReturnRequest(models.Model):
+#     user = models.ForeignKey(UserTable, on_delete=models.CASCADE)
+#     order = models.ForeignKey(OrderDetails, on_delete=models.CASCADE)
+#     return_reason = models.TextField()
+#     is_full_order_return = models.BooleanField(default=False)
+#     status = models.CharField(
+#         max_length=20,
+#         choices=[('Pending', 'Pending'),
+#                  ('Approved', 'Approved'),
+#                  ('Rejected', 'Rejected'),
+#                  ('Processed', 'Processed')],
+#         default='Pending'
+#     )
+#     requested_at = models.DateTimeField(auto_now_add=True)
+#     processed_at = models.DateTimeField(blank=True, null=True)
+
+#     def __str__(self):
+#         return f"Return Request {self.id} for Order {self.order.order_id}"

@@ -314,7 +314,9 @@
           <div class="p-8">
             <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
                 {% for book in books %}
-                <div class="bg-white rounded-lg shadow-md overflow-hidden transform hover:scale-105 transition-transform duration-300 relative group">
+                <div class="bg-white rounded-lg shadow-md overflow-hidden transform hover:scale-105 transition-transform duration-300 relative group 
+                    {% if not book.is_available %}opacity-100{% endif %}">
+                    
                     <!-- Image Section -->
                     <div class="relative aspect-[3/4]">
                         <a href="{% url 'single_detail' book.id %}">
@@ -323,10 +325,17 @@
                                 alt="{{ book.book_name }}" 
                                 class="w-full h-full object-contain"
                             />
+                            {% if not book.is_available %}
+                            <!-- Overlay for out-of-stock products -->
+                            <div class="absolute inset-0 bg-gradient-to-b from-gray-400 to-gray-700 opacity-70"></div>
+                            <span class="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded-full text-sm">Out of Stock</span>
+                            {% else %}
+                            <!-- Tag for new products -->
+                            <span class="absolute top-2 right-2 bg-blue-400 text-white px-2 py-1 rounded-full text-sm">NEW</span>
+                            {% endif %}
                         </a>
-                        <span class="absolute top-2 right-2 bg-blue-400 text-white px-2 py-1 rounded-full text-sm">NEW</span>
                     </div>
-                
+                    
                     <!-- Content Section -->
                     <div class="p-4">
                         <h3 class="font-semibold text-lg mb-2">{{ book.book_name }}</h3>
@@ -338,6 +347,7 @@
                             <span class="text-green-600 font-bold">₹{{ book.offer_price }}</span>
                             <span class="text-gray-400 line-through">₹{{ book.base_price }}</span>
                             
+                            {% if book.is_available %}
                             <!-- Floating Icons -->
                             <div class="absolute inset-x-0 top-1/2 transform -translate-y-1/2 flex justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10">
                                 <form class="m-0 z-20">
@@ -360,12 +370,12 @@
                                     </button>
                                 </form>
                             </div>
+                            {% endif %}
                         </div>
                     </div>
                 </div>                
                 {% endfor %}
-            </div>
-            
+            </div>                       
           </div>
       </div>
   </div>

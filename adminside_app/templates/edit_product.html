@@ -378,7 +378,7 @@
                     break;
     
                 case 'stock_quantity':
-                    if (!/^\d+$/.test(value) || parseInt(value) <= 0) {
+                    if (!/^\d+$/.test(value) || parseInt(value) < 0) {
                         displayError(field, 'Stock quantity must be a positive whole number.');
                         return false;
                     }

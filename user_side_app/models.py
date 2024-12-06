@@ -13,7 +13,7 @@ class CartTable(models.Model):
     total_price = models.DecimalField(max_digits=10,decimal_places=2,editable=False)
     grand_total = models.DecimalField(max_digits=10, decimal_places=2, default=0,editable=False)
     created_at = models.DateTimeField(auto_now_add=True)
-
+    session_is_available = models.BooleanField(default=True)
 
     def save(self, *args, **kwargs):
         # Calculate item_price if not set
@@ -52,3 +52,4 @@ class WhishlistTable(models.Model):
     user = models.ForeignKey(UserTable,on_delete=models.CASCADE,null=True,blank=True)
     book = models.ForeignKey(BookTable,on_delete=models.CASCADE, null=True, blank=True)
     session_id = models.CharField(max_length=255, null=True, blank=True)
+    session_is_available = models.BooleanField(default=True)

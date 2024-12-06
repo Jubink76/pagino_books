@@ -352,7 +352,7 @@ logger = logging.getLogger(__name__)
 
 @login_required(login_url='admin_login')
 def add_products(request):
-    """Handle product addition with comprehensive field validation."""
+
     if request.method == 'POST':
         logger.info("Processing add product POST request")
         errors = []
@@ -379,7 +379,7 @@ def add_products(request):
                     errors.append('Stock quantity is required.')
                 else:
                     stock_quantity = int(stock_quantity)
-                    if stock_quantity <= 0:
+                    if stock_quantity < 0:
                         errors.append('Stock quantity must be a positive number.')
             except ValueError:
                 errors.append('Invalid stock quantity value.')

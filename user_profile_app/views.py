@@ -255,10 +255,16 @@ def user_password_reset(request):
 #######################################################################################################################
 @login_required
 def user_orders(request, order_id=None):
+
+    orders_with_button = OrderDetails.objects.filter(
+        Q(payment_method__in=['ONLINE', 'WALLET']) | Q(order_status='Delivered'),
+        user=request.user
+    ).values_list('order_id', flat=True)
+
     order_stats = OrderDetails.objects.filter(user=request.user).aggregate(
         total_orders=Count('order_id'),
         delivered_orders=Count('order_id', filter=Q(order_status='Delivered')),
-        in_progress_orders=Count('order_id', filter=Q(order_status='Pending')),
+        in_progress_orders=Count('order_id', filter=Q(order_status='Ordered')),
         shipped_orders=Count('order_id', filter=Q(order_status='Shipped')),
         canceled_orders=Count('order_id', filter=Q(order_status='Canceled'))
     )
@@ -272,6 +278,7 @@ def user_orders(request, order_id=None):
             order_id=order_id,
             user=request.user
         )
+
         context = {
             'selected_order': selected_order,
             'order_stats': order_stats,
@@ -282,27 +289,10 @@ def user_orders(request, order_id=None):
         context = {
             'orders': user_orders,
             'order_stats': order_stats,
+            'orders_with_button': list(orders_with_button),
         }
 
     return render(request, 'user_orders.html', context)
-
-#######################################################################################################################
-def admin_single_item_cancel(request,order_id,order_item_id):
-    if request.method == "POST":
-        order_detail= get_object_or_404(OrderDetails, order_id=order_id)
-        order_item = get_object_or_404(OrderItem, order=order_detail, id=order_item_id)
-
-        order_item.is_canceled = True
-        order_item.order_status = 'Canceled'
-        order_item.save()
-
-        #update the order status if all items are canceled
-        if not OrderItem.objects.filter(order=order_detail, is_canceled=False).exists():
-            order_detail.order_status = 'Canceled'
-            order_detail.save()
-
-        messages.success(request, f"Item has been canceled in Order {order_detail.order_id}.")
-    return redirect('update_order',order_id=order_id)
 
 ########################################################################################################################
 

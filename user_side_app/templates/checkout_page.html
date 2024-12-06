@@ -248,7 +248,7 @@
                                     </div>
                                     <p class="text-sm text-gray-500 ml-7">Pay when you receive your order</p>
                                 </div>
-
+                        
                                 <div class="payment-option p-4 border rounded-lg cursor-pointer hover:border-yellow-500">
                                     <div class="flex items-center gap-3">
                                         <input type="radio" name="payment" id="online" value="ONLINE">
@@ -256,7 +256,7 @@
                                     </div>
                                     <p class="text-sm text-gray-500 ml-7">Pay securely with Razorpay</p>
                                 </div>
-
+                        
                                 <div class="payment-option p-4 border rounded-lg cursor-pointer hover:border-yellow-500">
                                     <div class="flex items-center gap-3">
                                         <input type="radio" name="payment" id="wallet" value="WALLET">
@@ -266,7 +266,25 @@
                                 </div>
                             </div>
                         </div>
-
+                        
+                        <!-- Coupons Section -->
+                        <div class="mt-6">
+                            <h4 class="text-lg font-semibold mb-4">Available Coupons</h4>
+                            <div class="space-y-4">
+                                {% for coupon in available_coupons %}
+                                <a href="{% url 'user_coupon' %}"><div class="p-4 border rounded-lg">
+                                    <h5 class="font-medium text-yellow-500">{{ coupon.code }}</h5>
+                                    <p class="text-sm text-gray-500"></p>
+                                    <p class="text-sm text-green-600">Discount: {{ coupon.discount_value }}{{ coupon.coupon_type }}</p>
+                                    <p class="text-sm text-red-600">Valid until: {{ coupon.valid_to }}</p>
+                                </div></a>
+                                {% empty %}
+                                <p class="text-sm text-gray-500">No available coupons.</p>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        
+                        <!-- Coupon Input Section -->
                         <div class="mt-6">
                             <div class="flex gap-2">
                                 <input type="text" id="coupon-code" name="coupon_code" placeholder="Enter coupon code" class="flex-1 p-3 border rounded-md">
@@ -274,7 +292,8 @@
                                     Apply
                                 </button>
                             </div>
-                        </div>                        
+                        </div>
+                                               
 
                         <button type="submit" id="place-order-button"  class="w-full mt-6 py-3 bg-gray-400 text-white rounded-md font-medium disabled:cursor-not-allowed disabled:opacity-75 transition-colors">
                             Place Order <i class="fas fa-arrow-right ml-2"></i>

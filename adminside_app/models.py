@@ -45,7 +45,7 @@ class BookTable(models.Model):
         # Ensure both base_price and discount_percentage are Decimal
         self.base_price = Decimal(self.base_price)  # Ensure it's Decimal
         self.discount_percentage = Decimal(self.discount_percentage)  # Ensure it's Decimal
-
+        self.is_available = self.stock_quantity > 0
         # Calculate the discount amount and offer price
         if self.discount_percentage:
             discount_amount = (self.base_price * self.discount_percentage) / Decimal(100)

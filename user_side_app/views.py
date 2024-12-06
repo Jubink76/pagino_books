@@ -9,7 +9,7 @@ from django.http import JsonResponse
 import json
 from user_profile_app.models import AddressTable
 from django.contrib.auth.decorators import login_required
-from order_detail_app.models import OrderDetails,OrderItem, OfferTable  
+from order_detail_app.models import OrderDetails,OrderItem, OfferTable, CouponTable
 from django.urls import reverse
 import re
 from django.db.models import Q
@@ -26,7 +26,7 @@ def shop_page(request):
     price_min = request.GET.get('price_min', 0)  
     price_max = request.GET.get('price_max', 10000)  
 
-    books = BookTable.objects.prefetch_related('images').filter(is_available=True, is_deleted=False)
+    books = BookTable.objects.prefetch_related('images').filter(is_deleted=False)
 
     active_offers = OfferTable.objects.filter(is_active=True, valid_from__lte=now(), valid_to__gte=now())
     if search_query:
@@ -98,7 +98,7 @@ def single_category(request,pk):
     price_max = request.GET.get('price_max', 10000)
 
     category = get_object_or_404(CategoryTable,id=pk,is_available=True,is_deleted=False)
-    books = BookTable.objects.prefetch_related('images').filter(category=category,is_available=True,is_deleted=False)
+    books = BookTable.objects.prefetch_related('images').filter(category=category,is_deleted=False)
 
     if search_query:
         books = books.filter(Q(book_name__icontains=search_query) | Q(description__icontains=search_query))
@@ -143,25 +143,42 @@ def single_category(request,pk):
 ###########################################################################################################
 
 def cart_page(request):
+
     if request.user.is_authenticated:
         user_id = request.user.id
-        cart_items = CartTable.objects.filter(user=request.user)
+        cart_items = CartTable.objects.filter(user=request.user, session_is_available=True)
     else:
         if not request.session.session_key:
             request.session.create()
         session_id = request.session.session_key
-        cart_items = CartTable.objects.filter(session_id=session_id)
+        cart_items = CartTable.objects.filter(session_id=session_id, session_is_available=True)
 
     grand_total = cart_items.aggregate(total=Sum('total_price'))['total'] or 0
 
-    return render(request,'cart_page.html',{'cart_items':cart_items,'grand_total': grand_total})
+    if not request.user.is_authenticated:
+        cart_items_expired = CartTable.objects.filter(session_id=session_id, session_is_available=False)
+        
+        for cart_item in cart_items_expired:
+            book = cart_item.book
+            book.stock_quantity += cart_item.quantity
+            if book.stock_quantity > 0:
+                book.is_available = True
+            else:
+                book.is_available = False
+            book.save()
+
+            cart_item.delete()  
+
+    return render(request, 'cart_page.html', {
+        'cart_items': cart_items,
+        'grand_total': grand_total
+    })
 
 ###########################################################################################################
 
 
 def add_to_cart(request, book_id):
-    print(request)
-    print(book_id)
+
     book = get_object_or_404(BookTable, id=book_id)
     item_price = book.offer_price if book.offer_price else book.base_price
 
@@ -385,6 +402,13 @@ def del_whishlist_item(request,book_id):
 @login_required
 def checkout_page(request):
 
+    if request.user.is_authenticated:
+        user = request.user
+        # Fetch coupons available for the user
+        available_coupons = CouponTable.objects.filter(is_active=True)
+    else:
+        available_coupons = CouponTable.objects.none()
+
     addresses = AddressTable.objects.filter(user=request.user)
     cart_items = CartTable.objects.filter(user=request.user)
     grand_total = sum(item.quantity * item.item_price for item in cart_items)
@@ -398,6 +422,7 @@ def checkout_page(request):
         "discount": discount,
         "final_total": final_total,
         'show_new_address_form': show_new_address_form,
+        'available_coupons':available_coupons
     }
 
     return render(request,'checkout_page.html',context)

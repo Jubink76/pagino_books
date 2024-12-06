@@ -229,14 +229,19 @@
                         <!-- Product Grid - Modified for 5 cards -->
                         <div class="flex space-x-3">
                             {% for book in books|slice:":5" %}
-                            {% if book.is_available %}
                             <!-- Product Card -->
-                            <div class="w-1/5 bg-white rounded-lg shadow-md overflow-hidden transform hover:scale-105 transition-transform duration-300 relative group">
+                            <div class="w-1/5 bg-white rounded-lg shadow-md overflow-hidden transform hover:scale-105 transition-transform duration-300 relative group 
+                                {% if not book.is_available %}opacity-50{% endif %}">
                                 <!-- Image Section -->
                                 <div class="relative">
                                     <a href="{% url 'single_detail' book.id %}">
-                                        <img src="{{ book.images.first.image.url }}" alt="The Hunter" class="w-full h-96 object-cover" />
+                                        <img src="{{ book.images.first.image.url }}" alt="{{ book.book_name }}" class="w-full h-96 object-cover" />
+                                        {% if not book.is_available %}
+                                        <div class="absolute inset-0 bg-gradient-to-b from-gray-400 to-gray-700 opacity-70"></div>
+                                        <span class="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded-full text-sm">Out of Stock</span>
+                                        {% else %}
                                         <span class="absolute top-2 right-2 bg-blue-400 text-white px-2 py-1 rounded-full text-sm">NEW</span>
+                                        {% endif %}
                                     </a>
                                 </div>
                             
@@ -258,9 +263,14 @@
                                             <form class="m-0 z-20">
                                                 {% csrf_token %}
                                                 <button type="submit"
-                                                    class="add-to-cart-btn w-10 h-10 bg-yellow-400 text-black flex justify-center items-center rounded-full shadow-md hover:bg-yellow-500"
-                                                    data-url="{% url 'add_to_cart' book.id %}"
-                                                    data-success-redirect="{% url 'cart_page' %}">
+                                                    class="add-to-cart-btn w-10 h-10 flex justify-center items-center rounded-full shadow-md 
+                                                    {% if not book.is_available %}
+                                                        bg-gradient-to-r from-gray-400 to-gray-600 text-gray-300 cursor-not-allowed
+                                                    {% else %}
+                                                        bg-yellow-400 text-black hover:bg-yellow-500
+                                                    {% endif %}"
+                                                    data-url="{% url 'add_to_cart' book.id %}" 
+                                                    {% if not book.is_available %} disabled {% endif %}>
                                                     <i class="fa fa-shopping-cart"></i>
                                                 </button>
                                             </form>
@@ -268,19 +278,23 @@
                                             <form class="m-0 z-20">
                                                 {% csrf_token %}
                                                 <button type="submit"
-                                                    class="add-to-wishlist-btn w-10 h-10 bg-yellow-400 text-black flex justify-center items-center rounded-full shadow-md hover:bg-yellow-500"
-                                                    data-url="{% url 'add_to_whishlist' book.id %}"
-                                                    data-success-redirect="{% url 'whishlist_page' %}">
+                                                    class="add-to-wishlist-btn w-10 h-10 flex justify-center items-center rounded-full shadow-md 
+                                                    {% if not book.is_available %}
+                                                        bg-gradient-to-r from-gray-400 to-gray-600 text-gray-300 cursor-not-allowed
+                                                    {% else %}
+                                                        bg-yellow-400 text-black hover:bg-yellow-500
+                                                    {% endif %}"
+                                                    data-url="{% url 'add_to_whishlist' book.id %}" 
+                                                    {% if not book.is_available %} disabled {% endif %}>
                                                     <i class="fa fa-heart"></i>
                                                 </button>
                                             </form>
                                         </div>
                                     </div>
                                 </div>
-                            </div>                                                                                                             
-                            {% endif %}
+                            </div>
                             {% endfor %}
-                        </div>
+                        </div>                        
                         
                     </div>
                 <!-----------------------authors list and banners ------------------------------------------------>
@@ -346,21 +360,26 @@
                         <div class="flex-1">
                             <div class="grid grid-cols-4 gap-4">
                                 {% for book in books|slice:"5:9" %}
-                                {% if book.is_available %}
                                 <!-- Product Card -->
-                                <div class="bg-white rounded-lg shadow-md overflow-hidden transform hover:scale-105 transition-transform duration-300 relative group">
+                                <div class="bg-white rounded-lg shadow-md overflow-hidden transform hover:scale-105 transition-transform duration-300 relative group 
+                                    {% if not book.is_available %}opacity-50{% endif %}">
                                     <!-- Image Section -->
                                     <div class="relative">
                                         <a href="{% url 'single_detail' book.id %}">
-                                            <img src="{{ book.images.first.image.url }}" alt="{{ book.book_name }}" class="w-full h-96 object-cover"/>
-                                            {% if forloop.counter == 1 %}
-                                                <span class="absolute top-2 right-2 bg-red-400 text-white px-2 py-1 rounded-full text-sm">HOT</span>
-                                            {% elif forloop.counter == 2 %}
-                                                <span class="absolute top-2 right-2 bg-blue-400 text-white px-2 py-1 rounded-full text-sm">NEW</span>
-                                            {% elif forloop.counter == 3 %}
-                                                <span class="absolute top-2 right-2 bg-yellow-400 text-white px-2 py-1 rounded-full text-sm">SALE</span>
+                                            <img src="{{ book.images.first.image.url }}" alt="{{ book.book_name }}" class="w-full h-96 object-cover" />
+                                            {% if not book.is_available %}
+                                            <div class="absolute inset-0 bg-gradient-to-b from-gray-400 to-gray-700 opacity-70"></div>
+                                            <span class="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded-full text-sm">Out of Stock</span>
                                             {% else %}
-                                                <span class="absolute top-2 right-2 bg-red-400 text-white px-2 py-1 rounded-full text-sm">HOT</span>
+                                                {% if forloop.counter == 1 %}
+                                                    <span class="absolute top-2 right-2 bg-red-400 text-white px-2 py-1 rounded-full text-sm">HOT</span>
+                                                {% elif forloop.counter == 2 %}
+                                                    <span class="absolute top-2 right-2 bg-blue-400 text-white px-2 py-1 rounded-full text-sm">NEW</span>
+                                                {% elif forloop.counter == 3 %}
+                                                    <span class="absolute top-2 right-2 bg-yellow-400 text-white px-2 py-1 rounded-full text-sm">SALE</span>
+                                                {% else %}
+                                                    <span class="absolute top-2 right-2 bg-red-400 text-white px-2 py-1 rounded-full text-sm">HOT</span>
+                                                {% endif %}
                                             {% endif %}
                                         </a>
                                     </div>
@@ -381,9 +400,14 @@
                                                 <form class="m-0 z-20">
                                                     {% csrf_token %}
                                                     <button type="submit"
-                                                        class="add-to-cart-btn w-10 h-10 bg-yellow-400 text-black flex justify-center items-center rounded-full shadow-md hover:bg-yellow-500"
-                                                        data-url="{% url 'add_to_cart' book.id %}"
-                                                        data-success-redirect="{% url 'cart_page' %}">
+                                                        class="add-to-cart-btn w-10 h-10 flex justify-center items-center rounded-full shadow-md 
+                                                        {% if not book.is_available %}
+                                                            bg-gradient-to-r from-gray-400 to-gray-600 text-gray-300 cursor-not-allowed
+                                                        {% else %}
+                                                            bg-yellow-400 text-black hover:bg-yellow-500
+                                                        {% endif %}"
+                                                        data-url="{% url 'add_to_cart' book.id %}" 
+                                                        {% if not book.is_available %} disabled {% endif %}>
                                                         <i class="fa fa-shopping-cart"></i>
                                                     </button>
                                                 </form>
@@ -391,19 +415,23 @@
                                                 <form class="m-0 z-20">
                                                     {% csrf_token %}
                                                     <button type="submit"
-                                                        class="add-to-wishlist-btn w-10 h-10 bg-yellow-400 text-black flex justify-center items-center rounded-full shadow-md hover:bg-yellow-500"
-                                                        data-url="{% url 'add_to_whishlist' book.id %}"
-                                                        data-success-redirect="{% url 'whishlist_page' %}">
+                                                        class="add-to-wishlist-btn w-10 h-10 flex justify-center items-center rounded-full shadow-md 
+                                                        {% if not book.is_available %}
+                                                            bg-gradient-to-r from-gray-400 to-gray-600 text-gray-300 cursor-not-allowed
+                                                        {% else %}
+                                                            bg-yellow-400 text-black hover:bg-yellow-500
+                                                        {% endif %}"
+                                                        data-url="{% url 'add_to_whishlist' book.id %}" 
+                                                        {% if not book.is_available %} disabled {% endif %}>
                                                         <i class="fa fa-heart"></i>
                                                     </button>
                                                 </form>
                                             </div>
                                         </div>
                                     </div>
-                                </div>                                
-                                {% endif %}
+                                </div>
                                 {% endfor %}
-                            </div>
+                            </div>                            
                             
                         </div>
                     </div>
@@ -485,14 +513,19 @@
                     <!-- Product Grid - Modified for 5 cards -->
                     <div class="flex space-x-3">
                         {% for book in books|slice:"9:14" %}
-                        {% if book.is_available %}
-                        <!-- Product Card 1 -->
-                        <div class="w-1/5 bg-white rounded-lg shadow-md overflow-hidden transform hover:scale-105 transition-transform duration-300 relative group">
+                        <!-- Product Card -->
+                        <div class="w-1/5 bg-white rounded-lg shadow-md overflow-hidden transform hover:scale-105 transition-transform duration-300 relative group 
+                            {% if not book.is_available %}opacity-50{% endif %}">
                             <!-- Image Section -->
                             <div class="relative">
                                 <a href="{% url 'single_detail' book.id %}">
-                                    <img src="{{ book.images.first.image.url }}" alt="The Hunter" class="w-full h-96 object-cover" />
+                                    <img src="{{ book.images.first.image.url }}" alt="{{ book.book_name }}" class="w-full h-96 object-cover" />
+                                    {% if not book.is_available %}
+                                    <div class="absolute inset-0 bg-gradient-to-b from-gray-400 to-gray-700 opacity-70"></div>
+                                    <span class="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded-full text-sm">Out of Stock</span>
+                                    {% else %}
                                     <span class="absolute top-2 right-2 bg-blue-400 text-white px-2 py-1 rounded-full text-sm">NEW</span>
+                                    {% endif %}
                                 </a>
                             </div>
                         
@@ -514,9 +547,14 @@
                                         <form class="m-0 z-20">
                                             {% csrf_token %}
                                             <button type="submit"
-                                                class="add-to-cart-btn w-10 h-10 bg-yellow-400 text-black flex justify-center items-center rounded-full shadow-md hover:bg-yellow-500"
-                                                data-url="{% url 'add_to_cart' book.id %}"
-                                                data-success-redirect="{% url 'cart_page' %}">
+                                                class="add-to-cart-btn w-10 h-10 flex justify-center items-center rounded-full shadow-md 
+                                                {% if not book.is_available %}
+                                                    bg-gradient-to-r from-gray-400 to-gray-600 text-gray-300 cursor-not-allowed
+                                                {% else %}
+                                                    bg-yellow-400 text-black hover:bg-yellow-500
+                                                {% endif %}"
+                                                data-url="{% url 'add_to_cart' book.id %}" 
+                                                {% if not book.is_available %} disabled {% endif %}>
                                                 <i class="fa fa-shopping-cart"></i>
                                             </button>
                                         </form>
@@ -524,9 +562,14 @@
                                         <form class="m-0 z-20">
                                             {% csrf_token %}
                                             <button type="submit"
-                                                class="add-to-wishlist-btn w-10 h-10 bg-yellow-400 text-black flex justify-center items-center rounded-full shadow-md hover:bg-yellow-500"
-                                                data-url="{% url 'add_to_whishlist' book.id %}"
-                                                data-success-redirect="{% url 'whishlist_page' %}">
+                                                class="add-to-wishlist-btn w-10 h-10 flex justify-center items-center rounded-full shadow-md 
+                                                {% if not book.is_available %}
+                                                    bg-gradient-to-r from-gray-400 to-gray-600 text-gray-300 cursor-not-allowed
+                                                {% else %}
+                                                    bg-yellow-400 text-black hover:bg-yellow-500
+                                                {% endif %}"
+                                                data-url="{% url 'add_to_whishlist' book.id %}" 
+                                                {% if not book.is_available %} disabled {% endif %}>
                                                 <i class="fa fa-heart"></i>
                                             </button>
                                         </form>
@@ -534,9 +577,8 @@
                                 </div>
                             </div>
                         </div>
-                        {% endif %}
                         {% endfor %}
-                    </div>
+                    </div>                    
                     
                 </div>
             </div>
