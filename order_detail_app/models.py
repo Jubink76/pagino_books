@@ -60,8 +60,8 @@ class OfferTable(models.Model):
         ('bundle', 'Bundle Discount'),
     ]
     offer_type = models.CharField(max_length=20, choices=OFFER_TYPES)
-    product = models.ForeignKey(BookTable, on_delete=models.CASCADE, null=True,blank=True,related_name='product_offer')
-    category = models.ForeignKey(CategoryTable, on_delete=models.CASCADE, null=True, blank=True,related_name='category_offers')
+    product = models.ForeignKey('adminside_app.BookTable', on_delete=models.CASCADE, null=True,blank=True,related_name='product_offer')
+    category = models.ForeignKey('adminside_app.CategoryTable', on_delete=models.CASCADE, null=True, blank=True,related_name='category_offers')
     discount_type = models.CharField(max_length=20, choices=DISCOUNT_TYPES,null=True,blank=True)
     discount_value = models.DecimalField(max_digits=10, decimal_places=2,null=True,blank=True)
     valid_from = models.DateTimeField()
@@ -127,23 +127,48 @@ class OrderItem(models.Model):
                                              default='Pending')
     def __str__(self):
         return f"{self.quantity} x {self.product.name} in Order {self.order.order_id}"
+    
+
+class ReturnRequest(models.Model):
+    order = models.ForeignKey(OrderDetails, on_delete=models.CASCADE,null=True,blank=True)
+    user = models.ForeignKey(UserTable, on_delete=models.CASCADE,null=True,blank=True)
+    reason = models.TextField(blank=False, null=False)  # Reason for return
+    status = models.CharField(
+        max_length=20,
+        choices=[
+            ('Pending', 'Pending'),
+            ('Approved', 'Approved'),
+            ('Rejected', 'Rejected'),
+            ('Processed', 'Processed')
+        ],
+        default='Pending'
+    )
+    return_entire_order = models.BooleanField(default=False)  # Return the entire order
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    admin_note = models.TextField(blank=True, null=True)  # Notes from the admin
+
+    def __str__(self):
+        if self.return_entire_order:
+            return f"Return Request for Order {self.order.order_id} - {self.status}"
+        else:
+            # Get related items for this ReturnRequest
+            items = self.items.all()  # Access related ReturnItems via related_name='items'
+            item_names = ', '.join(item.order_item.book.book_name for item in items)
+            return f"Return Request for Items: {item_names} - {self.status}"
 
 
-# class ReturnRequest(models.Model):
-#     user = models.ForeignKey(UserTable, on_delete=models.CASCADE)
-#     order = models.ForeignKey(OrderDetails, on_delete=models.CASCADE)
-#     return_reason = models.TextField()
-#     is_full_order_return = models.BooleanField(default=False)
-#     status = models.CharField(
-#         max_length=20,
-#         choices=[('Pending', 'Pending'),
-#                  ('Approved', 'Approved'),
-#                  ('Rejected', 'Rejected'),
-#                  ('Processed', 'Processed')],
-#         default='Pending'
-#     )
-#     requested_at = models.DateTimeField(auto_now_add=True)
-#     processed_at = models.DateTimeField(blank=True, null=True)
+class ReturnItem(models.Model):
+    return_request = models.ForeignKey(ReturnRequest, on_delete=models.CASCADE, related_name='items')
+    order_item = models.ForeignKey(OrderItem, on_delete=models.CASCADE)
+    reason = models.TextField(blank=False, null=False)  # Reason for returning this item
+    status = models.CharField(
+        max_length=20,
+        choices=[('Pending', 'Pending'), ('Approved', 'Approved'), ('Rejected', 'Rejected'), ('Processed', 'Processed')],
+        default='Pending'
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
-#     def __str__(self):
-#         return f"Return Request {self.id} for Order {self.order.order_id}"
+    def __str__(self):
+        return f"Return Item for {self.order_item.book.title} - {self.status}"

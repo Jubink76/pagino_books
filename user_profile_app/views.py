@@ -6,7 +6,7 @@ from django.contrib.auth.decorators import login_required
 import re
 from log_reg_app.models import UserTable
 from django.contrib.auth import update_session_auth_hash
-from order_detail_app.models import OrderDetails,OrderItem,CouponTable,CouponUsage
+from order_detail_app.models import OrderDetails,OrderItem,CouponTable,CouponUsage,ReturnRequest
 from django.db.models import Count
 from django.db.models import Q
 from django.urls import reverse
@@ -15,6 +15,7 @@ from django.conf import settings
 from decimal import Decimal
 import paypalrestsdk
 from django.utils import timezone
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 # Create your views here.
 #######################################################################################################################
 def user_profile(request):
@@ -256,6 +257,9 @@ def user_password_reset(request):
 @login_required
 def user_orders(request, order_id=None):
 
+    show_return_form = False
+    selected_order = None
+
     orders_with_button = OrderDetails.objects.filter(
         Q(payment_method__in=['ONLINE', 'WALLET']) | Q(order_status='Delivered'),
         user=request.user
@@ -264,33 +268,70 @@ def user_orders(request, order_id=None):
     order_stats = OrderDetails.objects.filter(user=request.user).aggregate(
         total_orders=Count('order_id'),
         delivered_orders=Count('order_id', filter=Q(order_status='Delivered')),
+        pending_orders = Count('order_id',filter=Q(order_status='Pending')),
         in_progress_orders=Count('order_id', filter=Q(order_status='Ordered')),
         shipped_orders=Count('order_id', filter=Q(order_status='Shipped')),
         canceled_orders=Count('order_id', filter=Q(order_status='Canceled'))
     )
 
+    if request.method == "POST":
+        if 'return_order' in request.POST:
+            # Display the return form
+            order_id = request.POST.get('order_id')
+            selected_order = get_object_or_404(
+                OrderDetails.objects.prefetch_related('orderitem_set__book__images')
+                                     .annotate(item_count=Count('orderitem')),
+                order_id=order_id,
+                user=request.user
+            )
+            show_return_form = True
+        elif 'reason' in request.POST:
+            # Handle form submission
+            order_id = request.POST.get('order_id')
+            reason = request.POST.get('reason')
+
+            selected_order = get_object_or_404(OrderDetails, order_id=order_id, user=request.user)
+            ReturnRequest.objects.create(order_item=None, reason=reason, status='Pending')
+
+            messages.success(request, "Your return request has been submitted successfully.")
+            return redirect('user_orders')
+
+    # Handle GET requests or specific order selection
     if order_id:
-        # Combine select_related, prefetch_related, and annotate
         selected_order = get_object_or_404(
-            OrderDetails.objects.select_related('user', 'address')  # Fetch user and address in one query
-                                  .prefetch_related('orderitem_set__book__images')  # Prefetch related images
-                                  .annotate(item_count=Count('orderitem')),  # Count related order items
+            OrderDetails.objects.select_related('user', 'address')
+                                 .prefetch_related('orderitem_set__book__images')
+                                 .annotate(item_count=Count('orderitem')),
             order_id=order_id,
             user=request.user
         )
 
-        context = {
-            'selected_order': selected_order,
-            'order_stats': order_stats,
-        }
-    else:
-        # Apply annotate to all user orders
-        user_orders = OrderDetails.objects.filter(user=request.user).annotate(item_count=Count('orderitem')).order_by('-order_date')
-        context = {
-            'orders': user_orders,
-            'order_stats': order_stats,
-            'orders_with_button': list(orders_with_button),
-        }
+    # Get all orders and apply pagination
+    order_list = OrderDetails.objects.filter(user=request.user)\
+        .annotate(item_count=Count('orderitem'))\
+        .order_by('-order_date')
+    
+    # Create paginator object
+    paginator = Paginator(order_list, 5)  # Show 5 orders per page
+    page_number = request.GET.get('page')
+    
+    try:
+        orders = paginator.page(page_number)
+    except PageNotAnInteger:
+        # If page is not an integer, deliver first page
+        orders = paginator.page(1)
+    except EmptyPage:
+        # If page is out of range, deliver last page of results
+        orders = paginator.page(paginator.num_pages)
+    
+    # Prepare context
+    context = {
+        'orders': orders,
+        'selected_order': selected_order,
+        'order_stats': order_stats,
+        'orders_with_button':orders_with_button,
+        'show_return_form': show_return_form,
+    }
 
     return render(request, 'user_orders.html', context)
 

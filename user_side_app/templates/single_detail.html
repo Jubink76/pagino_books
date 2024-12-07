@@ -257,7 +257,14 @@
 						<!-- Product Info Section -->
 						<div class="space-y-6">
 				 			 <!-- Product Title -->
-				  			<h1 class="text-3xl font-bold text-gray-800">{{ book.book_name }}</h1>
+				  			<div class="relative inline-block">
+								<h1 class="text-3xl font-bold text-gray-800">{{ book.book_name }}</h1>
+								{% if book.additional_offer_applied %}
+									<span class="absolute top-1/2 right-0 transform translate-x-16 -translate-y-8 bg-gradient-to-r from-purple-500 via-pink-400 to-orange-400 text-white px-4 py-2 rounded-full text-sm font-semibold shadow-md transform rotate-45">
+										{{ book.applied_offer.offer_name }}
+									</span>
+								{% endif %}
+							</div>																								
 		  
 				  			<!-- Rating -->
 				  			<div class="flex items-center space-x-4">
@@ -283,13 +290,28 @@
 		  
 				  			<!-- Description -->
 				 			 <p class="text-gray-600">{{ book.description }}</p>
-		  
+							
+							<!---offer if available-->
+							{% if book.additional_offer_applied %}
+								<span class="mt-4 inline-block bg-gradient-to-r from-pink-500 via-yellow-400 to-red-500 text-black px-8 py-5 rounded-full text-lg font-semibold shadow-lg transform transition-all duration-300 ease-in-out hover:scale-110 hover:shadow-2xl hover:ring-4 hover:ring-pink-300 flex items-center justify-center w-28 h-28 text-center animate-bounce">
+									
+									{% if book.applied_offer.discount_type == 'percentage' %}
+										<span class="block mt-1 text-xl font-bold text-black">
+											Save {{ book.applied_offer.discount_value }}% off
+										</span>
+									{% elif book.applied_offer.discount_type == 'fixed' %}
+										<span class="block mt-1 text-xl font-bold text-black">
+											Save ₹{{ book.applied_offer.discount_value }} off
+										</span>
+									{% endif %}
+								</span>
+							{% endif %}
 				  			<!-- Price -->
 				  			<div class="flex items-center space-x-4">
 								<span class="text-3xl font-bold text-pink-500">₹{{ book.offer_price }}</span>
 								<span class="text-xl text-gray-400 line-through">₹{{ book.base_price }}</span>
 				  			</div>
-		  
+							  
 				  			<!-- Quantity and Add to Cart -->
 				  			<!--<div class="flex items-center space-x-4">
 								<div class="flex items-center border rounded-md">

@@ -2,7 +2,7 @@ from django.shortcuts import render,redirect,get_object_or_404
 from django.contrib import messages
 from user_profile_app.models import AddressTable,WalletTable, WalletTransaction
 from user_side_app.models import CartTable
-from .models import OrderDetails, OrderItem,CouponTable,CouponUsage
+from .models import OrderDetails, OrderItem,CouponTable,CouponUsage,ReturnRequest,ReturnItem
 import random
 import string
 from django.db import transaction
@@ -16,7 +16,10 @@ from django.views.decorators.csrf import csrf_exempt
 from django.utils.timezone import now
 from django.utils import timezone
 from decimal import Decimal
-
+from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import letter
+import os
+from io import BytesIO
 # Initialize Razorpay client
 razorpay_client = razorpay.Client(
     auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET)
@@ -438,57 +441,125 @@ def verify_payment(request):
 
 ########################################################################################################################################
 
-@login_required
-def return_order(request, order_id):
-    if request.method == "POST":
+# @login_required
+# def return_order(request, order_id):
+#     if request.method == "POST":
         
-        order = get_object_or_404(OrderDetails, order_id=order_id, user=request.user)
+#         order = get_object_or_404(OrderDetails, order_id=order_id, user=request.user)
 
-        if order.order_status != 'Delivered':
-            return JsonResponse({
-                'status': 'error',
-                'message': "Only delivered orders can be returned."
-            }, status=400)
+#         if order.order_status != 'Delivered':
+#             return JsonResponse({
+#                 'status': 'error',
+#                 'message': "Only delivered orders can be returned."
+#             }, status=400)
 
-        total_refund_amount = Decimal(order.total_amount)
+#         total_refund_amount = Decimal(order.total_amount)
 
-        try:
+#         try:
             
-            wallet, created = WalletTable.objects.get_or_create(user=request.user)
+#             wallet, created = WalletTable.objects.get_or_create(user=request.user)
 
-            wallet.available_balance += total_refund_amount
-            wallet.save()
+#             wallet.available_balance += total_refund_amount
+#             wallet.save()
 
-            # Log the transaction for the refund
-            WalletTransaction.objects.create(
-                wallet=wallet,
-                transaction_type='refund',
-                transaction_amount=total_refund_amount,
-                description=f"Refund for returned order {order.order_id}",
-                transaction_time=now()
+#             # Log the transaction for the refund
+#             WalletTransaction.objects.create(
+#                 wallet=wallet,
+#                 transaction_type='refund',
+#                 transaction_amount=total_refund_amount,
+#                 description=f"Refund for returned order {order.order_id}",
+#                 transaction_time=now()
+#             )
+
+#             order.is_refund = True
+#             order.refund_date = now()  
+#             order.save()
+
+#             return JsonResponse({
+#                 'status': 'success',
+#                 'message': f"₹{total_refund_amount:.2f} has been refunded to your wallet.",
+#                 'order_status': order.order_status,
+#                 'refund_amount': float(total_refund_amount),
+#             })
+
+#         except WalletTable.DoesNotExist:
+#             return JsonResponse({
+#                 'status': 'error',
+#                 'message': "Refund failed: Wallet not found."
+#             }, status=500)
+
+#     return JsonResponse({
+#         'status': 'error',
+#         'message': "Invalid request method."
+#     }, status=405)
+@login_required
+def return_request(request, order_id):
+    order = get_object_or_404(OrderDetails, order_id=order_id, user=request.user)
+
+    if request.method == 'POST':
+        reason = request.POST.get('reason', '').strip()
+        item_ids = request.POST.getlist('items[]')
+        
+        # Check if order has only one item or if entire order checkbox is checked
+        total_items = order.orderitem_set.count()
+        return_entire_order = 'entire_order' in request.POST or total_items == 1
+
+        # Validation
+        errors = []
+        if not reason:
+            errors.append({'field': 'reason', 'message': "Reason for return is required."})
+
+        # Only validate item selection if there are multiple items
+        if total_items > 1:
+            if not return_entire_order and not item_ids:
+                errors.append({'field': 'items', 'message': "Select at least one item to return or choose 'Return Entire Order'."})
+
+            if item_ids:
+                valid_item_ids = order.orderitem_set.values_list('id', flat=True)
+                try:
+                    for item_id in item_ids:
+                        if int(item_id) not in valid_item_ids:
+                            errors.append({'field': 'items', 'message': f"Invalid item ID: {item_id}."})
+                except ValueError:
+                    errors.append({'field': 'items', 'message': "One or more item IDs are invalid."})
+
+        if errors:
+            return JsonResponse({'status': 'error', 'errors': errors}, status=400)
+
+        # Create ReturnRequest and ReturnItems
+        with transaction.atomic():
+            return_request = ReturnRequest.objects.create(
+                order=order,
+                user=request.user,
+                reason=reason,
+                return_entire_order=return_entire_order
             )
 
-            order.is_refund = True
-            order.refund_date = now()  
-            order.save()
+            if return_entire_order or total_items == 1:
+                # Return all items if it's entire order return or single item order
+                for item in order.orderitem_set.all():
+                    ReturnItem.objects.create(
+                        return_request=return_request,
+                        order_item=item,
+                        reason=reason
+                    )
+            else:
+                # Return selected items for multiple item orders
+                for item_id in item_ids:
+                    item = get_object_or_404(OrderItem, id=item_id, order=order)
+                    ReturnItem.objects.create(
+                        return_request=return_request,
+                        order_item=item,
+                        reason=reason
+                    )
 
-            return JsonResponse({
-                'status': 'success',
-                'message': f"₹{total_refund_amount:.2f} has been refunded to your wallet.",
-                'order_status': order.order_status,
-                'refund_amount': float(total_refund_amount),
-            })
+        return JsonResponse({
+            'status': 'success',
+            'message': "Your return request has been submitted successfully.",
+            'redirect_url': reverse('user_orders')
+        })
 
-        except WalletTable.DoesNotExist:
-            return JsonResponse({
-                'status': 'error',
-                'message': "Refund failed: Wallet not found."
-            }, status=500)
-
-    return JsonResponse({
-        'status': 'error',
-        'message': "Invalid request method."
-    }, status=405)
+    return JsonResponse({'status': 'error', 'message': "Invalid request method."}, status=405)
 
 #############################################################################################################################
 
@@ -565,3 +636,53 @@ def remove_coupon(request):
             return JsonResponse({'status': 'error', 'message': str(e)})
 
     return JsonResponse({'status': 'error', 'message': 'Invalid request method.'})
+
+#################################################################################################################################
+
+def generate_invoice(request, order_id):
+    try:
+        # Fetch the order details
+        order = OrderDetails.objects.get(order_id=order_id)
+        order_items = OrderItem.objects.filter(order=order)
+
+        # Create PDF
+        buffer = BytesIO()
+        p = canvas.Canvas(buffer)
+        p.drawString(100, 750, f"Invoice for Order ID: {order_id}")
+        p.drawString(100, 730, f"Customer: {order.user.phone_number}")
+        y = 700
+
+        for item in order_items:
+            p.drawString(100, y, f"{item.book.book_name} - Quantity: {item.quantity}, Price: {item.price_per_item}")
+            y -= 20
+
+        p.save()
+        buffer.seek(0)
+
+        # Define the path for saving the PDF in the invoices folder
+        pdf_name = f"invoice_{order_id}.pdf"
+        
+        # Use os.path.join to create the correct file path
+        media_path = os.path.join('media', 'invoices')  # Path to the 'invoices' folder
+        pdf_path = os.path.join(media_path, pdf_name)
+
+        # Ensure the directory exists
+        os.makedirs(media_path, exist_ok=True)
+
+        # Save the PDF to the 'invoices' folder
+        with open(pdf_path, 'wb') as f:
+            f.write(buffer.getvalue())
+
+        buffer.close()
+
+        # Return the URL to access the PDF
+        return JsonResponse({
+            'status': 'success',
+            'message': 'Invoice generated successfully!',
+            'file_url': f'/media/invoices/{pdf_name}'  # URL to download the invoice
+        })
+
+    except OrderDetails.DoesNotExist:
+        return JsonResponse({'status': 'error', 'message': 'Order not found.'}, status=404)
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)

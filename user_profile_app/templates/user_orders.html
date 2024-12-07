@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load custom_pagination %}
 {% load static %}
 
 {% block css_link %}
@@ -58,6 +59,63 @@
             <!-- Main Content -->
             <div class="flex-1">
                 {% if selected_order %}
+                {% if show_return_form %}
+                <!-- Custom Return Request Form -->
+                <div class="bg-white rounded-lg p-6">
+                    <h2 class="text-xl font-bold mb-4">Return Request</h2>
+                    <form id="returnOrderForm-{{ selected_order.order_id }}" 
+                        method="POST" 
+                        action="{% url 'return_request' selected_order.order_id %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="order_id" value="{{ selected_order.order_id }}">
+                    
+                        <!-- Reason for Return -->
+                        <label for="reason" class="block mb-2 text-sm font-medium text-gray-700">
+                            Reason for Return
+                        </label>
+                        <textarea id="reason" name="reason" 
+                            class="w-full border border-gray-300 rounded-lg p-2 mb-4"
+                            placeholder="Enter your reason for return" required></textarea>                    
+                        <!-- Order Items -->
+                        <label class="block mb-2 text-sm font-medium text-gray-700">
+                            Items to Return
+                        </label>
+                        <div class="border border-gray-300 rounded-lg p-4 mb-4">
+                            <div class="flex items-center mb-4">
+                                <input type="checkbox" id="entire_order" class="mr-2"
+                                       onclick="toggleAllItems(this)">
+                                <label for="entire_order" class="text-sm font-medium text-gray-700">
+                                    Return Entire Order
+                                </label>
+                            </div>
+                            <div class="space-y-2">
+                                {% for item in selected_order.orderitem_set.all %}
+                                <div class="flex items-center">
+                                    <input type="checkbox" name="items[]" id="item-{{ item.id }}" value="{{ item.id }}" 
+                                           class="mr-2 item-checkbox">
+                                    <label for="item-{{ item.id }}" class="text-sm font-medium text-gray-700">
+                                        {{ item.book.book_name }} (Qty: {{ item.quantity }})
+                                    </label>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    
+                        <!-- Action Buttons -->
+                        <div class="flex gap-4">
+                            <button type="button" 
+                                class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+                                onclick="confirmAction('returnOrderForm-{{ selected_order.order_id }}', 'Confirm Return', 'Are you sure you want to return this order?', 'Yes, confirm return!')">
+                                Submit
+                            </button>
+                            <a href="{% url 'user_orders' %}" 
+                               class="bg-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-400">
+                                Cancel
+                            </a>
+                        </div>
+                    </form>                    
+                </div>
+                {% else %}
                 <!-- Order Detail View -->
                 <div class="bg-white rounded-lg p-6">
                     <a href="{% url 'user_orders' %}" class="inline-flex items-center text-blue-600 hover:text-blue-800 mb-6">
@@ -153,6 +211,7 @@
                         </div>
                     </div>
                 </div>
+                {% endif %}
                 {% else %}
                 <!-- Orders List View -->
                 <div class="mb-8">
@@ -199,7 +258,7 @@
                         </div>
                         <div>
                             <h3 class="text-sm text-gray-600">In Progress</h3>
-                            <div class="text-xl font-semibold">{{ order_stats.in_progress_orders }}</div>
+                            <div class="text-xl font-semibold">{{ order_stats.pending_orders }}</div>
                         </div>
                     </div>
 
@@ -266,14 +325,17 @@
                                 <!-- Centered Download Invoice Button -->
                                 {% if order.order_id in orders_with_button %}
                                 <div class="text-center">
-                                    <a href="" target="_blank" 
-                                    class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition inline-flex items-center gap-2">
+                                    <a href="{% url 'generate_invoice' order.order_id %}" 
+                                       onclick="return handleInvoiceDownload(event, '{{ order.order_id }}')"
+                                       data-redirect-url="{% url 'user_orders' %}"
+                                       class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition inline-flex items-center gap-2">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                                             <path d="M8 2a1 1 0 00-1 1v2H5a2 2 0 00-2 2v4h14V7a2 2 0 00-2-2h-2V3a1 1 0 00-1-1H8zM7 6V4h6v2H7zM4 13v4a2 2 0 002 2h8a2 2 0 002-2v-4H4z" />
                                         </svg>
                                         Download Invoice
                                     </a>
                                 </div>
+                                
                                 {% endif %}
                     
                                 <!-- Cancel Button and Price -->
@@ -291,16 +353,57 @@
                                             Return Order
                                         </button>
                                     </form> {% endcomment %}
-                                    <form  
-                                        method="POST" 
-                                        action="">
-                                        {% csrf_token %}
-                                        <button 
-                                            type="button" 
-                                            class="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600 transition">
-                                            Return Order
-                                        </button>
-                                    </form>
+                                        {% if order.returnrequest_set.exists %}
+                                            {% with return_request=order.returnrequest_set.last %}
+                                                <div class="relative group">
+                                                    {% if return_request.status == 'Pending' %}
+                                                        <div class="bg-yellow-100 text-yellow-800 px-4 py-2 rounded cursor-help">
+                                                            Return Request Pending
+                                                        </div>
+                                                        <div class="hidden group-hover:block absolute z-10 w-48 p-2 mt-2 text-sm bg-gray-900 text-white rounded shadow-lg">
+                                                            Request submitted on {{ return_request.created_at|date:"M d, Y" }}
+                                                        </div>
+                                                    {% elif return_request.status == 'Approved' %}
+                                                        <div class="bg-green-100 text-green-800 px-4 py-2 rounded cursor-help">
+                                                            Return Request Approved
+                                                        </div>
+                                                        <div class="hidden group-hover:block absolute z-10 w-48 p-2 mt-2 text-sm bg-gray-900 text-white rounded shadow-lg">
+                                                            Approved on {{ return_request.updated_at|date:"M d, Y" }}
+                                                            {% if return_request.admin_note %}
+                                                                <br>Note: {{ return_request.admin_note }}
+                                                            {% endif %}
+                                                        </div>
+                                                    {% elif return_request.status == 'Rejected' %}
+                                                        <div class="bg-red-100 text-red-800 px-4 py-2 rounded cursor-help">
+                                                            Return Request Rejected
+                                                        </div>
+                                                        <div class="hidden group-hover:block absolute z-10 w-48 p-2 mt-2 text-sm bg-gray-900 text-white rounded shadow-lg">
+                                                            {% if return_request.admin_note %}
+                                                                Reason: {{ return_request.admin_note }}
+                                                            {% endif %}
+                                                        </div>
+                                                    {% elif return_request.status == 'Processed' %}
+                                                        <div class="bg-blue-100 text-blue-800 px-4 py-2 rounded cursor-help">
+                                                            Return Request Processed
+                                                        </div>
+                                                        <div class="hidden group-hover:block absolute z-10 w-48 p-2 mt-2 text-sm bg-gray-900 text-white rounded shadow-lg">
+                                                            Processed on {{ return_request.updated_at|date:"M d, Y" }}
+                                                        </div>
+                                                    {% endif %}
+                                                </div>
+                                            {% endwith %}
+                                        {% else %}
+                                            <form method="POST" action="{% url 'user_orders' %}">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="order_id" value="{{ order.order_id }}">
+                                                <input type="hidden" name="return_order" value="true">
+                                                <button 
+                                                    type="submit" 
+                                                    class="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600 transition">
+                                                    Return Order
+                                                </button>
+                                            </form>
+                                        {% endif %}
                                     {% elif order.order_status != 'Canceled' %}
                                     <form 
                                         id="cancelItemForm-{{ order.order_id }}" 
@@ -320,23 +423,75 @@
                             </div>
                         </div>
                     </a>
-                        {% endfor %}
-                    </div>                
-                    {% else %}
-                    <!-- Empty State -->
-                    <div class="text-center py-16">
-                        <img src="{% static 'user/images/logo/empty.jpeg' %}" alt="No Orders" class="w-48 h-48 object-contain mx-auto mb-6">
-                        <h2 class="text-xl font-semibold text-gray-900 mb-2">No Orders Yet</h2>
-                        <p class="text-gray-600 mb-6">Start shopping and your orders will appear here</p>
-                        <a href="{% url 'shop_page' %}" 
-                        class="inline-flex items-center gap-2 px-6 py-3 bg-amber-500 text-black rounded-lg hover:bg-blue-600 hover:text-white transition-colors">
-                            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <circle cx="9" cy="21" r="1"/>
-                                <circle cx="20" cy="21" r="1"/>
-                                <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
-                            </svg>
-                            Browse Products
-                        </a>
+                    {% endfor %}
+                    {% endif %}
+                    </div>
+                    <!-- Pagination Controls -->
+                    {% if orders.paginator.num_pages > 1 %}
+                    <div class="mt-8">
+                        <div class="flex justify-center">
+                            <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                                <!-- Previous page -->
+                                {% if orders.has_previous %}
+                                <a href="?page={{ orders.previous_page_number }}" 
+                                class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                                    <span class="sr-only">Previous</span>
+                                    <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+                                    </svg>
+                                </a>
+                                {% else %}
+                                <span class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-gray-100 text-sm font-medium text-gray-400 cursor-not-allowed">
+                                    <span class="sr-only">Previous</span>
+                                    <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+                                    </svg>
+                                </span>
+                                {% endif %}
+
+                                <!-- Page numbers with ellipsis -->
+                                {% get_proper_elided_page_range orders.paginator orders.number as page_range %}
+                                {% for page_num in page_range %}
+                                    {% if page_num == 'ELLIPSIS' %}
+                                        <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">
+                                            ...
+                                        </span>
+                                    {% else %}
+                                        {% if page_num == orders.number %}
+                                            <span class="relative inline-flex items-center px-4 py-2 border border-blue-500 bg-blue-50 text-sm font-medium text-blue-600">
+                                                {{ page_num }}
+                                            </span>
+                                        {% else %}
+                                            <a href="?page={{ page_num }}" 
+                                            class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
+                                                {{ page_num }}
+                                            </a>
+                                        {% endif %}
+                                    {% endif %}
+                                {% endfor %}
+
+                                <!-- Next page -->
+                                {% if orders.has_next %}
+                                <a href="?page={{ orders.next_page_number }}" 
+                                class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                                    <span class="sr-only">Next</span>
+                                    <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                                    </svg>
+                                </a>
+                                {% else %}
+                                <span class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-gray-100 text-sm font-medium text-gray-400 cursor-not-allowed">
+                                    <span class="sr-only">Next</span>
+                                    <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                                    </svg>
+                                </span>
+                                {% endif %}
+                            </nav>
+                        </div>
+                        <div class="mt-3 text-center text-sm text-gray-500">
+                            Page {{ orders.number }} of {{ orders.paginator.num_pages }}
+                        </div>
                     </div>
                     {% endif %}
                 {% endif %}
@@ -349,7 +504,12 @@
 {% block script %}
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
+    // Common function for confirming actions (e.g., canceling or returning orders)
     function confirmAction(formId, title, text, confirmButtonText) {
+        // Get the form element
+        const form = document.getElementById(formId);
+        const isReturnRequest = formId.startsWith('returnOrderForm');
+    
         // SweetAlert confirmation dialog
         Swal.fire({
             title: title,
@@ -362,10 +522,146 @@
             cancelButtonText: 'No, keep it'
         }).then((result) => {
             if (result.isConfirmed) {
-                // Submit the corresponding form
-                document.getElementById(formId).submit();
+                const formData = new FormData(form);
+    
+                // Submit form using fetch
+                fetch(form.action, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-CSRFToken': formData.get('csrfmiddlewaretoken')
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        // Show success message
+                        Swal.fire({
+                            title: 'Success!',
+                            text: isReturnRequest ? 'Return request submitted successfully!' : 'Order cancelled successfully!',
+                            icon: 'success',
+                            confirmButtonText: 'OK'
+                        }).then(() => {
+                            // Redirect after showing success message
+                            window.location.href = data.redirect_url;
+                        });
+                    } else {
+                        // Show error message
+                        Swal.fire({
+                            title: 'Error!',
+                            text: data.message || 'Something went wrong.',
+                            icon: 'error',
+                            confirmButtonText: 'OK'
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    Swal.fire({
+                        title: 'Error!',
+                        text: 'Something went wrong.',
+                        icon: 'error',
+                        confirmButtonText: 'OK'
+                    });
+                });
             }
         });
+    }
+
+    // Function for downloading the invoice
+    async function handleInvoiceDownload(event, orderId) {
+        event.preventDefault();
+        
+        // Get the redirect URL from the data attribute
+        const redirectUrl = event.target.closest('a').dataset.redirectUrl;
+        
+        try {
+            const willGenerate = await Swal.fire({
+                title: "Generate Invoice?",
+                text: "Are you sure you want to generate the invoice?",
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonText: "Yes, generate it!",
+                cancelButtonText: "Cancel",
+                reverseButtons: true
+            });
+    
+            if (willGenerate.isConfirmed) {
+                // Get the original href from the link
+                const downloadUrl = event.target.closest('a').href;
+                
+                try {
+                    const response = await fetch(downloadUrl);
+                    const data = await response.json();
+    
+                    if (data.status === 'success') {
+                        await Swal.fire({
+                            title: "Success!",
+                            text: "Invoice generated successfully!",
+                            icon: "success",
+                            timer: 2000,
+                            showConfirmButton: false
+                        });
+    
+                        // Open the file in a new tab
+                        window.open(data.file_url, '_blank');
+                        
+                        // Redirect main window after a short delay
+                        setTimeout(() => {
+                            window.location.href = redirectUrl;
+                        }, 1000);
+                    } else {
+                        await Swal.fire({
+                            title: "Error!",
+                            text: data.message || "Failed to generate invoice",
+                            icon: "error"
+                        });
+                    }
+                } catch (error) {
+                    await Swal.fire({
+                        title: "Error!",
+                        text: "Something went wrong while generating the invoice.",
+                        icon: "error"
+                    });
+                }
+            } else {
+                await Swal.fire({
+                    title: "Cancelled",
+                    text: "The invoice generation was cancelled.",
+                    icon: "info"
+                });
+            }
+        } catch (error) {
+            console.error("Error:", error);
+        }
+        
+        return false;
+    }
+    
+</script>
+
+<script>
+    document.querySelector("form").addEventListener("submit", function (event) {
+        const entireOrderCheckbox = document.getElementById("entire_order");
+        const itemCheckboxes = document.querySelectorAll(".item-checkbox");
+        const reasonField = document.getElementById("reason");
+        
+        let atLeastOneItemSelected = Array.from(itemCheckboxes).some((checkbox) => checkbox.checked);
+
+        if (!entireOrderCheckbox.checked && !atLeastOneItemSelected) {
+            alert("Please select either 'Return Entire Order' or at least one item to return.");
+            event.preventDefault(); // Prevent form submission
+        }
+
+        if (reasonField.value.trim() === "") {
+            alert("Please provide a reason for the return.");
+            event.preventDefault();
+        }
+    });
+
+    function toggleAllItems(checkbox) {
+        const itemCheckboxes = document.querySelectorAll(".item-checkbox");
+        itemCheckboxes.forEach((itemCheckbox) => (itemCheckbox.checked = checkbox.checked));
     }
 </script>
 

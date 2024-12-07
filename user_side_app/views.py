@@ -29,6 +29,46 @@ def shop_page(request):
     books = BookTable.objects.prefetch_related('images').filter(is_deleted=False)
 
     active_offers = OfferTable.objects.filter(is_active=True, valid_from__lte=now(), valid_to__gte=now())
+
+    # Apply active offers dynamically
+    for book in books:
+        base_price = book.base_price
+        product_offer_price = None
+        category_offer_price = None
+        applied_offer = None
+
+        # Check for product-specific offer
+        product_offer = active_offers.filter(offer_type='product', product=book).first()
+        if product_offer:
+            if product_offer.discount_type == 'percentage':
+                product_offer_price = base_price - (base_price * product_offer.discount_value / 100)
+            elif product_offer.discount_type == 'fixed':
+                product_offer_price = base_price - product_offer.discount_value
+
+        # Check for category-specific offer
+        category_offer = active_offers.filter(offer_type='category', category=book.category).first()
+        if category_offer:
+            if category_offer.discount_type == 'percentage':
+                category_offer_price = base_price - (base_price * category_offer.discount_value / 100)
+            elif category_offer.discount_type == 'fixed':
+                category_offer_price = base_price - category_offer.discount_value
+
+        # Determine the lowest price and the corresponding offer
+        effective_price = base_price  # Start with the base price
+        if product_offer_price is not None and product_offer_price < effective_price:
+            effective_price = product_offer_price
+            applied_offer = product_offer
+        if category_offer_price is not None and category_offer_price < effective_price:
+            effective_price = category_offer_price
+            applied_offer = category_offer
+
+        # Update the book's price and applied offer
+        book.offer_price = effective_price
+        book.applied_offer = applied_offer
+        book.additional_offer_applied = applied_offer is not None
+        book.save()
+
+    # Apply filters
     if search_query:
         books = books.filter(Q(book_name__icontains=search_query) | Q(description__icontains=search_query))
 
@@ -41,7 +81,6 @@ def shop_page(request):
     books = books.filter(offer_price__gte=price_min, offer_price__lte=price_max)
 
     # Apply sorting
-    
     if sort == 'price_low':
         books = books.order_by('offer_price')
     elif sort == 'price_high':
@@ -71,12 +110,52 @@ def shop_page(request):
         'price_max': price_max,
     })
 
+
 ##########################################################################################################
 
 def single_detail(request,pk):
     book = get_object_or_404(BookTable,id=pk)
     images = book.images.all()
 
+    active_offers = OfferTable.objects.filter(is_active=True, valid_from__lte=now(), valid_to__gte=now())
+
+    # Calculate the offer price for the main book
+    base_price = book.base_price
+    product_offer_price = None
+    category_offer_price = None
+    applied_offer = None
+
+    # Check for product-specific offer
+    product_offer = active_offers.filter(offer_type='product', product=book).first()
+    if product_offer:
+        if product_offer.discount_type == 'percentage':
+            product_offer_price = base_price - (base_price * product_offer.discount_value / 100)
+        elif product_offer.discount_type == 'fixed':
+            product_offer_price = base_price - product_offer.discount_value
+
+    # Check for category-specific offer
+    category_offer = active_offers.filter(offer_type='category', category=book.category).first()
+    if category_offer:
+        if category_offer.discount_type == 'percentage':
+            category_offer_price = base_price - (base_price * category_offer.discount_value / 100)
+        elif category_offer.discount_type == 'fixed':
+            category_offer_price = base_price - category_offer.discount_value
+
+    # Determine the lowest price and the corresponding offer
+    effective_price = base_price  # Start with the base price
+    if product_offer_price is not None and product_offer_price < effective_price:
+        effective_price = product_offer_price
+        applied_offer = product_offer
+    if category_offer_price is not None and category_offer_price < effective_price:
+        effective_price = category_offer_price
+        applied_offer = category_offer
+
+    # Update the book's offer price and applied offer
+    book.offer_price = effective_price
+    book.applied_offer = applied_offer
+    book.additional_offer_applied = applied_offer is not None
+    book.save()
+    
     # fetch related products exclude the main book
     related_books = BookTable.objects.filter(
         category = book.category,
@@ -99,6 +178,46 @@ def single_category(request,pk):
 
     category = get_object_or_404(CategoryTable,id=pk,is_available=True,is_deleted=False)
     books = BookTable.objects.prefetch_related('images').filter(category=category,is_deleted=False)
+
+    active_offers = OfferTable.objects.filter(is_active=True, valid_from__lte=now(), valid_to__gte=now())
+
+    # Apply active offers dynamically
+    for book in books:
+        base_price = book.base_price
+        product_offer_price = None
+        category_offer_price = None
+        applied_offer = None
+
+        # Check for product-specific offer
+        product_offer = active_offers.filter(offer_type='product', product=book).first()
+        if product_offer:
+            if product_offer.discount_type == 'percentage':
+                product_offer_price = base_price - (base_price * product_offer.discount_value / 100)
+            elif product_offer.discount_type == 'fixed':
+                product_offer_price = base_price - product_offer.discount_value
+
+        # Check for category-specific offer
+        category_offer = active_offers.filter(offer_type='category', category=book.category).first()
+        if category_offer:
+            if category_offer.discount_type == 'percentage':
+                category_offer_price = base_price - (base_price * category_offer.discount_value / 100)
+            elif category_offer.discount_type == 'fixed':
+                category_offer_price = base_price - category_offer.discount_value
+
+        # Determine the lowest price and the corresponding offer
+        effective_price = base_price  # Start with the base price
+        if product_offer_price is not None and product_offer_price < effective_price:
+            effective_price = product_offer_price
+            applied_offer = product_offer
+        if category_offer_price is not None and category_offer_price < effective_price:
+            effective_price = category_offer_price
+            applied_offer = category_offer
+
+        # Update the book's price and applied offer
+        book.offer_price = effective_price
+        book.applied_offer = applied_offer
+        book.additional_offer_applied = applied_offer is not None
+        book.save()
 
     if search_query:
         books = books.filter(Q(book_name__icontains=search_query) | Q(description__icontains=search_query))

@@ -239,6 +239,13 @@
                                         {% if not book.is_available %}
                                         <div class="absolute inset-0 bg-gradient-to-b from-gray-400 to-gray-700 opacity-70"></div>
                                         <span class="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded-full text-sm">Out of Stock</span>
+                                        {% elif book.additional_offer_applied %}
+                                            <!-- Tag for offers -->
+                                            <span 
+                                                class="absolute top-2 right-2 bg-gradient-to-r from-pink-500 via-yellow-400 to-red-500 text-black px-6 py-2 rounded-full text-xs font-bold shadow-lg transform transition-all duration-300 ease-in-out hover:scale-110 hover:shadow-2xl hover:ring-4 hover:ring-pink-300 flex justify-center items-center text-center w-auto max-w-full break-words whitespace-normal animate-bounce"
+                                                style="line-height: 1.2; max-width: 80px; word-wrap: break-word;">
+                                                <span class="block">{{ book.applied_offer.offer_name }}</span>
+                                            </span>
                                         {% else %}
                                         <span class="absolute top-2 right-2 bg-blue-400 text-white px-2 py-1 rounded-full text-sm">NEW</span>
                                         {% endif %}
@@ -370,6 +377,13 @@
                                             {% if not book.is_available %}
                                             <div class="absolute inset-0 bg-gradient-to-b from-gray-400 to-gray-700 opacity-70"></div>
                                             <span class="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded-full text-sm">Out of Stock</span>
+                                            {% elif book.additional_offer_applied %}
+                                            <!-- Tag for offers -->
+                                            <span 
+                                                class="absolute top-2 right-2 bg-gradient-to-r from-pink-500 via-yellow-400 to-red-500 text-black px-6 py-2 rounded-full text-xs font-bold shadow-lg transform transition-all duration-300 ease-in-out hover:scale-110 hover:shadow-2xl hover:ring-4 hover:ring-pink-300 flex justify-center items-center text-center w-auto max-w-full break-words whitespace-normal animate-bounce"
+                                                style="line-height: 1.2; max-width: 80px; word-wrap: break-word;">
+                                                <span class="block">{{ book.applied_offer.offer_name }}</span>
+                                            </span>
                                             {% else %}
                                                 {% if forloop.counter == 1 %}
                                                     <span class="absolute top-2 right-2 bg-red-400 text-white px-2 py-1 rounded-full text-sm">HOT</span>
@@ -523,6 +537,13 @@
                                     {% if not book.is_available %}
                                     <div class="absolute inset-0 bg-gradient-to-b from-gray-400 to-gray-700 opacity-70"></div>
                                     <span class="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded-full text-sm">Out of Stock</span>
+                                    {% elif book.additional_offer_applied %}
+                                            <!-- Tag for offers -->
+                                            <span 
+                                                class="absolute top-2 right-2 bg-gradient-to-r from-pink-500 via-yellow-400 to-red-500 text-black px-6 py-2 rounded-full text-xs font-bold shadow-lg transform transition-all duration-300 ease-in-out hover:scale-110 hover:shadow-2xl hover:ring-4 hover:ring-pink-300 flex justify-center items-center text-center w-auto max-w-full break-words whitespace-normal animate-bounce"
+                                                style="line-height: 1.2; max-width: 80px; word-wrap: break-word;">
+                                                <span class="block">{{ book.applied_offer.offer_name }}</span>
+                                            </span>
                                     {% else %}
                                     <span class="absolute top-2 right-2 bg-blue-400 text-white px-2 py-1 rounded-full text-sm">NEW</span>
                                     {% endif %}

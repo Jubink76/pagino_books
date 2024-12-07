@@ -5,6 +5,25 @@
 {% block css_link %}
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 <script src="{% static 'user/js/sweetAlert.js' %}"></script>
+<style>
+    @keyframes bounce {
+        0% {
+          transform: translateY(0);
+        }
+        25% {
+          transform: translateY(-5px); /* Moves up */
+        }
+        50% {
+          transform: translateY(0); /* Back to original position */
+        }
+        75% {
+          transform: translateY(-5px); /* Moves up again */
+        }
+        100% {
+          transform: translateY(0); /* Back to original position */
+        }
+      }
+</style>      
 {% endblock %}
 
 {% block content %}
@@ -326,15 +345,22 @@
                                 class="w-full h-full object-contain"
                             />
                             {% if not book.is_available %}
-                            <!-- Overlay for out-of-stock products -->
-                            <div class="absolute inset-0 bg-gradient-to-b from-gray-400 to-gray-700 opacity-70"></div>
-                            <span class="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded-full text-sm">Out of Stock</span>
-                            {% else %}
-                            <!-- Tag for new products -->
-                            <span class="absolute top-2 right-2 bg-blue-400 text-white px-2 py-1 rounded-full text-sm">NEW</span>
+                                <!-- Overlay for out-of-stock products -->
+                                <div class="absolute inset-0 bg-gradient-to-b from-gray-400 to-gray-700 opacity-70"></div>
+                                <span class="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded-full text-sm">Out of Stock</span>
+                                {% elif book.additional_offer_applied %}
+                                <!-- Tag for offers -->
+                                <span 
+                                    class="absolute top-2 right-2 bg-gradient-to-r from-pink-500 via-yellow-400 to-red-500 text-black px-6 py-2 rounded-full text-xs font-bold shadow-lg transform transition-all duration-300 ease-in-out hover:scale-110 hover:shadow-2xl hover:ring-4 hover:ring-pink-300 flex justify-center items-center text-center w-auto max-w-full break-words whitespace-normal animate-bounce"
+                                    style="line-height: 1.2; max-width: 80px; word-wrap: break-word;">
+                                    <span class="block">{{ book.applied_offer.offer_name }}</span>
+                                </span>
+                                {% else %}                                <!-- Tag for new products -->
+                                <span class="absolute top-2 right-2 bg-blue-400 text-white px-2 py-1 rounded-full text-sm">NEW</span>
                             {% endif %}
                         </a>
                     </div>
+                    
                     
                     <!-- Content Section -->
                     <div class="p-4">
@@ -344,8 +370,8 @@
                         
                         <!-- Price Section with Floating Icons -->
                         <div class="relative flex justify-between items-center">
-                            <span class="text-green-600 font-bold">₹{{ book.offer_price }}</span>
-                            <span class="text-gray-400 line-through">₹{{ book.base_price }}</span>
+                                <span class="text-green-600 font-bold">₹{{ book.offer_price }}</span>
+                                <span class="text-red-400 line-through">₹{{ book.base_price }}</span>
                             
                             {% if book.is_available %}
                             <!-- Floating Icons -->
