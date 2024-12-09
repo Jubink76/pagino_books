@@ -23,14 +23,108 @@ from datetime import datetime
 from django.urls import reverse
 from django.utils.timezone import now
 from django.utils.dateparse import parse_datetime
+import os
+from io import BytesIO
+import openpyxl
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
+from collections import Counter
+from django.db.models import Sum
+from collections import defaultdict
+from datetime import datetime, timedelta
 # Create your views here.
 
 ##############################################################################################################
 
 @login_required(login_url='admin_login')
 @never_cache
+
 def admin_dashboard(request):
-    return render(request,'admin_dashboard.html')
+
+    order_data = OrderDetails.objects.all()
+    active_users_count = UserTable.objects.filter(is_blocked=False, is_deleted=False).count()
+    current_date = datetime.now()
+
+    # Calculate the total revenue for the current period (all orders)
+    total_revenue = OrderDetails.objects.aggregate(Sum('total_amount'))['total_amount__sum'] or 0
+
+    # Get the start and end date for the previous period (e.g., previous month)
+    previous_month_start = current_date.replace(day=1) - timedelta(days=1)  # Last day of the previous month
+    previous_month_start = previous_month_start.replace(day=1)  # First day of the previous month
+    previous_month_end = previous_month_start.replace(day=28) + timedelta(days=4)  # The end of the previous month
+
+    # Calculate the total revenue for the previous period (last month)
+    previous_month_revenue = OrderDetails.objects.filter(
+        order_date__gte=previous_month_start, 
+        order_date__lt=previous_month_end
+    ).aggregate(Sum('total_amount'))['total_amount__sum'] or 0
+
+    # Calculate the percentage change in revenue from the previous period
+    percentage_change = 0
+    if previous_month_revenue > 0:
+        percentage_change = ((total_revenue - previous_month_revenue) / previous_month_revenue) * 100
+
+
+    # Data for line chart: Order amounts by month
+    order_counts = order_data.values('order_date').annotate(total_amount_sum=Sum('total_amount'))
+    months = [order['order_date'].strftime('%B %Y') for order in order_counts]
+    total_amounts = [float(order['total_amount_sum']) for order in order_counts]  # Convert Decimal to float
+
+    # Data for top products: Top selling products (based on order items)
+    product_sales = Counter()
+    for order in order_data:
+        for item in order.orderitem_set.all():
+            product_sales[item.book.book_name] += item.quantity
+
+    top_products = product_sales.most_common(3)
+
+    # Data for categories
+    category_sales = Counter()
+    for order in order_data:
+        for item in order.orderitem_set.all():
+            category_sales[item.book.category.category_name] += item.quantity
+
+    top_categories = category_sales.most_common(3)
+
+    payment_methods = defaultdict(int)
+    for order in order_data:
+        payment_methods[order.payment_method] += 1
+
+    payment_method_data = [
+        {"label": "Online", "count": payment_methods.get("ONLINE", 0)},
+        {"label": "COD", "count": payment_methods.get("COD", 0)},
+        {"label": "Wallet", "count": payment_methods.get("WALLET", 0)},
+    ]
+
+    cancelled_count = order_data.filter(order_status='Cancelled').count()
+    delivered_count = order_data.filter(order_status='Delivered').count()
+    returned_count = order_data.filter(order_status='Returned').count()
+    total_orders = order_data.count()
+
+    cancellation_rate = 0
+    if total_orders > 0:
+        cancellation_rate = (cancelled_count / total_orders) * 100
+    # Prepare context data for template
+    context = {
+        'order_data':order_data,
+        'leave_count_by_month': json.dumps(total_amounts),
+        'months': json.dumps(months),
+        'top_products': json.dumps(top_products),
+        'top_categories': json.dumps(top_categories),
+        'payment_methods': json.dumps(payment_method_data),
+        'products':top_products,
+        'categories':top_categories,
+        'payment_method_data':payment_method_data,
+        'cancelled_count': cancelled_count,
+        'delivered_count': delivered_count,
+        'returned_count': returned_count,
+        'cancellation_rate': round(cancellation_rate, 2),
+        'total_orders':total_orders,
+        'total_revenue': total_revenue,
+        'percentage_change': round(percentage_change, 2),
+        'active_users_count': active_users_count,
+    }
+    return render(request, 'admin_dashboard.html', context)
 
 ###############################################################################################################
 @login_required(login_url='admin_login')
@@ -1590,3 +1684,156 @@ def delete_coupon(request, coupon_id):
         'status': 'error', 
         'message': 'Invalid request method'
     }, status=400)
+
+###########################################################################################################################
+
+def generate_detailed_sales_report_pdf(request):
+    try:
+        # Fetch orders categorized by their statuses
+        orders_by_status = {
+            'Ordered': OrderDetails.objects.filter(order_status='Ordered'),
+            'Shipped': OrderDetails.objects.filter(order_status='Shipped'),
+            'Out of Delivery': OrderDetails.objects.filter(order_status='Out of delivery'),
+            'Delivered': OrderDetails.objects.filter(order_status='Delivered'),
+            'Canceled': OrderDetails.objects.filter(order_status='Canceled'),
+        }
+
+        # Fetch payment method-based orders
+        orders_by_payment = {
+            'COD': OrderDetails.objects.filter(payment_method='COD'),
+            'Online Payment': OrderDetails.objects.filter(payment_method='ONLINE'),
+            'Wallet': OrderDetails.objects.filter(payment_method='WALLET'),
+        }
+
+        # Refund details
+        refunded_orders = OrderDetails.objects.filter(is_refund=True)
+        total_refunded_amount = sum(order.total_amount for order in refunded_orders)
+
+        # Create PDF
+        buffer = BytesIO()
+        p = canvas.Canvas(buffer, pagesize=letter)
+        width, height = letter
+
+        # Title
+        p.setFont("Helvetica-Bold", 18)
+        p.drawCentredString(width / 2, height - 50, "Detailed Sales Report")
+
+        # Header Information
+        p.setFont("Helvetica", 12)
+        p.drawString(100, height - 80, f"Report Generated on: {timezone.now().strftime('%Y-%m-%d %H:%M:%S')}")
+
+        # Section 1: Orders by Status
+        y = height - 120
+        p.setFont("Helvetica-Bold", 14)
+        p.drawString(50, y, "Orders by Status:")
+        y -= 20
+        for status, orders in orders_by_status.items():
+            p.setFont("Helvetica-Bold", 12)
+            p.drawString(100, y, f"{status}: {orders.count()} orders")
+            y -= 20
+
+        # Section 2: Orders by Payment Method
+        p.setFont("Helvetica-Bold", 14)
+        p.drawString(50, y - 20, "Orders by Payment Method:")
+        y -= 40
+        for method, orders in orders_by_payment.items():
+            p.setFont("Helvetica-Bold", 12)
+            p.drawString(100, y, f"{method}: {orders.count()} orders")
+            y -= 20
+
+        # Section 3: Refund Details
+        p.setFont("Helvetica-Bold", 14)
+        p.drawString(50, y - 20, "Refund Details:")
+        y -= 40
+        p.setFont("Helvetica", 12)
+        p.drawString(100, y, f"Total Refunded Orders: {refunded_orders.count()}")
+        p.drawString(100, y - 20, f"Total Refunded Amount: ₹{total_refunded_amount}")
+        y -= 40
+
+        # Save and close
+        p.save()
+
+        # Save to file
+        pdf_name = f"sales_report_{timezone.now().strftime('%Y%m%d%H%M%S')}.pdf"
+        media_path = os.path.join('media', 'reports')
+        pdf_path = os.path.join(media_path, pdf_name)
+        os.makedirs(media_path, exist_ok=True)
+
+        with open(pdf_path, 'wb') as f:
+            f.write(buffer.getvalue())
+
+        buffer.close()
+
+        return JsonResponse({
+            'status': 'success',
+            'message': 'Sales report PDF generated successfully!',
+            'file_url': f'/media/reports/{pdf_name}',
+        })
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+    
+#######################################################################################################################################
+
+def generate_detailed_sales_report_excel(request):
+    try:
+        # Fetch orders categorized by their statuses
+        orders_by_status = {
+            'Ordered': OrderDetails.objects.filter(order_status='Ordered'),
+            'Shipped': OrderDetails.objects.filter(order_status='Shipped'),
+            'Out of Delivery': OrderDetails.objects.filter(order_status='Out of delivery'),
+            'Delivered': OrderDetails.objects.filter(order_status='Delivered'),
+            'Canceled': OrderDetails.objects.filter(order_status='Canceled'),
+        }
+
+        # Fetch payment method-based orders
+        orders_by_payment = {
+            'COD': OrderDetails.objects.filter(payment_method='COD'),
+            'Online Payment': OrderDetails.objects.filter(payment_method='ONLINE'),
+            'Wallet': OrderDetails.objects.filter(payment_method='WALLET'),
+        }
+
+        # Refund details
+        refunded_orders = OrderDetails.objects.filter(is_refund=True)
+        total_refunded_amount = sum(order.total_amount for order in refunded_orders)
+
+        # Create Excel Workbook
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = "Sales Report"
+
+        # Add header row
+        ws.append(["Report Generated On", timezone.now().strftime('%Y-%m-%d %H:%M:%S')])
+
+        # Orders by Status
+        ws.append([""])
+        ws.append(["Orders by Status"])
+        for status, orders in orders_by_status.items():
+            ws.append([status, orders.count()])
+
+        # Orders by Payment Method
+        ws.append([""])
+        ws.append(["Orders by Payment Method"])
+        for method, orders in orders_by_payment.items():
+            ws.append([method, orders.count()])
+
+        # Refund Details
+        ws.append([""])
+        ws.append(["Refund Details"])
+        ws.append(["Total Refunded Orders", refunded_orders.count()])
+        ws.append(["Total Refunded Amount", total_refunded_amount])
+
+        # Save the Excel file
+        excel_name = f"sales_report_{timezone.now().strftime('%Y%m%d%H%M%S')}.xlsx"
+        media_path = os.path.join('media', 'reports')
+        excel_path = os.path.join(media_path, excel_name)
+        os.makedirs(media_path, exist_ok=True)
+
+        wb.save(excel_path)
+
+        return JsonResponse({
+            'status': 'success',
+            'message': 'Sales report Excel generated successfully!',
+            'file_url': f'/media/reports/{excel_name}',
+        })
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)

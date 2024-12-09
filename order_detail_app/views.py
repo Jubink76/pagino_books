@@ -1,8 +1,9 @@
 from django.shortcuts import render,redirect,get_object_or_404
 from django.contrib import messages
+from adminside_app.models import BookTable
 from user_profile_app.models import AddressTable,WalletTable, WalletTransaction
 from user_side_app.models import CartTable
-from .models import OrderDetails, OrderItem,CouponTable,CouponUsage,ReturnRequest,ReturnItem
+from .models import OrderDetails, OrderItem,CouponTable,CouponUsage,ReturnRequest,ReturnItem,ReviewTable
 import random
 import string
 from django.db import transaction
@@ -647,15 +648,67 @@ def generate_invoice(request, order_id):
 
         # Create PDF
         buffer = BytesIO()
-        p = canvas.Canvas(buffer)
-        p.drawString(100, 750, f"Invoice for Order ID: {order_id}")
-        p.drawString(100, 730, f"Customer: {order.user.phone_number}")
-        y = 700
+        p = canvas.Canvas(buffer, pagesize=letter)
+        width, height = letter
 
+        # Title and Header (Centered)
+        p.setFont("Helvetica-Bold", 18)
+        p.drawCentredString(width / 2, height - 50, f"Invoice for Order {order_id}")
+
+        # Customer Info (Centered)
+        p.setFont("Helvetica", 12)
+        p.drawCentredString(width / 2, height - 80, f"Customer: {order.user.username} ({order.user.phone_number})")
+        p.drawCentredString(width / 2, height - 100, f"Shipping Address: {order.address.street_name}, {order.address.city}, {order.address.state} - {order.address.pincode}")
+
+        # Draw a Line Separator
+        p.setLineWidth(1)
+        p.line(50, height - 120, width - 50, height - 120)
+
+        # Order Summary (Items)
+        y = height - 150
+        p.setFont("Helvetica-Bold", 12)
+        p.drawString(100, y, "Item Description")
+        p.drawString(400, y, "Quantity")
+        p.drawString(500, y, "Price")
+
+        y -= 20  # Space for items
+        p.setFont("Helvetica", 10)
         for item in order_items:
-            p.drawString(100, y, f"{item.book.book_name} - Quantity: {item.quantity}, Price: {item.price_per_item}")
+            p.drawString(100, y, f"{item.book.book_name}")
+            p.drawString(400, y, f"{item.quantity}")
+            p.drawString(500, y, f"₹{item.price_per_item}")
             y -= 20
+        
+        # Draw a Line Separator
+        p.setLineWidth(1)
+        p.line(50, y, width - 50, y)
+        y -= 20
 
+        # Payment Details
+        p.setFont("Helvetica-Bold", 12)
+        p.drawString(100, y, "Payment Method:")
+        p.setFont("Helvetica", 12)
+        p.drawString(200, y, f"{order.payment_method}")
+        y -= 20
+
+        p.setFont("Helvetica-Bold", 12)
+        p.drawString(100, y, "Payment Status:")
+        p.setFont("Helvetica", 12)
+        payment_status = "Paid" if order.order_status == "Delivered" else "Pending"
+        p.drawString(200, y, f"{payment_status}")
+        y -= 20
+
+        p.setFont("Helvetica-Bold", 12)
+        p.drawString(100, y, "Total Amount Paid:")
+        p.setFont("Helvetica", 12)
+        p.drawString(200, y, f"₹{order.total_amount}")
+        y -= 20
+
+        # Footer
+        p.setFont("Helvetica", 10)
+        p.drawCentredString(width / 2, y - 30, "Thank you for shopping with us!")
+        
+        # Save and get the PDF content
         p.save()
         buffer.seek(0)
 
@@ -686,3 +739,47 @@ def generate_invoice(request, order_id):
         return JsonResponse({'status': 'error', 'message': 'Order not found.'}, status=404)
     except Exception as e:
         return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+    
+
+############################################################################################################################################
+
+@login_required
+def submit_review(request, order_id):
+    # Get the order
+    order = get_object_or_404(OrderDetails, order_id=order_id, user=request.user)
+    
+    if request.method == 'POST':
+        # Get review data
+        rating = request.POST.get('rating')
+        review = request.POST.get('review', '').strip()
+        # Validation
+        errors = []
+        if not rating or not review:
+            errors.append({'field': 'rating', 'message': 'Rating and review are required.'})
+        
+        try:
+            rating = int(rating)
+            if rating < 1 or rating > 5:
+                errors.append({'field': 'rating', 'message': 'Rating must be between 1 and 5.'})
+        except ValueError:
+            errors.append({'field': 'rating', 'message': 'Invalid rating.'})
+        
+        if errors:
+            return JsonResponse({'status': 'error', 'errors': errors}, status=400)
+        
+        with transaction.atomic():
+            ReviewTable.objects.create(
+                order=order,
+                #book=book,
+                rating=rating,
+                review=review,
+                user=request.user
+            )
+
+        return JsonResponse({
+            'status': 'success',
+            'message': 'Your review has been submitted successfully.',
+            'redirect_url': reverse('user_orders')
+        })
+    
+    return JsonResponse({'status': 'error', 'message': 'Invalid request method.'}, status=405)

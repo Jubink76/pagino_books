@@ -59,7 +59,58 @@
             <!-- Main Content -->
             <div class="flex-1">
                 {% if selected_order %}
-                {% if show_return_form %}
+                {% if show_review_form %}
+                <!-- Custom Review Form -->
+                <div class="bg-white rounded-lg p-6">
+                    <h2 class="text-xl font-bold mb-4">Write a Review</h2>
+                    <form id="reviewOrderForm-{{ selected_order.order_id }}" 
+                          method="POST" 
+                          action="{% url 'submit_review' selected_order.order_id %}"
+                          onsubmit="event.preventDefault(); submitReviewForm(this.id);">>
+                        {% csrf_token %}
+                        <input type="hidden" name="book_id" value="{{ book.id }}">
+                        
+                        <!-- Star Rating -->
+                        <div class="mb-4">
+                            <label for="rating" class="block mb-2 text-sm font-medium text-gray-700">Rating</label>
+                            <div id="rating-stars" class="flex space-x-2">
+                                {% for i in "12345" %}
+                                <svg data-value="{{ forloop.counter }}" 
+                                     class="w-6 h-6 text-gray-300 hover:text-yellow-400 transition cursor-pointer" 
+                                     fill="currentColor" 
+                                     xmlns="http://www.w3.org/2000/svg" 
+                                     viewBox="0 0 20 20">
+                                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                                </svg>
+                                {% endfor %}
+                            </div>
+                            <input type="hidden" name="rating" id="rating-value" value="0">
+                        </div>
+                        
+                        <!-- Review Text -->
+                        <div class="mb-4">
+                            <label for="review" class="block mb-2 text-sm font-medium text-gray-700">Review</label>
+                            <textarea id="review" name="review" 
+                                      class="w-full border border-gray-300 rounded-lg p-2 mb-4" 
+                                      placeholder="Write your review here..." 
+                                      rows="4" required></textarea>
+                        </div>
+                        
+                        <!-- Action Buttons -->
+                        <div class="flex gap-4">
+                            <button type="submit" 
+                                    class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+                                Submit Review
+                            </button>
+                            <button type="button" 
+                                    class="bg-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-400"
+                                    onclick="window.location.href='{% url 'user_orders' %}'">
+                                Cancel
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                {% elif show_return_form %}
                 <!-- Custom Return Request Form -->
                 <div class="bg-white rounded-lg p-6">
                     <h2 class="text-xl font-bold mb-4">Return Request</h2>
@@ -319,6 +370,20 @@
                                             {% endwith %}
                                             {% endwith %}
                                         </div>
+                                        {% if order.order_status == 'Delivered' %}
+                                        <form method="POST" action="{% url 'user_orders' %}">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="order_id" value="{{ order.order_id }}">
+                                            <input type="hidden" name="review_order" value="true">
+                                            <input type="hidden" name="book_id" value="{{ book.id }}">
+                                            <button 
+                                                type="submit" 
+                                                class="bg-yellow-500 text-black px-4 py-2 rounded hover:bg-yellow-600 transition">
+                                                Write a Review
+                                            </button>
+                                        </form>
+                                        
+                                        {% endif %}
                                     </div>
                                 </div>
                     
@@ -509,7 +574,6 @@
         // Get the form element
         const form = document.getElementById(formId);
         const isReturnRequest = formId.startsWith('returnOrderForm');
-    
         // SweetAlert confirmation dialog
         Swal.fire({
             title: title,
@@ -565,6 +629,54 @@
                     });
                 });
             }
+        });
+    }
+    function submitReviewForm(formId) {
+        // Get the form element
+        const form = document.getElementById(formId);
+        
+        // SweetAlert confirmation dialog (only for form submission)
+        const formData = new FormData(form);
+        
+        // Submit form using fetch
+        fetch(form.action, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': formData.get('csrfmiddlewaretoken')
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                // Show success message
+                Swal.fire({
+                    title: 'Success!',
+                    text: data.message,
+                    icon: 'success',
+                    confirmButtonText: 'OK'
+                }).then(() => {
+                    // Redirect after showing success message
+                    window.location.href = data.redirect_url;
+                });
+            } else {
+                // Show error message
+                Swal.fire({
+                    title: 'Error!',
+                    text: data.message || 'Something went wrong.',
+                    icon: 'error',
+                    confirmButtonText: 'OK'
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            Swal.fire({
+                title: 'Error!',
+                text: 'Something went wrong.',
+                icon: 'error',
+                confirmButtonText: 'OK'
+            });
         });
     }
 
@@ -663,6 +775,31 @@
         const itemCheckboxes = document.querySelectorAll(".item-checkbox");
         itemCheckboxes.forEach((itemCheckbox) => (itemCheckbox.checked = checkbox.checked));
     }
+    document.addEventListener('DOMContentLoaded', function () {
+        const stars = document.querySelectorAll('#rating-stars svg');
+        const ratingValue = document.getElementById('rating-value');
+    
+        stars.forEach((star, index) => {
+            star.addEventListener('mouseover', () => {
+                stars.forEach((s, i) => {
+                    s.classList.toggle('text-yellow-400', i <= index);
+                    s.classList.toggle('text-gray-300', i > index);
+                });
+            });
+    
+            star.addEventListener('click', () => {
+                ratingValue.value = index + 1;
+            });
+        });
+    
+        document.getElementById('rating-stars').addEventListener('mouseleave', () => {
+            const selectedRating = parseInt(ratingValue.value) || 0;
+            stars.forEach((s, i) => {
+                s.classList.toggle('text-yellow-400', i < selectedRating);
+                s.classList.toggle('text-gray-300', i >= selectedRating);
+            });
+        });
+    });
 </script>
 
 {% endblock %}

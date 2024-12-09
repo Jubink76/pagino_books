@@ -1,12 +1,13 @@
 from django.shortcuts import render,redirect,get_object_or_404
 from user_profile_app.models import AddressTable,WalletTable,WalletTransaction
+from adminside_app.models import BookTable
 from django.contrib import messages
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
 import re
 from log_reg_app.models import UserTable
 from django.contrib.auth import update_session_auth_hash
-from order_detail_app.models import OrderDetails,OrderItem,CouponTable,CouponUsage,ReturnRequest
+from order_detail_app.models import OrderDetails,OrderItem,CouponTable,CouponUsage,ReturnRequest,ReviewTable
 from django.db.models import Count
 from django.db.models import Q
 from django.urls import reverse
@@ -258,6 +259,7 @@ def user_password_reset(request):
 def user_orders(request, order_id=None):
 
     show_return_form = False
+    show_review_form = False
     selected_order = None
 
     orders_with_button = OrderDetails.objects.filter(
@@ -280,21 +282,21 @@ def user_orders(request, order_id=None):
             order_id = request.POST.get('order_id')
             selected_order = get_object_or_404(
                 OrderDetails.objects.prefetch_related('orderitem_set__book__images')
-                                     .annotate(item_count=Count('orderitem')),
+                                    .annotate(item_count=Count('orderitem')),
                 order_id=order_id,
                 user=request.user
             )
             show_return_form = True
-        elif 'reason' in request.POST:
-            # Handle form submission
+
+        elif 'review_order' in request.POST:
+            # Display the review form
             order_id = request.POST.get('order_id')
-            reason = request.POST.get('reason')
-
-            selected_order = get_object_or_404(OrderDetails, order_id=order_id, user=request.user)
-            ReturnRequest.objects.create(order_item=None, reason=reason, status='Pending')
-
-            messages.success(request, "Your return request has been submitted successfully.")
-            return redirect('user_orders')
+            selected_order = get_object_or_404(
+                OrderDetails.objects.prefetch_related('orderitem_set__book__images'),
+                order_id=order_id,
+                user=request.user
+            )
+            show_review_form = True
 
     # Handle GET requests or specific order selection
     if order_id:
@@ -331,6 +333,7 @@ def user_orders(request, order_id=None):
         'order_stats': order_stats,
         'orders_with_button':orders_with_button,
         'show_return_form': show_return_form,
+        'show_review_form': show_review_form,
     }
 
     return render(request, 'user_orders.html', context)

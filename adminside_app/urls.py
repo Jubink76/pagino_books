@@ -31,4 +31,6 @@ urlpatterns = [
     path('edit_product_offer/<int:product_id>/',views.edit_product_offer,name='edit_product_offer'),
     path('delete_product_offer/<int:product_id>/',views.delete_product_offer,name='delete_product_offer'),
     path('admin_coupon/get_coupon_details/<int:coupon_id>/', views.get_coupon_details, name='get_coupon_details'),
+    path('sales-report/pdf/', views.generate_detailed_sales_report_pdf, name='generate_detailed_sales_report_pdf'),
+    path('sales-report/excel/', views.generate_detailed_sales_report_excel, name='generate_detailed_sales_report_excel'),
 ]

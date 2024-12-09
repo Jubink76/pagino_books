@@ -91,7 +91,8 @@ class OrderDetails(models.Model):
                                              ('Shipped', 'Shipped'),
                                              ('Out of delivery','Out of delivery'),
                                              ('Delivered', 'Delivered'),
-                                             ('Canceled','Canceled')], 
+                                             ('Canceled','Canceled'),
+                                             ('Returned','Returned')], 
                                              default='Pending')
     order_date = models.DateTimeField(auto_now_add=True)
     coupon_applied = models.BooleanField(default = False)
@@ -101,6 +102,7 @@ class OrderDetails(models.Model):
     is_canceled = models.BooleanField(default=False)
     cancel_description = models.TextField(blank=True, null=True)
     cancel_date = models.DateTimeField(blank=True, null=True)
+    is_returned = models.BooleanField(default=False)
     is_refund = models.BooleanField(default=False)
     refund_date = models.DateTimeField(blank=True, null=True)
     razorpay_order_id = models.CharField(max_length=100, null=True, blank=True)
@@ -116,6 +118,7 @@ class OrderItem(models.Model):
     quantity = models.PositiveIntegerField(default=1)
     price_per_item = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     total_price = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    is_returned = models.BooleanField(default=False)
     is_canceled = models.BooleanField(default=False)  
     order_status = models.CharField(max_length=20, 
                                     choices=[('Pending','Pending'),
@@ -123,7 +126,8 @@ class OrderItem(models.Model):
                                              ('Shipped', 'Shipped'),
                                              ('Delivered', 'Delivered'),
                                              ('Out of delivery','Out of delivery'),
-                                             ('Canceled','Canceled')], 
+                                             ('Canceled','Canceled'),
+                                             ('Returned','Returned')], 
                                              default='Pending')
     def __str__(self):
         return f"{self.quantity} x {self.product.name} in Order {self.order.order_id}"
@@ -172,3 +176,14 @@ class ReturnItem(models.Model):
 
     def __str__(self):
         return f"Return Item for {self.order_item.book.title} - {self.status}"
+    
+    
+class ReviewTable(models.Model):
+    order = models.ForeignKey(OrderDetails, on_delete=models.CASCADE, null=True,blank=True)
+    user = models.ForeignKey(UserTable,on_delete=models.CASCADE)
+    rating = models.PositiveBigIntegerField(choices=[(i,i) for i in  range(1,6)])
+    review = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Review for {self.book.book_name} by {self.user.username}"
