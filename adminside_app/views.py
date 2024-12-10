@@ -15,9 +15,10 @@ from django.core.exceptions import ValidationError
 from django.http import JsonResponse
 from decimal import Decimal, InvalidOperation
 import re
+from django.db import models
 from django.views.decorators.csrf import csrf_exempt
 import json
-from order_detail_app.models import CouponTable,OfferTable
+from order_detail_app.models import CouponTable,OfferTable,ReturnRequest
 from django.utils import timezone
 from datetime import datetime
 from django.urls import reverse
@@ -29,9 +30,10 @@ import openpyxl
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 from collections import Counter
-from django.db.models import Sum
+from django.db.models import Sum,F, ExpressionWrapper, DecimalField
 from collections import defaultdict
 from datetime import datetime, timedelta
+from django.db.models.functions import TruncMonth, TruncYear,TruncDay
 # Create your views here.
 
 ##############################################################################################################
@@ -43,34 +45,71 @@ def admin_dashboard(request):
 
     order_data = OrderDetails.objects.all()
     active_users_count = UserTable.objects.filter(is_blocked=False, is_deleted=False).count()
-    current_date = datetime.now()
+    current_date = timezone.now()
+    current_year = current_date.year
 
-    # Calculate the total revenue for the current period (all orders)
     total_revenue = OrderDetails.objects.aggregate(Sum('total_amount'))['total_amount__sum'] or 0
+    total_discount = OrderItem.objects.annotate(
+    discount=ExpressionWrapper(
+        F('book__base_price') - F('price_per_item'),
+        output_field=DecimalField()
+    )
+).aggregate(total_discount=Sum(F('discount') * F('quantity')))['total_discount'] or 0
+    previous_month_end = current_date.replace(day=1) - timedelta(days=1)
+    previous_month_start = previous_month_end.replace(day=1)  
+    previous_month_end = previous_month_start.replace(day=28) + timedelta(days=4)  
 
-    # Get the start and end date for the previous period (e.g., previous month)
-    previous_month_start = current_date.replace(day=1) - timedelta(days=1)  # Last day of the previous month
-    previous_month_start = previous_month_start.replace(day=1)  # First day of the previous month
-    previous_month_end = previous_month_start.replace(day=28) + timedelta(days=4)  # The end of the previous month
-
-    # Calculate the total revenue for the previous period (last month)
-    previous_month_revenue = OrderDetails.objects.filter(
-        order_date__gte=previous_month_start, 
-        order_date__lt=previous_month_end
+    previous_month_revenue = order_data.filter(
+        order_date__gte=previous_month_start,
+        order_date__lte=previous_month_end
     ).aggregate(Sum('total_amount'))['total_amount__sum'] or 0
 
-    # Calculate the percentage change in revenue from the previous period
     percentage_change = 0
     if previous_month_revenue > 0:
         percentage_change = ((total_revenue - previous_month_revenue) / previous_month_revenue) * 100
 
+    # daily data
+    daily_data = order_data.annotate(
+        day=TruncDay('order_date', output_field=models.DateTimeField())
+    ).values('day').annotate(
+        total_amount_sum=Sum('total_amount')
+    ).order_by('day')
 
-    # Data for line chart: Order amounts by month
+    current_month = current_date.month
+    current_month_data = [entry for entry in daily_data if entry['day'].month == current_month]
+    days = [entry['day'].strftime('%d %b') for entry in current_month_data]
+    total_amounts_by_day = [float(entry['total_amount_sum']) for entry in current_month_data]
+
+
+    #monthly data
+    monthly_data = order_data.annotate(
+        month=TruncMonth('order_date', output_field=models.DateTimeField())
+    ).values('month').annotate(
+        total_amount_sum=Sum('total_amount')
+    ).order_by('month')
+
+    all_months = [datetime(current_year, month, 1) for month in range(1, 13)]
+
+    sales_by_month = {entry['month'].strftime('%B %Y'): float(entry['total_amount_sum']) for entry in monthly_data}
+    months = [month.strftime('%B %Y') for month in all_months]
+    total_amounts_by_month = [sales_by_month.get(month, 0) for month in months]
+
+    # Yearly data
+    yearly_data = order_data.annotate(
+        year=TruncYear('order_date', output_field=models.DateTimeField())
+    ).values('year').annotate(
+        total_amount_sum=Sum('total_amount')
+    ).order_by('year')
+
+    years = [entry['year'].strftime('%Y') for entry in yearly_data]
+
+    total_amounts_by_year = [float(entry['total_amount_sum']) for entry in yearly_data]
+
     order_counts = order_data.values('order_date').annotate(total_amount_sum=Sum('total_amount'))
-    months = [order['order_date'].strftime('%B %Y') for order in order_counts]
-    total_amounts = [float(order['total_amount_sum']) for order in order_counts]  # Convert Decimal to float
 
-    # Data for top products: Top selling products (based on order items)
+    total_amounts = [float(order['total_amount_sum']) for order in order_counts]  
+
+
     product_sales = Counter()
     for order in order_data:
         for item in order.orderitem_set.all():
@@ -78,7 +117,6 @@ def admin_dashboard(request):
 
     top_products = product_sales.most_common(3)
 
-    # Data for categories
     category_sales = Counter()
     for order in order_data:
         for item in order.orderitem_set.all():
@@ -96,7 +134,7 @@ def admin_dashboard(request):
         {"label": "Wallet", "count": payment_methods.get("WALLET", 0)},
     ]
 
-    cancelled_count = order_data.filter(order_status='Cancelled').count()
+    cancelled_count = order_data.filter(order_status='Canceled').count()
     delivered_count = order_data.filter(order_status='Delivered').count()
     returned_count = order_data.filter(order_status='Returned').count()
     total_orders = order_data.count()
@@ -107,8 +145,12 @@ def admin_dashboard(request):
     # Prepare context data for template
     context = {
         'order_data':order_data,
-        'leave_count_by_month': json.dumps(total_amounts),
+        'total_amounts_by_day': json.dumps(total_amounts_by_day),
+        'days': json.dumps(days),
+        'leave_count_by_month': json.dumps(total_amounts_by_month),
         'months': json.dumps(months),
+        'leave_count_by_year': json.dumps(total_amounts_by_year),
+        'years': json.dumps(years),
         'top_products': json.dumps(top_products),
         'top_categories': json.dumps(top_categories),
         'payment_methods': json.dumps(payment_method_data),
@@ -123,6 +165,7 @@ def admin_dashboard(request):
         'total_revenue': total_revenue,
         'percentage_change': round(percentage_change, 2),
         'active_users_count': active_users_count,
+        'total_discount':total_discount,
     }
     return render(request, 'admin_dashboard.html', context)
 
@@ -1837,3 +1880,9 @@ def generate_detailed_sales_report_excel(request):
         })
     except Exception as e:
         return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+    
+############################################################################################################################################
+
+def return_requests(request):
+    return_requests = ReturnRequest.objects.filter(status='Pending').order_by('-created_at')
+    return render(request, 'return_request.html', {'return_requests': return_requests})

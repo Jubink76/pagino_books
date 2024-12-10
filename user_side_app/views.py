@@ -9,11 +9,12 @@ from django.http import JsonResponse
 import json
 from user_profile_app.models import AddressTable
 from django.contrib.auth.decorators import login_required
-from order_detail_app.models import OrderDetails,OrderItem, OfferTable, CouponTable
+from order_detail_app.models import OrderDetails,OrderItem, OfferTable, CouponTable,ReviewTable
 from django.urls import reverse
 import re
 from django.db.models import Q
 from django.utils.timezone import now
+from django.db.models import Avg, Count
 
 ##########################################################################################################
 
@@ -117,6 +118,14 @@ def single_detail(request,pk):
     book = get_object_or_404(BookTable,id=pk)
     images = book.images.all()
 
+    rating_data = ReviewTable.objects.filter(book=book).aggregate(
+    average_rating=Avg('rating'),
+    review_count=Count('id')
+    )
+
+    average_rating = rating_data['average_rating'] or 0  # Default to 0 if no reviews
+    review_count = rating_data['review_count'] or 0  
+
     active_offers = OfferTable.objects.filter(is_active=True, valid_from__lte=now(), valid_to__gte=now())
 
     # Calculate the offer price for the main book
@@ -162,7 +171,11 @@ def single_detail(request,pk):
         is_available = True,
         is_deleted = False
     ).exclude(id=pk)[:6]
-    return render(request,'single_detail.html',{'book':book,'images':images,'related_books':related_books})
+    return render(request,'single_detail.html',{'book':book,'images':images,
+                                                'related_books':related_books,
+                                                'average_rating': average_rating,
+                                                'review_count': review_count,
+                                                'rating_range': range(1, 6),})
 
 ###########################################################################################################
 

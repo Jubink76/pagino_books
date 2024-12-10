@@ -1,0 +1,153 @@
+{% extends 'admin_base.html' %}
+{% load static %}
+
+{% block csslink %}
+<link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="col-md-9 ms-sm-auto col-lg-10 offset-md-3 offset-lg-2">
+    <div class="bg-gray-800 rounded-lg shadow-lg p-6">
+        <!-- Header Section -->
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-white text-2xl font-medium">Return requests</h1>
+            <nav aria-label="breadcrumb">
+                <ol class="flex space-x-2 text-sm text-gray-400">
+                    <li><a href="{% url 'admin_dashboard' %}" class="hover:text-white">Admin</a></li>
+                    <li>/</li>
+                    <li class="text-white">Return requests</li>
+                </ol>
+            </nav>
+        </div>
+        
+        {% if return_requests.exists %}
+        <div class="space-y-6">
+            {% for request in return_requests %}
+            <div class="flex justify-between items-start bg-gray-700 rounded-lg shadow p-4">
+                <div>
+                    <h2 class="text-white text-lg font-medium">Request #{{ request.id }}</h2>
+                    <p class="text-gray-300 text-sm">
+                        <strong>Order:</strong> {{ request.order.order_id }}<br>
+                        <strong>User:</strong> {{ request.user.phone_number }}<br>
+                        <strong>Reason:</strong> {{ request.reason }}<br>
+                        <strong>Status:</strong>
+                        <span class="text-{{ request.status|lower }}-500 font-medium">{{ request.status }}</span>
+                    </p>
+                    {% if request.return_entire_order %}
+                        <p class="text-gray-300 text-sm mt-2">
+                            <strong>Request Type:</strong> Entire Order Return
+                        </p>
+                    {% else %}
+                        <p class="text-gray-300 text-sm mt-2">
+                            <strong>Items:</strong> 
+                            {% for item in request.items.all %}
+                                {{ item.order_item.book.book_name }}
+                                {% if not forloop.last %}, {% endif %}
+                            {% endfor %}
+                        </p>
+                    {% endif %}
+                </div>
+                <div class="text-right flex flex-col items-end">
+                    <span class="text-gray-400 text-sm mb-2 mb-10">{{ request.created_at|date:"M d, Y h:i A" }}</span>
+                    <div class="flex justify-center space-x-4">
+                        <!-- Approve Button -->
+                        <form method="POST" action="{% url 'approve_return_request' request.id %}" id="approve-form-{{ request.id }}">
+                            {% csrf_token %}
+                            <button type="button" onclick="confirmAction('approve', '{{ request.id }}')" class="bg-green-500 hover:bg-green-600 text-white font-medium py-1 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500">
+                                Approve
+                            </button>
+                        </form>
+                        
+                        <!-- Reject Button -->
+                        <form method="POST" action="{% url 'reject_return_request' request.id %}" id="reject-form-{{ request.id }}">
+                            {% csrf_token %}
+                            <button type="button" onclick="confirmAction('reject', '{{ request.id }}')" class="bg-red-500 hover:bg-red-600 text-white font-medium py-1 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500">
+                                Reject
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>                      
+            {% endfor %}
+        </div>
+    {% else %}
+        <p class="text-gray-300 text-center">No return requests found.</p>
+    {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+
+{% block script %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    function confirmAction(action, requestId) {
+        let title, text, icon, formId;
+
+        // Set the appropriate values based on the action
+        if (action === 'approve') {
+            title = "Are you sure you want to approve this return request?";
+            text = "You will refund the user and approve this request.";
+            icon = "warning";
+            formId = 'approve-form-' + requestId;
+        } else if (action === 'reject') {
+            title = "Are you sure you want to reject this return request?";
+            text = "This action will reject the return request permanently.";
+            icon = "error";
+            formId = 'reject-form-' + requestId;
+        }
+
+        // Show SweetAlert confirmation dialog
+        Swal.fire({
+            title: title,
+            text: text,
+            icon: icon,
+            showCancelButton: true,
+            confirmButtonText: 'Yes',
+            cancelButtonText: 'No'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Submit the corresponding form using AJAX after confirmation
+                var form = document.getElementById(formId);
+                var formData = new FormData(form);
+
+                // Use fetch to send the form data
+                fetch(form.action, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value // CSRF token
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    // Check if the response is successful
+                    if (data.status === 'success') {
+                        Swal.fire({
+                            title: 'Success!',
+                            text: data.message,
+                            icon: 'success',
+                            confirmButtonText: 'Ok'
+                        });
+                    } else {
+                        Swal.fire({
+                            title: 'Error',
+                            text: data.message,
+                            icon: 'error',
+                            confirmButtonText: 'Try Again'
+                        });
+                    }
+                })
+                .catch(error => {
+                    Swal.fire({
+                        title: 'Error',
+                        text: 'An error occurred while processing the request.',
+                        icon: 'error',
+                        confirmButtonText: 'Try Again'
+                    });
+                });
+            }
+        });
+    }
+</script>
+{% endblock %}

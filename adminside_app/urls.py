@@ -33,4 +33,6 @@ urlpatterns = [
     path('admin_coupon/get_coupon_details/<int:coupon_id>/', views.get_coupon_details, name='get_coupon_details'),
     path('sales-report/pdf/', views.generate_detailed_sales_report_pdf, name='generate_detailed_sales_report_pdf'),
     path('sales-report/excel/', views.generate_detailed_sales_report_excel, name='generate_detailed_sales_report_excel'),
+    path('return_requests',views.return_requests,name='return_requests'),
+    
 ]

@@ -11,4 +11,6 @@ urlpatterns = [
     path('return_request/<str:order_id>/',views.return_request, name='return_request'),
     path('generate_invoice/<str:order_id>/', views.generate_invoice, name='generate_invoice'),
     path('submit_review/<str:order_id>/', views.submit_review, name='submit_review'),
+    path('return-request/<int:return_request_id>/approve/',views.approve_return_request, name='approve_return_request'),
+    path('return-request/<int:return_request_id>/reject/',views.reject_return_request, name='reject_return_request'),
 ]

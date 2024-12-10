@@ -181,6 +181,7 @@ class ReturnItem(models.Model):
 class ReviewTable(models.Model):
     order = models.ForeignKey(OrderDetails, on_delete=models.CASCADE, null=True,blank=True)
     user = models.ForeignKey(UserTable,on_delete=models.CASCADE)
+    book = models.ForeignKey(BookTable, on_delete=models.CASCADE,null=True,blank=True)
     rating = models.PositiveBigIntegerField(choices=[(i,i) for i in  range(1,6)])
     review = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)

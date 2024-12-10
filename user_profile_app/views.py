@@ -261,6 +261,7 @@ def user_orders(request, order_id=None):
     show_return_form = False
     show_review_form = False
     selected_order = None
+    selected_book = None
 
     orders_with_button = OrderDetails.objects.filter(
         Q(payment_method__in=['ONLINE', 'WALLET']) | Q(order_status='Delivered'),
@@ -291,11 +292,14 @@ def user_orders(request, order_id=None):
         elif 'review_order' in request.POST:
             # Display the review form
             order_id = request.POST.get('order_id')
+            book_id = request.POST.get('book_id')  # Fetch book_id from POST data
+
             selected_order = get_object_or_404(
                 OrderDetails.objects.prefetch_related('orderitem_set__book__images'),
                 order_id=order_id,
                 user=request.user
             )
+            selected_book = get_object_or_404(OrderItem.objects.select_related('book'), id=book_id).book
             show_review_form = True
 
     # Handle GET requests or specific order selection
@@ -307,6 +311,12 @@ def user_orders(request, order_id=None):
             order_id=order_id,
             user=request.user
         )
+
+    if selected_order:
+        # Check if item_count is available and pass it to the context
+        is_single_item_order = selected_order.item_count == 1
+    else:
+        is_single_item_order = False
 
     # Get all orders and apply pagination
     order_list = OrderDetails.objects.filter(user=request.user)\
@@ -330,10 +340,12 @@ def user_orders(request, order_id=None):
     context = {
         'orders': orders,
         'selected_order': selected_order,
+        'selected_book': selected_book,
         'order_stats': order_stats,
         'orders_with_button':orders_with_button,
         'show_return_form': show_return_form,
         'show_review_form': show_review_form,
+        'is_single_item_order': is_single_item_order,
     }
 
     return render(request, 'user_orders.html', context)

@@ -82,7 +82,7 @@
       </div>
       <div class="bg-green-600 border-2 border-gray-600 rounded-lg p-6">
         <h2 class="text-gray-300 font-semibold mb-4">Total Discount Given</h2>
-        <p class="text-4xl font-bold text-white">₹799.50</p>
+        <p class="text-4xl font-bold text-white">₹{{ total_discount }}</p>
       </div>
       <div class="bg-yellow-600 border-2 border-gray-600 rounded-lg p-6">
         <h2 class="text-gray-300 font-semibold mb-4">Cancelled Orders</h2>
@@ -166,10 +166,26 @@
           <div id="topCategoriesChart" style="min-height: 350px;"></div>
       </div>
   
-        <div class="bg-gray-700 border-2 border-gray-600 rounded-lg p-6">
-            <h2 class="text-gray-300 font-semibold mb-4">Monthly Sales</h2>
-            <div id="lineChart" style="min-height: 350px;"></div>
+      <div class="bg-gray-700 border-2 border-gray-600 rounded-lg p-6">
+        <div class="flex items-center space-x-4 mb-4">
+            <label class="text-gray-200 flex items-center space-x-2">
+                <input type="checkbox" id="filterMonthly" class="form-checkbox" checked>
+                <span>Monthly Sales</span>
+            </label>
+            <label class="text-gray-200 flex items-center space-x-2">
+                <input type="checkbox" id="filterYearly" class="form-checkbox">
+                <span>Yearly Sales</span>
+            </label>
+            <label class="text-gray-200 flex items-center space-x-2">
+                <input type="checkbox" id="filterDaily" class="form-checkbox">
+                <span>Daily Sales</span>
+            </label>
         </div>
+        <div id="lineChart" style="min-height: 350px;">
+            <!-- The chart will be rendered here -->
+        </div>
+      </div>
+    
 
         <div class="bg-gray-700 border-2 border-gray-600 rounded-lg p-6">
           <h2 class="text-gray-300 font-semibold mb-4">Payment Method Distribution</h2>
@@ -183,42 +199,46 @@
 <script>
   document.addEventListener('DOMContentLoaded', function () {
       // Parse the JSON data from Django context
-      var leaveCounts = JSON.parse('{{ leave_count_by_month|safe }}');
+      var dailyCounts = JSON.parse('{{ total_amounts_by_day|safe }}'); 
+      var days = JSON.parse('{{ days|safe }}'); 
+      var monthlyCounts = JSON.parse('{{ leave_count_by_month|safe }}');
       var months = JSON.parse('{{ months|safe }}');
+      var yearlyCounts = JSON.parse('{{ leave_count_by_year|safe }}');
+      var years = JSON.parse('{{ years|safe }}');
       var topProducts = JSON.parse('{{ top_products|safe }}');
       var topCategories = JSON.parse('{{ top_categories|safe }}');
       var paymentMethods = JSON.parse('{{ payment_methods|safe }}');
 
       // Line Chart Configuration
       var optionsLineChart = {
-          series: [{
-              name: 'Total Amount',
-              data: leaveCounts,
-          }],
-          chart: {
-              height: 350,
-              type: 'line',
-              zoom: { enabled: false },
-              foreColor: '#d1d5db'
-          },
-          theme: {
-              mode: 'dark'
-          },
-          stroke: {
-              curve: 'smooth',
-              width: 3
-          },
-          xaxis: {
-              categories: months,
-              title: { text: 'Months' }
-          },
-          yaxis: {
-              title: { text: 'Total Amount (₹)' }
-          },
-          tooltip: {
-              theme: 'dark'
-          }
-      };
+        series: [{
+            name: 'Total Amount',
+            data: monthlyCounts, // Default to monthly data
+        }],
+        chart: {
+            height: 350,
+            type: 'line',
+            zoom: { enabled: false },
+            foreColor: '#d1d5db'
+        },
+        theme: {
+            mode: 'dark'
+        },
+        stroke: {
+            curve: 'smooth',
+            width: 3
+        },
+        xaxis: {
+            categories: months,
+            title: { text: 'Months' }
+        },
+        yaxis: {
+            title: { text: 'Total Amount (₹)' }
+        },
+        tooltip: {
+            theme: 'dark'
+        }
+    };
 
       // Bar Chart for Top Products Configuration
       var optionsProductChart = {
@@ -313,6 +333,62 @@
       productChart.render();
       categoryChart.render();
       paymentChart.render();
+
+      var monthlyCheckbox = document.getElementById('filterMonthly');
+      var yearlyCheckbox = document.getElementById('filterYearly');
+      var dailyCheckbox = document.getElementById('filterDaily');
+
+      monthlyCheckbox.checked = true;
+
+      monthlyCheckbox.addEventListener('change', function () {
+        if (monthlyCheckbox.checked) {
+            yearlyCheckbox.checked = false; // Uncheck yearly
+            // Update chart to show monthly data
+            lineChart.updateOptions({
+                series: [{
+                    name: 'Total Amount',
+                    data: monthlyCounts
+                }],
+                xaxis: {
+                    categories: months,
+                    title: { text: 'Months' }
+                }
+            });
+        }
+      });
+
+      yearlyCheckbox.addEventListener('change', function () {
+        if (yearlyCheckbox.checked) {
+            monthlyCheckbox.checked = false; // Uncheck monthly
+            // Update chart to show yearly data
+            lineChart.updateOptions({
+                series: [{
+                    name: 'Total Amount',
+                    data: yearlyCounts
+                }],
+                xaxis: {
+                    categories: years,
+                    title: { text: 'Years' }
+                }
+            });
+        }
+      });
+      dailyCheckbox.addEventListener('change', function () {
+        if (dailyCheckbox.checked) {
+            monthlyCheckbox.checked = false; // Uncheck monthly
+            yearlyCheckbox.checked = false; // Uncheck yearly
+            lineChart.updateOptions({
+                series: [{
+                    name: 'Total Amount',
+                    data: dailyCounts
+                }],
+                xaxis: {
+                    categories: days,
+                    title: { text: 'Days' }
+                }
+            });
+        }
+      });
   });
 </script>
 

@@ -564,6 +564,93 @@ def return_request(request, order_id):
 
 #############################################################################################################################
 
+def approve_return_request(request, return_request_id):
+    if request.method == "POST":
+        return_request = get_object_or_404(ReturnRequest, id=return_request_id)
+
+        # Check if return request is already processed
+        if return_request.status != 'Pending':
+            return JsonResponse({
+                'status': 'error',
+                'message': "This return request has already been processed."
+            }, status=400)
+
+        try:
+            # Process refund
+            with transaction.atomic():
+                order = return_request.order
+                total_refund_amount = Decimal(order.total_amount if return_request.return_entire_order else 0)
+
+                # Calculate refund for selected items if not entire order
+                if not return_request.return_entire_order:
+                    items_to_return = return_request.items.all()
+                    total_refund_amount = sum(item.order_item.total_price for item in items_to_return)
+
+                # Update wallet
+                wallet, created = WalletTable.objects.get_or_create(user=order.user)
+                wallet.available_balance += total_refund_amount
+                print(wallet.available_balance)
+                wallet.save()
+
+                # Log transaction
+                WalletTransaction.objects.create(
+                    wallet=wallet,
+                    transaction_type='refund',
+                    transaction_amount=total_refund_amount,
+                    description=f"Refund for returned order {order.order_id}",
+                    transaction_time=now()
+                )
+
+                # Update order and return request
+                return_request.status = 'Approved'
+                return_request.processed_at = now()
+                return_request.save()
+
+                order.order_status = 'Returned'
+                order.is_returned = True
+                order.is_refund = True
+                order.refund_date = now()
+                order.save()
+
+                return JsonResponse({
+                    'status': 'success',
+                    'message': f"₹{total_refund_amount:.2f} has been refunded to the user's wallet.",
+                })
+
+        except Exception as e:
+            return JsonResponse({
+                'status': 'error',
+                'message': f"An error occurred while processing the refund: {str(e)}."
+            }, status=500)
+
+    return JsonResponse({'status': 'error', 'message': "Invalid request method."}, status=405)
+
+#############################################################################################################################
+
+def reject_return_request(request, return_request_id):
+    if request.method == "POST":
+        return_request = get_object_or_404(ReturnRequest, id=return_request_id)
+
+        # Check if return request is already processed
+        if return_request.status != 'Pending':
+            return JsonResponse({
+                'status': 'error',
+                'message': "This return request has already been processed."
+            }, status=400)
+
+        # Mark return request as Rejected
+        return_request.status = 'Rejected'
+        return_request.processed_at = now()
+        return_request.save()
+
+        return JsonResponse({
+            'status': 'success',
+            'message': "The return request has been rejected."
+        })
+
+    return JsonResponse({'status': 'error', 'message': "Invalid request method."}, status=405)
+
+#############################################################################################################################
 def apply_coupon(request):
     if request.method == 'POST':
         try:
@@ -752,6 +839,7 @@ def submit_review(request, order_id):
         # Get review data
         rating = request.POST.get('rating')
         review = request.POST.get('review', '').strip()
+        book_id = request.POST.get('book_id')
         # Validation
         errors = []
         if not rating or not review:
@@ -767,10 +855,20 @@ def submit_review(request, order_id):
         if errors:
             return JsonResponse({'status': 'error', 'errors': errors}, status=400)
         
+        if not book_id:
+            return JsonResponse({'status': 'error', 'message': 'Book ID is missing.'}, status=400)
+
+        try:
+            book_id = int(book_id)
+        except ValueError:
+            return JsonResponse({'status': 'error', 'message': 'Invalid Book ID provided.'}, status=400)
+        
+        book = get_object_or_404(BookTable, id=book_id)
+
         with transaction.atomic():
             ReviewTable.objects.create(
                 order=order,
-                #book=book,
+                book=book,
                 rating=rating,
                 review=review,
                 user=request.user

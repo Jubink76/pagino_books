@@ -62,13 +62,13 @@
                 {% if show_review_form %}
                 <!-- Custom Review Form -->
                 <div class="bg-white rounded-lg p-6">
-                    <h2 class="text-xl font-bold mb-4">Write a Review</h2>
+                    <h2 class="text-xl font-bold mb-4">Write a Review "{{ selected_book.book_name }}"</h2>
                     <form id="reviewOrderForm-{{ selected_order.order_id }}" 
                           method="POST" 
                           action="{% url 'submit_review' selected_order.order_id %}"
-                          onsubmit="event.preventDefault(); submitReviewForm(this.id);">>
+                          onsubmit="event.preventDefault(); submitReviewForm(this.id);">
                         {% csrf_token %}
-                        <input type="hidden" name="book_id" value="{{ book.id }}">
+                        <input type="hidden" name="book_id" value="{{ selected_book.id }}">
                         
                         <!-- Star Rating -->
                         <div class="mb-4">
@@ -142,7 +142,7 @@
                             <div class="space-y-2">
                                 {% for item in selected_order.orderitem_set.all %}
                                 <div class="flex items-center">
-                                    <input type="checkbox" name="items[]" id="item-{{ item.id }}" value="{{ item.id }}" 
+                                    <input type="checkbox" name="items[]" id="item-{{ item.book.id }}" value="{{ item.id }}" 
                                            class="mr-2 item-checkbox">
                                     <label for="item-{{ item.id }}" class="text-sm font-medium text-gray-700">
                                         {{ item.book.book_name }} (Qty: {{ item.quantity }})
@@ -201,7 +201,7 @@
                                 <div class="flex items-center gap-4">
                                     {% if item.book.images.first %}
                                     <img src="{{ item.book.images.first.image.url }}" alt="{{ item.book.book_name }}" 
-                                        class="w-24 h-24 object-cover rounded">
+                                        class="w-24 h-30 object-cover rounded">
                                     {% endif %}
                                     <div>
                                         <h3 class="text-lg font-medium text-gray-900">{{ item.book.book_name }}</h3>
@@ -212,7 +212,19 @@
                                     </div>
                                 </div>
                                 <div>
-                                    {% if selected_order.item_count > 1 and selected_order.order_status == 'Pending' %}
+                                    {% if selected_order.order_status == 'Delivered' %}
+                                        <form method="POST" action="{% url 'user_orders' %}">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="order_id" value="{{ selected_order.order_id }}">
+                                            <input type="hidden" name="review_order" value="true">
+                                            <input type="hidden" name="book_id" value="{{ item.id }}">
+                                            <button 
+                                                type="submit" 
+                                                class="bg-yellow-500 text-black px-4 py-2 rounded hover:bg-yellow-600 transition">
+                                                Write a Review
+                                            </button>
+                                        </form>                                      
+                                    {% elif selected_order.item_count > 1 and selected_order.order_status == 'Pending' %}
                                     <form method="POST" action="{% url 'user_single_item_cancel' selected_order.order_id item.id %}" id="cancelItemForm-{{ item.id }}">
                                         {% csrf_token %}
                                         <button type="button" 
@@ -370,20 +382,6 @@
                                             {% endwith %}
                                             {% endwith %}
                                         </div>
-                                        {% if order.order_status == 'Delivered' %}
-                                        <form method="POST" action="{% url 'user_orders' %}">
-                                            {% csrf_token %}
-                                            <input type="hidden" name="order_id" value="{{ order.order_id }}">
-                                            <input type="hidden" name="review_order" value="true">
-                                            <input type="hidden" name="book_id" value="{{ book.id }}">
-                                            <button 
-                                                type="submit" 
-                                                class="bg-yellow-500 text-black px-4 py-2 rounded hover:bg-yellow-600 transition">
-                                                Write a Review
-                                            </button>
-                                        </form>
-                                        
-                                        {% endif %}
                                     </div>
                                 </div>
                     
