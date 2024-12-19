@@ -1,0 +1,154 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block css_link %}
+
+{% endblock %}
+
+{% block content %}
+<div class="bg-gray-50">
+    <div class="min-h-screen">
+        <!-- Breadcrumb -->
+        <div class="max-w-7xl mx-auto px-4 py-8">
+            <div class="text-sm mb-8">
+                <a href="/" class="text-blue-600 hover:text-blue-800">Home</a>
+                <span class="text-gray-500 mx-2">/</span>
+                <span class="text-gray-500">My Account</span>
+            </div>
+
+            <!-- Main Content -->
+            <div class="flex flex-col lg:flex-row gap-8 bg-white rounded-xl p-8 shadow-sm">
+                <!-- Sidebar -->
+                <div class="w-full lg:w-72">
+                    <div class="bg-gray-50 rounded-lg p-6">
+                        <h2 class="text-2xl font-semibold text-gray-800 mb-6">Manage Account</h2>
+                        <ul class="space-y-4">
+                            <li>
+                                <a href="" class="flex items-center px-5 py-3 rounded-lg bg-blue-600 text-white">
+                                    <span class="mr-3 text-xl">👤</span>
+                                    My Profile
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{% url 'user_address' %}" class="flex items-center px-5 py-3 rounded-lg text-gray-700 hover:bg-gray-200">
+                                    <span class="mr-3 text-xl">📖</span>
+                                    Address Book
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{% url 'user_orders' %}" class="flex items-center px-5 py-3 rounded-lg text-gray-700 hover:bg-gray-200">
+                                    <span class="mr-3 text-xl">🛍️</span>
+                                    My Orders
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{% url 'user_wallet' %}" class="flex items-center px-5 py-3 rounded-lg text-gray-700 hover:bg-gray-200">
+                                    <span class="mr-3 text-xl">💰</span>
+                                    Wallet
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{% url 'user_coupon' %}" class="flex items-center px-5 py-3 rounded-lg text-gray-700 hover:bg-gray-200">
+                                    <span class="mr-3 text-xl">💳</span>
+                                    Coupon
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Main Content Area -->
+                <div class="flex-1 px-4">
+                    <!-- Profile Header -->
+                    <div class="flex items-center mb-10">
+                        <div class="w-14 h-14 bg-blue-600 rounded-full flex items-center justify-center mr-5">
+                            <svg class="w-8 h-8 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                                <circle cx="12" cy="7" r="4"/>
+                            </svg>
+                        </div>
+                        <h1 class="text-3xl font-semibold text-gray-800">Edit Your Profile</h1>
+                    </div>
+
+                    <!-- Profile Form -->
+                    <form action="" method="post" id="user-profile-form" class="space-y-6">
+                        {% csrf_token %}
+                        <!-- Name Grid -->
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">First Name*</label>
+                                <input type="text" id="first_name" name="first_name" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" value="{{ profile.first_name }}">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Last Name*</label>
+                                <input type="text" id="last_name" name="last_name" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" value="{{ profile.last_name}}">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">User name*</label>
+                            <input type="text" id="username" name="username" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" value="{{ profile.username}}">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Email Address*</label>
+                            <input type="email" id="email" name="email" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" value="{{ profile.email}}">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
+                            <input type="tel" id="phone_number" name="phone_number" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" value="{{ profile.phone_number}}">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Gender</label>
+                            <select id="gender" name="gender" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none bg-white">
+                                <option value="male" {% if profile.gender == "male" %}selected{% endif %}>Male</option>
+                                <option value="female"{% if profile.gender == "female" %}selected{% endif %} selected>Female</option>
+                                <option value="other"{% if profile.gender == "other" %}selected{% endif %}>Other</option>
+                            </select>
+                        </div>
+
+                        <!-- Buttons -->
+                        <div class="flex flex-col sm:flex-row gap-4 pt-6">
+                            <a href="{% url 'user_password_reset' %}"><button type="button" class="w-full sm:w-40 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                                Reset Password
+                            </button></a>
+                            <button type="submit" id="save-changes" class="w-full sm:w-40 px-6 py-3 bg-yellow-500 text-black rounded-lg hover:bg-yellow-600 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2" disabled>
+                                Save Changes
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block script %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('user-profile-form');
+        const saveChangesButton = document.getElementById('save-changes');
+        const originalValues = {};
+
+        // Store the original field values
+        form.querySelectorAll('input, select').forEach(function(field) {
+            originalValues[field.id] = field.value;
+        });
+
+        // Track form field changes
+        form.addEventListener('input', function() {
+            let isModified = false;
+            form.querySelectorAll('input, select').forEach(function(field) {
+                if (originalValues[field.id] !== field.value) {
+                    isModified = true;
+                    return;
+                }
+            });
+            saveChangesButton.disabled = !isModified;
+        });
+    });
+</script>
+{% endblock %}

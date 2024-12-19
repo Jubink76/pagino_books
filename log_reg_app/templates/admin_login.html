@@ -1,0 +1,148 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book Shop Login</title>
+    <link rel="stylesheet" href="{% static 'user/css/admin_login.css' %}">
+    <style>
+        #message-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            width: 300px;
+        }
+        
+        .alert {
+            padding: 15px;
+            margin-bottom: 10px;
+            border: none;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            opacity: 1;
+            transition: opacity 0.3s ease;
+        }
+        
+        .alert-success {
+            background-color: #d4edda !important;
+            color: #155724 !important;
+            border-left: 4px solid #28a745;
+        }
+        
+        .alert-error, .alert-danger {
+            background-color: #f8d7da !important;
+            color: #721c24 !important;
+            border-left: 4px solid #dc3545;
+        }
+        
+        .alert.fade {
+            opacity: 0;
+        }
+        
+        .alert.show {
+            opacity: 1;
+        }
+        
+        .btn-close {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            padding: 0.5rem;
+            background: none;
+            border: none;
+            opacity: 0.5;
+            cursor: pointer;
+        }
+        
+        .btn-close:hover {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="form-container">
+            <h1>Pagino</h1>
+            <h2>Welcome 👋</h2>
+            <p>Please login here</p>
+            {% if messages %}
+                <div id="message-container">
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                            {% if message.tags == 'success' %}
+                                <i class="bi bi-check-circle-fill me-2"></i>
+                            {% elif message.tags == 'error' %}
+                                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                            {% endif %}
+                                {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+            <form action="" method="post">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="username" class="form-label">Username</label>
+                    <input type="text" class="form-control" id="username" name="username" placeholder="Enter your username" required>
+                    <span class="error-message" id="username_error"></span>
+                </div>
+                <div class="form-group">
+                    <label for="password" class="form-label">Password</label>
+                    <input type="password" class="form-control" id="password" name="password" placeholder="*****" required>
+                    <span class="error-message" id="password_error"></span>
+                </div>
+                <div class="remember-me">
+                    <div class="rem_content">
+                        <input type="checkbox" id="remember" name="remember">
+                        <label for="remember">Remember me</label>
+                    </div>
+                    <a href="#" class="forgot-password">Forgot Password?</a>
+                </div>
+                <!-- Add login button here -->
+                <div class="form-group">
+                    <button type="submit" class="login-btn">Login</button>
+                </div>
+            </form>
+        </div>
+        <div class="image-container">
+            <img src="{% static 'user/images/logo/book_logo.png' %}" alt="Book icon">
+        </div>
+    </div>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const usernameInput = document.getElementById("username");
+            const usernameError = document.getElementById("username_error");
+            const passwordInput = document.getElementById("password");
+            const passwordError = document.getElementById("password_error");
+        
+            usernameInput.addEventListener("input", function () {
+                const usernameValue = usernameInput.value;
+                const validPattern = /^[a-zA-Z0-9_-]*$/;
+        
+                if (!validPattern.test(usernameValue)) {
+                    usernameError.textContent = "Username can only contain letters, numbers, underscores, and hyphens.";
+                    usernameError.style.color = "red";
+                } else {
+                    usernameError.textContent = ""; // Clear error message
+                }
+            });
+        
+            passwordInput.addEventListener("input", function () {
+                const passwordValue = passwordInput.value;
+        
+                if (passwordValue.length < 5) {
+                    passwordError.textContent = "Password must be at least 5 characters long.";
+                    passwordError.style.color = "red";
+                } else {
+                    passwordError.textContent = ""; // Clear error message
+                }
+            });
+        });
+    </script>
+    <script src="{% static 'user/js/message_timer.js' %}"></script>
+</body>
+</html>

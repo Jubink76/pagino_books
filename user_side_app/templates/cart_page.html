@@ -1,0 +1,171 @@
+{% extends 'base.html' %}
+
+{% load static %}
+
+{% block css_link %}
+<script src="{% static 'user/js/confirm_alert.js' %}"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+
+{% endblock %}
+
+{% block content %}
+<div class="bg-gray-100 py-2">
+    <div class="container mx-auto px-4">
+        <ul class="flex items-center space-x-2 text-sm">
+            {% if user.is_authenticated %}
+                <li><a href="{% url 'homepage_after_login' %}" class="text-blue-600 hover:text-blue-800">Home</a></li>
+            {% else %}
+                <li><a href="{% url 'homepage_before_login' %}" class="text-blue-600 hover:text-blue-800">Home</a></li>
+            {% endif %}
+            <li class="text-gray-500">/</li>
+            <li class="text-gray-700">Shopping Cart</li>
+        </ul>
+    </div>
+</div>
+
+<!-- Main Content -->
+<div class="container mx-auto px-4 py-8">
+    <div class="max-w-7xl mx-auto">
+        {% if cart_items %}
+            <!-- Cart Table -->
+            <div class="bg-white rounded-lg shadow-md overflow-hidden mb-8">
+                <div class="overflow-x-auto">
+                    {% csrf_token %}
+                    <table class="w-full">
+                        <thead class="bg-gray-50">
+                            <tr class="text-left text-gray-600">
+                                <th class="py-4 px-6">Remove</th>
+                                <th class="py-4 px-6">Image</th>
+                                <th class="py-4 px-6">Product Name</th>
+                                <th class="py-4 px-6">Quantity</th>
+                                <th class="py-4 px-6">Total Price</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200">
+                            {% for item in cart_items %}
+                            <tr class="hover:bg-gray-50">
+                                <!-- Remove Button -->
+                                <td class="py-4 px-6">
+									<a href="#" 
+                                        class="action-btn inline-block text-red-500 hover:text-red-700 transition-colors" 
+                                        data-url="{% url 'delete_cart_item' item.id %}"
+                                        data-title="Remove Item?"
+                                        data-text="Do you want to remove this item from your cart?"
+                                        data-success-message="Item removed successfully!">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                        </svg>
+                                    </a>
+								</td>
+                                
+                                <!-- Product Image -->
+                                <td class="py-4 px-6">
+                                    <div class="w-20 h-30">
+                                        <img src="{{ item.book.images.first.image.url }}" 
+                                             alt="{{ item.book.book_name }}"
+                                             class="w-full h-full object-cover rounded">
+                                    </div>
+                                </td>
+                                
+                                <!-- Product Info -->
+                                <td class="py-4 px-6">
+                                    <h4 class="font-medium text-gray-900">{{ item.book.book_name }}</h4>
+                                    <div class="mt-1">
+                                        <div class="flex text-yellow-400 text-sm">★★★★☆</div>
+                                        <div class="text-sm text-gray-500 mt-1">(06 Reviews)</div>
+                                    </div>
+                                    <div class="mt-1 text-sm text-gray-600">
+                                        Author: <span class="text-gray-900">{{ item.book.author }}</span>
+                                    </div>
+                                </td>
+                                
+                                <!-- Quantity Controls -->
+                                <td class="py-4 px-6">
+                                    <div class="flex items-center space-x-2">
+                                        <div class="flex items-center border rounded-lg">
+                                            <button class="minus gradient px-3 py-1 text-gray-600 hover:bg-gray-100" 
+                                                    data-id="{{ item.id }}">
+                                                <i class="fas fa-minus"></i>
+                                            </button>
+                                            <input type="number" 
+                                                   class="w-16 px-2 py-1 text-center focus:outline-none"
+                                                   data-id="{{ item.id }}"
+                                                   value="{{ item.quantity }}"
+                                                   min="1"
+                                                   max="{% if item.book.stock_quantity > 10 %}10{% else %}{{ item.book.stock_quantity }}{% endif %}"
+                                                   readonly>
+                                            <button class="plus gradient px-3 py-1 text-gray-600 hover:bg-gray-100" 
+                                                    data-id="{{ item.id }}">
+                                                <i class="fas fa-plus"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div id="error-message-{{ item.id }}" class="hidden text-red-500 text-sm mt-1"></div>
+                                </td>
+
+                        
+                                
+                                <!-- Total Price -->
+                                <td class="py-4 px-6">
+                                    <span class="font-medium text-gray-900" id="item-total-{{ item.id }}">₹{{ item.item_price }}</span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Cart Footer -->
+                <div class="border-t border-gray-200 px-6 py-4">
+                    <div class="flex justify-between items-center flex-wrap gap-4">
+                        <!-- Continue Shopping -->
+                        <a href="{% url 'shop_page' %}" 
+                           class="bg-yellow-500 text-white px-6 py-2 rounded-lg hover:bg-yellow-600 transition-colors">
+                            Continue Shopping
+                        </a>
+                        
+                        <!-- Checkout Section -->
+                        <div class="text-right">
+                            <div class="mb-4">
+                                <span class="text-gray-600">Grand Total:</span>
+                                <span class="text-xl font-bold text-gray-900 ml-2">₹{{ grand_total }}</span>
+                            </div>
+                            {% if user.is_authenticated %}
+                                <a href="{% url 'checkout_page' %}" 
+                                   class="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 transition-colors inline-block">
+                                    Proceed to Checkout
+                                </a>
+                            {% else %}
+                                <a href="{% url 'user_login' %}" 
+                                   class="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 transition-colors inline-block">
+                                    Proceed to Checkout
+                                </a>
+                            {% endif %}
+                            <p class="text-sm text-gray-500 mt-2">Checkout with multiple address!</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% else %}
+            <!-- Empty Cart -->
+            <div class="text-center py-16">
+                <img src="{% static 'user/images/logo/empty.jpeg' %}" 
+                     alt="Empty Cart" 
+                     class="mx-auto max-w-xs mb-6">
+                <h2 class="text-2xl font-bold text-gray-900 mb-2">Your Cart is Empty</h2>
+                <p class="text-gray-600 mb-6">Add products to cart</p>
+                <a href="{% url 'shop_page' %}" 
+                   class="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 transition-colors inline-block">
+                    Explore Products
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block script %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="{% static 'user/js/update_cart.js' %}"></script>
+{% endblock %}

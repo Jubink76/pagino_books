@@ -1,0 +1,173 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block css_link %}
+<script src="{% static 'user/js/confirm_alert.js' %}"></script>
+{% endblock %}
+
+{% block content %}
+<div class="bg-gray-50">
+    <div class="font-sans">
+        <div class="max-w-7xl mx-auto px-4 py-10">
+            <!-- Breadcrumb -->
+            <div class="mb-8 text-base">
+                <a href="{% url 'homepage_after_login' %}" class="text-blue-600 hover:text-blue-800">Home</a>
+                <span class="text-gray-500 mx-2">/</span>
+                <span class="text-gray-500">Reset Password</span>
+            </div>
+
+            <!-- Main Content Container -->
+            <div class="flex flex-col lg:flex-row gap-8 bg-white rounded-xl p-8 shadow-sm">
+                <!-- Sidebar -->
+                <div class="w-full lg:w-72">
+                    <div class="bg-gray-50 rounded-lg p-6">
+                        <h2 class="text-2xl font-semibold text-gray-800 mb-6">Manage Account</h2>
+                        <ul class="space-y-4">
+                            <li>
+                                <a href="{% url 'user_profile' %}" class="flex items-center px-5 py-3 rounded-lg text-gray-700 hover:bg-gray-200">
+                                    <span class="mr-3 text-xl">👤</span>
+                                    My Profile
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{% url 'user_address' %}" class="flex items-center px-5 py-3 rounded-lg text-gray-700 hover:bg-gray-200">
+                                    <span class="mr-3 text-xl">📖</span>
+                                    Address Book
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{% url 'user_orders' %}" class="flex items-center px-5 py-3 rounded-lg text-gray-700 hover:bg-gray-200">
+                                    <span class="mr-3 text-xl">🛍️</span>
+                                    My Orders
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{% url 'user_wallet' %}" class="flex items-center px-5 py-3 rounded-lg bg-blue-600 text-white">
+                                    <span class="mr-3 text-xl">💰</span>
+                                    Wallet
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{% url 'user_coupon' %}" class="flex items-center px-5 py-3 rounded-lg text-gray-700 hover:bg-gray-200">
+                                    <span class="mr-3 text-xl">💳</span>
+                                    Coupon
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Main Content -->
+                
+                <div class="flex-1 px-5 py-8 bg-gray-50">
+                    <h1 class="text-3xl font-bold text-gray-800 mb-2">My Wallet</h1>
+                    <p class="text-gray-600 mb-8">Manage your funds and track transactions</p>
+                  
+                    <!-- Wallet Card -->
+                    <div class="relative mb-8">
+                      <div class="w-96 h-56 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-2xl p-6 shadow-lg transform transition-transform hover:scale-105">
+                        <div class="flex justify-between items-start">
+                          <div class="space-y-2">
+                            <div class="w-12 h-8 bg-yellow-400 rounded-md"></div>
+                            <p class="text-gray-100 text-sm">Available Balance</p>
+                            <h2 class="text-white text-4xl font-bold">₹{{ wallet.available_balance }}</h2>
+                          </div>
+                        </div>
+                        <div class="absolute bottom-6 left-6">
+                          <p class="text-gray-200 text-lg">xxxxxxx</p>
+                        </div>
+                      </div>
+                    </div>
+                  
+                    <!-- Add Money Section -->
+                    <div class="bg-white rounded-xl p-6 shadow-sm mb-8">
+                      <h2 class="text-xl font-bold text-gray-800 mb-4">Add Money to Wallet</h2>
+                        <form action="{% url 'add_money_via_paypal' %}" method="POST" class="space-y-4">
+                          {% csrf_token %}
+                          <div class="flex items-center gap-4">
+                              <input 
+                                  type="number" 
+                                  name="amount" 
+                                  step="0.01" 
+                                  placeholder="Enter amount" 
+                                  class="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+                                  required />
+                              <select 
+                                  name="currency" 
+                                  class="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+                                  required>
+                                  <option value="USD">USD</option>
+                                  <!-- Add more currencies as needed -->
+                              </select>
+                              <button type="submit" 
+                                  class="px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors font-medium">
+                                  Add Money with PayPal
+                              </button>
+                          </div>
+                      </form>
+                  </div>
+                  
+                    <!-- Transaction History -->
+                    <div class="bg-white rounded-xl p-6 shadow-sm">
+                      <h2 class="text-xl font-bold text-gray-800 mb-4">Transaction History</h2>
+                      {% if transactions %}
+                          <div class="overflow-x-auto">
+                              <table class="w-full">
+                                  <thead>
+                                      <tr class="border-b border-gray-200">
+                                          <th class="text-left py-3 px-4 text-gray-600">Date & Time</th>
+                                          <th class="text-left py-3 px-4 text-gray-600">Description</th>
+                                          <th class="text-right py-3 px-4 text-gray-600">Amount</th>
+                                      </tr>
+                                  </thead>
+                                  <tbody>
+                                      {% for transaction in transactions %}
+                                          <tr class="border-b border-gray-100 hover:bg-gray-50">
+                                              <td class="py-3 px-4 text-gray-800">
+                                                  {{ transaction.transaction_time|date:"F d, Y, h:i A" }}
+                                              </td>
+                                              <td class="py-3 px-4 text-gray-800">
+                                                  <div class="flex items-center gap-2">
+                                                      {% if transaction.transaction_type == 'add' %}
+                                                          <svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path>
+                                                          </svg>
+                                                          <span class="text-green-500"> Money added to wallet </span>
+                                                      {% elif transaction.transaction_type == 'deduct' %}
+                                                          <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
+                                                          </svg>
+                                                          <span class="text-red-500"> Money deducted </span>
+                                                      {% elif transaction.transaction_type == 'refund' %}
+                                                          <svg class="w-4 h-4 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l-7-7 7-7m5 14l7-7-7-7"></path>
+                                                          </svg>
+                                                          <span class="text-yellow-500"> Refund money collected </span>
+                                                      {% endif %}
+                                                  </div>
+                                              </td>
+                                              <td class="py-3 px-4 text-right font-medium {% if transaction.transaction_type == 'deduct' %}text-red-500{% else %}text-green-500{% endif %}">
+                                                  {% if transaction.transaction_type == 'deduct' %}
+                                                      -₹{{ transaction.transaction_amount }}
+                                                  {% else %}
+                                                      +₹{{ transaction.transaction_amount }}
+                                                  {% endif %}
+                                              </td>
+                                          </tr>
+                                      {% endfor %}
+                                  </tbody>
+                              </table>
+                          </div>
+                      {% else %}
+                          <p class="text-gray-600">No transactions found.</p>
+                      {% endif %}
+                  </div>                  
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block script %}
+
+{% endblock %}

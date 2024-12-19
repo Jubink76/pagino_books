@@ -1,0 +1,31 @@
+# Ignore environment variables
+project_book/.env
+
+
+# Django #
+*.log
+*.pot
+*.pyc
+__pycache__
+db.sqlite3
+media
+ 
+
+# pyenv 
+.python-version 
+
+
+# Environments 
+.book_venv 
+
+# mypy 
+.mypy_cache/ 
+
+
+# Visual Studio Code # 
+.vscode/* 
+!.vscode/settings.json 
+!.vscode/tasks.json 
+!.vscode/launch.json 
+!.vscode/extensions.json 
+.history

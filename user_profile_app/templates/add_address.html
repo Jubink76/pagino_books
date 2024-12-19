@@ -1,0 +1,275 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block css_link %}
+<script src="{% static 'user/js/confirm_alert.js' %}"></script>
+{% endblock %}
+
+{% block content %}
+<div class="bg-gray-50 font-sans">
+    <div class="max-w-7xl mx-auto px-5 py-10">
+        <!-- Breadcrumb -->
+        <div class="mb-8">
+            <nav class="text-base">
+                <a href="{% url 'homepage_after_login' %}" class="text-blue-600 hover:text-blue-800">Home</a>
+                <span class="text-gray-500 mx-2">/</span>
+                <span class="text-gray-500">My Account</span>
+            </nav>
+        </div>
+
+        <!-- Main Content Container -->
+        <div class="flex flex-col lg:flex-row gap-8 bg-white rounded-xl p-8 shadow-sm">
+            <!-- Sidebar -->
+            <div class="w-full lg:w-72">
+                <div class="bg-gray-50 rounded-lg p-6">
+                    <h2 class="text-2xl font-semibold text-gray-800 mb-6">Manage Account</h2>
+                    <ul class="space-y-4">
+                        <li>
+                            <a href="{% url 'user_profile' %}" class="flex items-center px-5 py-3 rounded-lg text-gray-700 hover:bg-gray-200">
+                                <span class="mr-3 text-xl">👤</span>
+                                My Profile
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{% url 'user_address' %}" class="flex items-center px-5 py-3 rounded-lg bg-blue-600 text-white">
+                                <span class="mr-3 text-xl">📖</span>
+                                Address Book
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{% url 'user_orders' %}" class="flex items-center px-5 py-3 rounded-lg text-gray-700 hover:bg-gray-200">
+                                <span class="mr-3 text-xl">🛍️</span>
+                                My Orders
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{% url 'user_wallet' %}" class="flex items-center px-5 py-3 rounded-lg text-gray-700 hover:bg-gray-200">
+                                <span class="mr-3 text-xl">💰</span>
+                                Wallet
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{% url 'user_coupon' %}" class="flex items-center px-5 py-3 rounded-lg text-gray-700 hover:bg-gray-200">
+                                <span class="mr-3 text-xl">💳</span>
+                                Coupon
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="flex-1 px-5">
+                <div class="mb-8">
+                    <h1 class="text-2xl font-bold text-gray-800">Add New Address</h1>
+                </div>
+
+                <form onsubmit="return validateForm()" data-url="{% url 'add_address' %}" method="post" id="addressForm" class="space-y-6">
+                    {% csrf_token %}
+                    <!-- Address Type Selector -->
+                    <div class="flex gap-5 mb-8">
+                        <div class="flex-1 p-4 border rounded-lg text-center cursor-pointer transition-all type-option active" data-type="home">
+                            <span class="block text-2xl mb-2">🏠</span>
+                            <div>Home</div>
+                        </div>
+                        <div class="flex-1 p-4 border rounded-lg text-center cursor-pointer transition-all type-option" data-type="office">
+                            <span class="block text-2xl mb-2">🏢</span>
+                            <div>Office</div>
+                        </div>
+                    </div>
+
+                    <!-- Form Fields -->
+                    <div class="space-y-4">
+                        <div class="form-group">
+                            <label class="block text-gray-600 text-sm mb-2">Full Name</label>
+                            <input type="text" name="address_name" placeholder="Enter your full name"
+                                class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-red-500 focus:border-red-500">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="block text-gray-600 text-sm mb-2">Street Address</label>
+                            <input type="text" name="street_name" placeholder="Enter your street address"
+                                class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-red-500 focus:border-red-500">
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="form-group">
+                                <label class="block text-gray-600 text-sm mb-2">Apartment/Suite</label>
+                                <input type="text" name="building_no" placeholder="Enter apartment or suite number"
+                                    class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-red-500 focus:border-red-500">
+                            </div>
+                            <div class="form-group">
+                                <label class="block text-gray-600 text-sm mb-2">Landmark</label>
+                                <input type="text" name="landmark" placeholder="Enter nearby landmark"
+                                    class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-red-500 focus:border-red-500">
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="form-group">
+                                <label class="block text-gray-600 text-sm mb-2">City</label>
+                                <input type="text" name="city" placeholder="Enter city"
+                                    class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-red-500 focus:border-red-500">
+                            </div>
+                            <div class="form-group">
+                                <label class="block text-gray-600 text-sm mb-2">Postal Code</label>
+                                <input type="text" name="pincode" placeholder="Enter postal code"
+                                    class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-red-500 focus:border-red-500">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="block text-gray-600 text-sm mb-2">Phone Number</label>
+                            <input type="tel" name="address_phone" placeholder="Enter phone number"
+                                class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-red-500 focus:border-red-500">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="block text-gray-600 text-sm mb-2">State</label>
+                            <input type="text" name="state" placeholder="Enter your state"
+                                class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-red-500 focus:border-red-500">
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="flex justify-end gap-4 mt-8">
+                            <a href="{% url 'user_address' %}"><button type="button" onclick="window.history.back()"
+                                class="px-6 py-3 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors">
+                                Cancel
+                            </button></a>
+                            <button type="submit"
+                                class="px-6 py-3 rounded-lg bg-yellow-500 text-black hover:bg-yellow-600 transition-colors">
+                                Save Address
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block script %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        // Address type selection
+        const typeOptions = document.querySelectorAll('.type-option');
+        typeOptions.forEach(option => {
+            option.addEventListener('click', () => {
+                typeOptions.forEach(opt => {
+                    opt.classList.remove('active', 'border-red-500', 'bg-red-50');
+                    opt.classList.add('border-gray-300');
+                });
+                option.classList.add('active', 'border-red-500', 'bg-red-50');
+                option.classList.remove('border-gray-300');
+            });
+        });
+
+        // Form validation
+        function validateForm() {
+            let isValid = true;
+            const errorMessages = [];
+            
+            // Reset all fields' styles
+            document.querySelectorAll('input').forEach(input => {
+                input.classList.remove('border-red-500', 'bg-red-50');
+            });
+
+            // Full Name validation
+            const addressName = document.getElementsByName('address_name')[0];
+            if (!addressName.value.trim()) {
+                errorMessages.push("Full name is required");
+                addressName.classList.add('border-red-500', 'bg-red-50');
+                isValid = false;
+            } else if (!/^[A-Za-z\s]+$/.test(addressName.value.trim())) {
+                errorMessages.push("Name should only contain letters and spaces");
+                addressName.classList.add('border-red-500', 'bg-red-50');
+                isValid = false;
+            }
+
+            // Street Address validation
+            const streetName = document.getElementsByName('street_name')[0];
+            if (!streetName.value.trim()) {
+                errorMessages.push("Street address is required");
+                streetName.classList.add('border-red-500', 'bg-red-50');
+                isValid = false;
+            }
+
+            // City validation
+            const city = document.getElementsByName('city')[0];
+            if (!city.value.trim()) {
+                errorMessages.push("City is required");
+                city.classList.add('border-red-500', 'bg-red-50');
+                isValid = false;
+            } else if (!/^[A-Za-z\s]+$/.test(city.value.trim())) {
+                errorMessages.push("City should only contain letters and spaces");
+                city.classList.add('border-red-500', 'bg-red-50');
+                isValid = false;
+            }
+
+            // Pincode validation
+            const pincode = document.getElementsByName('pincode')[0];
+            if (!pincode.value.trim()) {
+                errorMessages.push("Postal code is required");
+                pincode.classList.add('border-red-500', 'bg-red-50');
+                isValid = false;
+            } else if (!/^\d{6}$/.test(pincode.value.trim())) {
+                errorMessages.push("Please enter a valid 6-digit postal code");
+                pincode.classList.add('border-red-500', 'bg-red-50');
+                isValid = false;
+            }
+
+            // Phone number validation
+            const phone = document.getElementsByName('address_phone')[0];
+            if (!phone.value.trim()) {
+                errorMessages.push("Phone number is required");
+                phone.classList.add('border-red-500', 'bg-red-50');
+                isValid = false;
+            } else if (!/^[6-9]\d{9}$/.test(phone.value.trim())) {
+                errorMessages.push("Please enter a valid 10-digit Indian phone number");
+                phone.classList.add('border-red-500', 'bg-red-50');
+                isValid = false;
+            }
+
+            // State validation
+            const state = document.getElementsByName('state')[0];
+            if (!state.value.trim()) {
+                errorMessages.push("State is required");
+                state.classList.add('border-red-500', 'bg-red-50');
+                isValid = false;
+            } else if (!/^[A-Za-z\s]+$/.test(state.value.trim())) {
+                errorMessages.push("State should only contain letters and spaces");
+                state.classList.add('border-red-500', 'bg-red-50');
+                isValid = false;
+            }
+
+            // Show errors using SweetAlert if validation fails
+            if (!isValid) {
+                Swal.fire({
+                    title: 'Validation Error',
+                    html: errorMessages.join('<br>'),
+                    icon: 'error',
+                    confirmButtonText: 'OK'
+                });
+                return false;
+            }
+
+            return true;
+        }
+
+        // Form submission handler
+        document.getElementById('addressForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            if (validateForm()) {
+                // Handle form submission here
+                console.log('Form submitted successfully');
+            }
+        });
+
+        // Real-time validation feedback
+        document.querySelectorAll('input').forEach(input => {
+            input.addEventListener('input', function() {
+                this.classList.remove('border-red-500', 'bg-red-50');
+            });
+        });
+    </script>
+{% endblock %}

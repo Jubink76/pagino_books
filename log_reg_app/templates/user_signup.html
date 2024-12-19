@@ -1,0 +1,461 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .signup-container {
+            background: white;
+            border-radius: 24px;
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.08);
+            width: 100%;
+            max-width: 1200px;
+            overflow: hidden;
+            display: flex;
+        }
+
+        .form-section {
+            flex: 1;
+            padding: 40px;
+        }
+
+        .image-section {
+            flex: 1;
+            background-color: #fff5f5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+        }
+
+        .back-link {
+            color: #6c757d;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            margin-bottom: 32px;
+            font-size: 15px;
+        }
+
+        .back-link:hover { 
+            color: #000;
+        }
+
+        .signup-title {
+            color: #ff5c5c;
+            font-size: 32px;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .welcome-text {
+            color: #495057;
+            font-size: 24px;
+            margin-bottom: 32px;
+        }
+
+        .form-label {
+            color: #495057;
+            font-size: 15px;
+            margin-bottom: 8px;
+        }
+
+        .form-control {
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 12px 16px;
+            height: auto;
+            font-size: 15px;
+            margin-bottom: 16px;
+        }
+
+        .form-control:focus {
+            border-color: #ff5c5c;
+            box-shadow: 0 0 0 0.2rem rgba(255, 92, 92, 0.25);
+        }
+
+        .form-select {
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 12px 16px;
+            height: auto;
+            font-size: 15px;
+            margin-bottom: 16px;
+        }
+
+        .form-select:focus {
+            border-color: #ff5c5c;
+            box-shadow: 0 0 0 0.2rem rgba(255, 92, 92, 0.25);
+        }
+
+        .btn-signup {
+            background: #ff5c5c;
+            border: none;
+            border-radius: 8px;
+            color: white;
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+            font-weight: 500;
+            margin: 24px 0;
+            transition: background-color 0.2s;
+        }
+
+        .btn-signup:hover {
+            background: #ff4444;
+        }
+
+        .login-link {
+            text-align: center;
+            color: #6c757d;
+            margin-bottom: 24px;
+        }
+
+        .login-link a {
+            color: #ff5c5c;
+            text-decoration: none;
+        }
+
+        .btn-google {
+            border: 1px solid #dee2e6;
+            background: white;
+            border-radius: 8px;
+            width: 100%;
+            padding: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            color: #333;
+            text-decoration: none;
+            transition: background-color 0.2s;
+        }
+
+        .btn-google:hover {
+            background: #f8f9fa;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 0;
+        }
+
+        .form-row .form-group {
+            flex: 1;
+        }
+        .error-message {
+            color: red;
+            font-size: 0.9em;
+            display: none; /* Hide by default */
+        }
+        .form-group {
+            margin-bottom: 15px;
+            position: relative; /* Make this relative for absolute positioning of icon */
+        }
+        .form-control {
+            width: 100%; /* Full width */
+            padding-right: 40px; /* Add space for the icon */
+            box-sizing: border-box; /* Include padding in the width calculation */
+        }
+        .fas {
+            position: absolute;
+            right: 10px; /* Distance from the right edge of the input */
+            top: 50%;
+            transform: translateY(-50%); /* Center the icon vertically */
+            cursor: pointer; /* Change cursor to pointer */
+            color: #888; /* Optional: Change icon color */
+        }
+        @media (max-width: 768px) {
+            .signup-container {
+                flex-direction: column;
+            }
+            
+            .image-section {
+                display: none;
+            }
+            
+            .form-section {
+                padding: 24px;
+            }
+            
+            .form-row {
+                flex-direction: column;
+                gap: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="signup-container">
+        <div class="form-section">
+            <a href="{% url 'homepage_before_login' %}" class="back-link">
+                ← Back to home
+            </a>
+            {% if messages %}
+                <div id="message-container">
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                            {% if message.tags == 'success' %}
+                                <i class="bi bi-check-circle-fill me-2"></i>
+                            {% elif message.tags == 'error' %}
+                                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                            {% endif %}
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+            <h1 class="signup-title">Sign Up</h1>
+            <h2 class="welcome-text">Create Account !!!</h2>
+            
+            <form action="{% url 'user_signup' %}" method="post" class="signup-form">
+                {% csrf_token %}
+                <div class="form-row">
+                    <div class="form-group">
+                        <input type="text" class="form-control" name="first_name" id="first_name" placeholder="First Name" required>
+                        <span class="error-message" id="first_name_error"></span>
+                    </div>
+                    <div class="form-group">
+                        <input type="text" class="form-control" name="last_name" id="last_name" placeholder="Last Name" required>
+                        <span class="error-message" id="last_name_error"></span>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <input type="text" class="form-control" name="username" id="username" placeholder="Username" required>
+                    <span class="error-message" id="username_error"></span> 
+                </div>
+                <div class="form-group">
+                    <input type="email" class="form-control" name="email" id="email" placeholder="Email" required>
+                    <span class="error-message" id="email_error"></span>
+                </div>
+                <div class="form-group">
+                    <input type="tel" class="form-control" id="phone_number" name="phone_number" placeholder="Phone Number" required>
+                    <span class="error-message" id="phone_number_error" style="display: none; color: red;"></span>
+                </div>
+                
+                <select class="form-select" name="gender" required="required">
+                    <option value="" selected disabled>Select Gender</option>
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                    <option value="other">Other</option>
+                </select>
+                
+                <div class="form-group">
+                    <input type="password" class="form-control" id="password" name="password" placeholder="Password" required>
+                    <span class="error-message" id="password_error" style="display: none; color: red;"></span>
+                    <i id="togglePassword" class="fas fa-eye" style="cursor: pointer;"></i> 
+                </div>
+                
+                <div class="form-group">
+                    <input type="password" class="form-control" id="confirm_password" name="confirm_password" placeholder="Confirm Password" required>
+                    <span class="error-message" id="confirm_password_error" style="display: none; color: red;"></span>
+                    <i id="toggleConfirmPassword" class="fas fa-eye" style="cursor: pointer;"></i>
+                </div>
+                
+                <button type="submit" class="btn-signup">SIGN UP</button>
+                
+                <div class="login-link">
+                    Already have an account? <a href="{% url 'user_login' %}">Sign in</a>
+                </div>
+                
+                <a href="#" class="btn-google">
+                    <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCA0OCA0OCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBmaWxsPSIjRUE0MzM1IiBkPSJNMjQgOS41YzMuNTQgMCA2LjcxIDEuMjIgOS4yMSAzLjZsNi44NS02Ljg1QzM1LjkgMi4zOCAzMC40NyAwIDI0IDAgMTQuNjIgMCA2LjUxIDUuMzggMi41NiAxMy4yMmw3Ljk4IDYuMTlDMTIuNDMgMTMuNzIgMTcuNzQgOS41IDI0IDkuNXoiLz48cGF0aCBmaWxsPSIjNDI4NUY0IiBkPSJNNDYuOTggMjQuNTVjMC0xLjU3LS4xNS0zLjA5LS4zOC00LjU1SDI0djkuMDJoMTIuOTRjLS41OCAyLjk2LTIuMjYgNS40OC00Ljc4IDcuMThsNy43MyA2YzQuNTEtNC4xOCA3LjA5LTEwLjM2IDcuMDktMTcuNjV6Ii8+PHBhdGggZmlsbD0iI0ZCQkMwNSIgZD0iTTEwLjUzIDI4LjU5Yy0uNDgtMS40NS0uNzYtMi45OS0uNzYtNC41OXMuMjctMy4xNC43Ni00LjU5bC03Ljk4LTYuMTlDLjkyIDE2LjQ2IDAgMjAuMTIgMCAyNGMwIDMuODguOTIgNy41NCAyLjU2IDEwLjc4bDcuOTctNi4xOXoiLz48cGF0aCBmaWxsPSIjMzRBODUzIiBkPSJNMjQgNDhjNi40OCAwIDExLjkzLTIuMTMgMTUuODktNS44MWwtNy43My02Yy0yLjE1IDEuNDUtNC45MiAyLjMtOC4xNiAyLjMtNi4yNiAwLTExLjU3LTQuMjItMTMuNDctOS45MWwtNy45OCA2LjE5QzYuNTEgNDIuNjIgMTQuNjIgNDggMjQgNDh6Ii8+PC9zdmc+" 
+                         alt="Google" width="24" height="24">
+                    Continue with Google
+                </a>
+            </form>
+        </div>
+        
+        <div class="image-section">
+            <img src="{% static 'user/images/logo/login_image.png' %}" alt="Sign Up" style="max-width: 100%; height: auto;">
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const firstNameInput = document.getElementById('first_name');
+            const lastNameInput = document.getElementById('last_name');
+            const usernameInput = document.getElementById('username');
+            const emailInput = document.getElementById('email');
+            const passwordInput = document.getElementById('password');
+            const confirmPasswordInput = document.getElementById('confirm_password');
+            const passwordErrorMessage = document.getElementById('password_error');
+            const confirmPasswordErrorMessage = document.getElementById('confirm_password_error');
+            const togglePassword = document.getElementById('togglePassword');
+            const toggleConfirmPassword = document.getElementById('toggleConfirmPassword');
+            const phoneInput = document.getElementById('phone_number');
+            const phoneErrorMessage = document.getElementById('phone_number_error');
+    
+        
+                function validateAlphabeticField(inputField, errorFieldId) {
+                    const namePattern = /^[A-Za-z]+$/;
+                    const errorMessageElement = document.getElementById(errorFieldId);
+        
+                    if (!namePattern.test(inputField.value) && inputField.value.length > 0) {
+                        errorMessageElement.style.display = 'block';
+                        errorMessageElement.textContent = 'This field should contain only alphabets.';
+                        return false;
+                    } else {
+                        errorMessageElement.style.display = 'none';
+                        errorMessageElement.textContent = '';
+                        return true;
+                    }
+                }
+        
+                function validateUsernameField() {
+                    const usernamePattern = /^[A-Za-z0-9_-]+$/; 
+                    const errorMessageElement = document.getElementById('username_error');
+        
+                    if (!usernamePattern.test(usernameInput.value) && usernameInput.value.length > 0) {
+                        errorMessageElement.style.display = 'block';
+                        errorMessageElement.textContent = 'Username can only contain letters, numbers, underscores, and hyphens.';
+                        return false;
+                    } else {
+                        errorMessageElement.style.display = 'none';
+                        errorMessageElement.textContent = '';
+                        return true;
+                    }
+                }
+        
+                function validateEmailField() {
+                    const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+                    const invalidChars = /[^a-zA-Z0-9._%+-]/;
+                    const hasInvalidChars = invalidChars.test(emailInput.value.split('@')[0]); 
+                    const errorMessageElement = document.getElementById('email_error');
+        
+                    if (emailInput.value.length > 0) {
+                        if (hasInvalidChars) {
+                            errorMessageElement.style.display = 'block';
+                            errorMessageElement.textContent = 'Email can only contain valid characters before the "@" symbol.';
+                        } else if (!emailPattern.test(emailInput.value) && emailInput.value.includes('@')) {
+                            errorMessageElement.style.display = 'block';
+                            errorMessageElement.textContent = 'Invalid email format.';
+                        } else {
+                            errorMessageElement.style.display = 'none'; 
+                        }
+                    } else {
+                        errorMessageElement.style.display = 'none'; 
+                    }
+                }
+                function validatePhoneNumber() {
+                    const phonePattern = /^[6-9]\d{9}$/; // Start with 6-9, followed by exactly 9 other digits
+                    
+                    if (!phonePattern.test(phoneInput.value) && phoneInput.value.length > 0) {
+                        // Show error if phone number is invalid
+                        phoneErrorMessage.style.display = 'block';
+                        phoneErrorMessage.textContent = 'Phone number must be 10 digits and start with 6-9.';
+                        return false;
+                    } else {
+                        // Hide error message if valid
+                        phoneErrorMessage.style.display = 'none';
+                        return true;
+                    }
+                }
+        
+                function validatePasswordField() {
+                    const minLength = 5; 
+                    const errorMessageElement = passwordErrorMessage;
+        
+                    if (passwordInput.value.length < minLength && passwordInput.value.length > 0) {
+                        errorMessageElement.style.display = 'block';
+                        errorMessageElement.textContent = `Password must be at least ${minLength} characters.`;
+                        return false;
+                    } else {
+                        errorMessageElement.style.display = 'none'; 
+                        return true;
+                    }
+                }
+        
+                function validateConfirmPasswordField() {
+                    const errorMessageElement = confirmPasswordErrorMessage;
+        
+                    if (confirmPasswordInput.value !== passwordInput.value && confirmPasswordInput.value.length > 0) {
+                        errorMessageElement.style.display = 'block';
+                        errorMessageElement.textContent = 'Passwords do not match.';
+                        return false;
+                    } else {
+                        errorMessageElement.style.display = 'none'; 
+                        return true;
+                    }
+                }
+        
+                function checkFormValidity() { 
+                   const isFirstNameValid = validateAlphabeticField(firstNameInput, 'first_name_error');
+                   const isLastNameValid = validateAlphabeticField(lastNameInput, 'last_name_error');
+                   const isUsernameValid = validateUsernameField();
+                   const isEmailValid = validateEmailField();
+                   const isPhoneNumberValid = validatePhoneNumber();
+                   const isPasswordValid = validatePasswordField();
+                   const isConfirmPasswordValid = validateConfirmPasswordField();
+        
+                }
+        
+                // Attach event listeners to input fields with blur event for error messages
+                firstNameInput.addEventListener('input', function() {
+                    checkFormValidity();
+                });
+                
+                lastNameInput.addEventListener('input', function() {
+                    checkFormValidity();
+                });
+                
+                usernameInput.addEventListener('input', function() {
+                    checkFormValidity();
+                });
+                
+                emailInput.addEventListener('input', function() {
+                    checkFormValidity();
+                });
+                phoneInput.addEventListener('input', function() {
+                    validatePhoneNumber();
+                    checkFormValidity(); 
+                });
+                
+                passwordInput.addEventListener('input', function() {
+                    checkFormValidity();
+                });
+                
+                confirmPasswordInput.addEventListener('input', function() {
+                    checkFormValidity();
+                });
+        
+                 //Toggle password visibility
+                togglePassword.addEventListener('click', function() {
+                    const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+                    passwordInput.setAttribute('type', type);
+                    this.classList.toggle('fa-eye');
+                    this.classList.toggle('fa-eye-slash');
+                });
+        
+                toggleConfirmPassword.addEventListener('click', function() {
+                    const type = confirmPasswordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+                    confirmPasswordInput.setAttribute('type', type);
+                    this.classList.toggle('fa-eye');
+                    this.classList.toggle('fa-eye-slash');
+                });
+            
+            
+        });
+    </script>
+    <script src="{% static 'user/js/message_timer.js' %}"></script>
+        
+</body>
+</html>

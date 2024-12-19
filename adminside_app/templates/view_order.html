@@ -1,0 +1,164 @@
+{% extends 'admin_base.html' %}
+
+{% load static %}
+
+{% block css %}
+<title>Order Details</title>
+<link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.16/dist/tailwind.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/lucide@0.263.1/dist/lucide.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+  <div class="bg-gray-800 rounded-lg shadow-lg p-6">
+    <div class="flex justify-between items-start mb-8">
+      <div>
+        <h1 class="text-3xl font-bold text-blue-400">Order Details</h1>
+        <p class="text-gray-500">Order #{{ order_detail.order_id }}</p>
+      </div>
+      <div class="flex gap-4">
+        <button class="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v8H6v-8z"></path>
+          </svg>
+          Print Invoice
+        </button>
+        <a href="{% url 'admin_orders' %}" class="flex items-center gap-2 bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition-colors">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M15 18l-6-6 6-6"></path>
+          </svg>
+          Back to Orders
+        </a>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div class="lg:col-span-2 bg-gray-800 rounded-xl p-6">
+        <h2 class="text-xl font-semibold mb-4">Order Summary</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          <div>
+            <div class="mb-4">
+              <p class="text-gray-500">Order Date</p>
+              <p class="text-gray-300">{{ order_detail.order_date }}</p>
+            </div>
+            <div>
+              <p class="text-gray-500">Payment Status</p>
+              {% if order_detail.order_status == 'Delivered' or order_detail.payment_method == "Online" %}
+                <span class="inline-block bg-green-900 text-green-400 px-3 py-1 rounded-full text-sm font-medium">
+                  Completed
+                </span>
+              {% else %}
+                <span class="inline-block bg-green-900 text-green-400 px-3 py-1 rounded-full text-sm font-medium">
+                  Pending
+                </span>
+              {% endif %}
+            </div>
+          </div>
+          <div>
+            <div class="mb-4">
+              <p class="text-gray-500">Payment Method</p>
+              <p class="text-gray-300">{{ order_detail.payment_method }}</p>
+            </div>
+            <div>
+              <p class="text-gray-500">Order Status</p>
+              <span class="inline-block bg-blue-900 text-blue-400 px-3 py-1 rounded-full text-sm font-medium">
+                {{ order_detail.order_status }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-gray-800 rounded-xl p-6">
+        <h2 class="text-xl font-semibold mb-4">Amount Details</h2>
+        <div class="space-y-3">
+          <div class="flex justify-between">
+            <span class="text-gray-500">Subtotal</span>
+            <span class="text-gray-300">₹{{ order_detail.total_amount }}</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-gray-500">Shipping</span>
+            <span class="text-gray-300">₹0</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-gray-500">Discount</span>
+            <span class="text-green-400">-₹0</span>
+          </div>
+          <div class="flex justify-between pt-3 border-t border-gray-700">
+            <span class="font-semibold">Total</span>
+            <span class="text-blue-400 font-semibold">₹{{ order_detail.total_amount }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
+      <div class="bg-gray-800 rounded-xl p-6">
+        <h2 class="text-xl font-semibold mb-4">Customer Details</h2>
+        <div class="space-y-3">
+          <p class="text-gray-500">Name</p>
+          <p class="text-gray-300">{{ order_detail.user.first_name }}</p>
+          <p class="text-gray-500">Email</p>
+          <p class="text-gray-300">{{ order_detail.user.email }}</p>
+          <p class="text-gray-500">Phone</p>
+          <p class="text-gray-300">{{ order_detail.user.phone_number }}</p>
+        </div>
+      </div>
+
+      <div class="bg-gray-800 rounded-xl p-6">
+        <h2 class="text-xl font-semibold mb-4">Shipping Address</h2>
+        <div class="space-y-2">
+          <p class="text-gray-300">{{ order_detail.address.address_name }}</p>
+          <p class="text-gray-300">{{ order_detail.address.building_no }}</p>
+          <p class="text-gray-300">{{ order_detail.address.landmark }}</p>
+          <p class="text-gray-300">{{ order_detail.address.city }}</p>
+          <p class="text-gray-300">{{ order_detail.address.address_phone }}</p>
+          <p class="text-gray-300">{{ order_detail.address.pincode }}, {{ order_detail.address.state }}</p>
+        </div>
+      </div>
+
+      <div class="bg-gray-800 rounded-xl p-6">
+        <h2 class="text-xl font-semibold mb-4 text-white">Order Items</h2>
+        <div class="overflow-x-auto">
+          <table class="table-auto w-full text-left text-gray-400">
+            <thead class="bg-gray-700 text-sm uppercase font-medium">
+              <tr>
+                <th class="px-6 py-4">Product</th>
+                <th class="px-6 py-4">Name</th>
+                <th class="px-6 py-4">Quantity</th>
+                <th class="px-6 py-4">Price</th>
+                <th class="px-6 py-4">Total Price</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for item in book_detail %}
+              <tr class="border-b border-gray-700 hover:bg-gray-700">
+                <td class="px-6 py-4 text-sm">
+                  {% with item.book.images.first as image %}
+                    {% if image %}
+                    <img src="{{ image.image.url }}" alt="{{ item.book.book_name }}" class="rounded-md" style="width: 70px; height: 100px; object-fit: cover;">
+                    {% else %}
+                    <span>No Image</span>
+                    {% endif %}
+                  {% endwith %}
+                </td>
+                <td class="px-6 py-4 text-sm font-medium">{{ item.book.book_name }}</td>
+                <td class="px-6 py-4 text-sm">{{ item.quantity }}</td>
+                <td class="px-6 py-4 text-sm">₹{{ item.price_per_item }}</td>
+                <td class="px-6 py-4 text-sm font-medium">₹{{ item.total_price }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    lucide.createIcons();
+  });
+</script>
+{% endblock %}

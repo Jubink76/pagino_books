@@ -1,0 +1,253 @@
+
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify Code</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .verify-container {
+            max-width: 900px;
+            width: 100%;
+            padding: 20px;
+        }
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.05);
+        }
+        .card-body {
+            padding: 40px;
+        }
+        .btn-verify {
+            background-color: #ff4757;
+            border: none;
+            padding: 12px;
+        }
+        .btn-verify:hover {
+            background-color: #ff6b81;
+        }
+        .timer {
+            width: 50px;
+            height: 50px;
+            background-color: #f8f9fa;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ff4757;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+        .code-inputs {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        .otp-input {
+            width: 45px;
+            height: 45px;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+        .otp-input:focus {
+            border-color: #ff4757;
+            box-shadow: 0 0 0 0.2rem rgba(255, 71, 87, 0.25);
+            outline: none;
+        }
+        .resend-link {
+            color: #ff4757;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .resend-link:hover {
+            color: #ff6b81;
+        }
+        .illustration-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="verify-container">
+        <div class="card">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-7">
+                        <h2 class="text-dark mb-4">Please verify code</h2>
+                        {% if messages %}
+                            <div id="message-container">
+                                {% for message in messages %}
+                                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                        {{ message }}
+                                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                            <span aria-hidden="true">&times;</span>
+                                        </button>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        
+                        <div class="timer" id="timer">
+                            90
+                        </div>
+                        
+                        <p class="text-secondary mb-4">An authentication code has been sent to your email</p>
+                        <form action="{% url 'verify_otp' %}" method="post">
+                            {% csrf_token %}
+                        
+                            <div class="code-inputs">
+                                <input type="text" name="otp1" maxlength="1" class="otp-input">
+                                <input type="text" name="otp2" maxlength="1" class="otp-input">
+                                <input type="text" name="otp3" maxlength="1" class="otp-input">
+                                <input type="text" name="otp4" maxlength="1" class="otp-input">
+                                <input type="text" name="otp5" maxlength="1" class="otp-input">
+                                <input type="text" name="otp6" maxlength="1" class="otp-input">
+                            </div>
+                        
+                        <button type="submit" class="btn btn-verify text-white w-100 mb-3">VERIFY</button>
+                        
+                        <div class="text-center">
+                            <p class="text-secondary mb-0">
+                                Don't receive any code? 
+                                <form id="resend-otp-form" method="POST" action="{% url 'resend_otp' %}" style="display: inline;">
+                                    {% csrf_token %}
+                                    <a href="#" class="resend-link disabled" id="resend-otp">Resend</a>
+                                </form>
+                            </p>
+                        </div>
+                    </div>
+                    <div class="col-md-5 d-none d-md-block">
+                        <div class="illustration-container">
+                            <img src="{% static 'user/images/logo/otp.png' %}" alt="Verification illustration" class="img-fluid" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Timer functionality
+        let timeLeft = 90;
+        const timerDisplay = document.getElementById('timer');
+        const resendLink = document.getElementById('resend-otp');
+    
+        function updateTimer() {
+            timerDisplay.textContent = timeLeft;
+    
+            if (timeLeft > 0) {
+                timeLeft--;
+                setTimeout(updateTimer, 1000);
+            }else {
+                // Enable the resend link when the timer reaches zero
+                resendLink.textContent = 'Resend OTP';
+                resendLink.classList.remove('disabled'); // Enable the link
+                resendLink.style.pointerEvents = 'auto'; // Re-enable pointer events to make it clickable
+            }
+        }
+    
+        // Start the timer
+        updateTimer();
+    
+        document.addEventListener('DOMContentLoaded', function() {
+            const otpInputs = document.querySelectorAll('.otp-input'); // Select OTP input fields
+            const resendLink = document.getElementById('resend-otp'); // Select the resend link
+    
+            // Handle input for OTP fields
+            otpInputs.forEach((input, index) => {
+                input.addEventListener('input', (e) => {
+                    if (e.target.value.length === 1 && index < otpInputs.length - 1) {
+                        otpInputs[index + 1].focus();
+                    }
+                });
+    
+                input.addEventListener('keydown', (e) => {
+                    if (e.key === 'Backspace' && !e.target.value && index > 0) {
+                        otpInputs[index - 1].focus();
+                    }
+                });
+            });
+    
+            // Handle resend OTP functionality
+            resendLink.addEventListener('click', function(event) {
+                event.preventDefault(); // Prevent the default link behavior
+
+                if (resendLink.classList.contains('disabled')) {
+                    return; // Prevent clicking if disabled
+                }
+    
+                // Show loading text or disable the link
+                resendLink.textContent = 'Resending...';
+                resendLink.classList.add('disabled');
+                resendLink.style.pointerEvents = 'none';
+    
+                // Send a request to the server to resend the OTP without including email in the request body
+                fetch('/resend_otp/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken') // Get CSRF token
+                    },
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('OTP resent successfully! Please check your email.');
+                        otpInputs.forEach(input => input.value = ''); // Clear input fields
+                        otpInputs[0].focus(); // Focus on the first input
+    
+                        // Reset timer
+                        timeLeft = 90; // Reset timer to 90 seconds
+                        updateTimer(); // Restart the timer
+                    } else {
+                        alert('Failed to resend OTP: ' + data.message);
+                    }
+                    // Reset link text and remove disabled class
+                    resendLink.textContent = 'Resend';
+                    resendLink.classList.remove('disabled');
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred while resending OTP.');
+                    resendLink.textContent = 'Resend';
+                    resendLink.classList.remove('disabled');
+                });
+            });
+    
+            // Function to get CSRF token from cookies
+            function getCookie(name) {
+                let cookieValue = null;
+                if (document.cookie && document.cookie !== '') {
+                    const cookies = document.cookie.split(';');
+                    for (let i = 0; i < cookies.length; i++) {
+                        const cookie = cookies[i].trim();
+                        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                            break;
+                        }
+                    }
+                }
+                return cookieValue;
+            }
+        });
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
+    <script src="{% static 'user/js/message_timer.js' %}"></script>
+</body>
+</html>

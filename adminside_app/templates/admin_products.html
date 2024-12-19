@@ -1,0 +1,373 @@
+{% extends 'admin_base.html' %}
+{% load static %}
+
+{% block csslink %}
+<link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="col-md-9 ms-sm-auto col-lg-10 offset-md-3 offset-lg-2 bg-gray-800 rounded-lg shadow-lg p-6 ">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-white text-2xl font-medium">Products</h1>
+        <nav aria-label="breadcrumb" class="flex space-x-2 items-center text-gray-400">
+            <!-- Breadcrumb Items -->
+            <a href="{% url 'admin_dashboard' %}" class="hover:text-gray-300">Admin</a>
+            <span>/</span>
+            <span class="text-gray-300 font-semibold">Products</span>
+        </nav>
+    </div>
+
+    <!-- Search and Actions Bar -->
+    <div class="flex flex-wrap justify-between items-center gap-4 mb-6">
+        <!-- Search Form -->
+        <form method="GET" action="{% url 'admin_products' %}" class="flex-1 max-w-lg">
+            <div class="relative">
+                <input 
+                    type="search" 
+                    class="bg-gray-700 text-gray-300 rounded-md px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                    name="search" 
+                    placeholder="Search" 
+                    value="{{search_query}}">
+                <button 
+                    type="submit" 
+                    class="absolute inset-y-0 right-0 px-3 bg-yellow-400 hover:bg-yellow-500 text-black rounded-r-md focus:outline-none focus:ring-2 focus:ring-yellow-300">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
+                        <path fill-rule="evenodd" d="M11 4a7 7 0 100 14 7 7 0 000-14zm-9 7a9 9 0 1116.32 5.906l4.387 4.387a1 1 0 11-1.414 1.414l-4.387-4.387A9 9 0 012 11z" clip-rule="evenodd"/>
+                    </svg>
+                </button>
+                
+            </div>
+        </form>
+        
+        <!-- Action Buttons -->
+        <div class="flex items-center space-x-4">
+            <a href="{% url 'add_products' %}" class="inline-flex items-center px-4 py-2 bg-blue-500 text-white rounded-md shadow-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors">
+                <svg class="-ml-1 mr-2 h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"></path>
+                </svg>
+                Add Product
+            </a>
+
+            <div class="relative">
+                <!-- Button -->
+                <button id="filter-button" class="inline-flex items-center px-4 py-2 bg-gray-700 border border-gray-600 text-gray-300 rounded-md shadow-sm hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors">
+                    <svg class="-ml-1 mr-2 h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V3z" clip-rule="evenodd"></path>
+                    </svg>
+                    Filter
+                </button>
+            
+                <!-- Dropdown Menu -->
+                <ul id="filter-dropdown" class="absolute right-0 mt-2 w-48 bg-gray-800 border border-gray-600 rounded-md shadow-lg z-10 hidden">
+                    <li><a href="?status=active" class="block px-4 py-2 text-gray-300 hover:bg-gray-700">Available</a></li>
+                    <li><a href="?status=inactive" class="block px-4 py-2 text-gray-300 hover:bg-gray-700">Out of stock </a></li>
+                    <li><a href="?status=pending" class="block px-4 py-2 text-gray-300 hover:bg-gray-700">Popular</a></li>
+                    <li><a href="?status=blocked" class="block px-4 py-2 text-gray-300 hover:bg-gray-700">Price-low-to-high</a></li>
+                    <li><a href="?status=blocked" class="block px-4 py-2 text-gray-300 hover:bg-gray-700">Price-high-to-low</a></li>
+                    <li><a href="?status=blocked" class="block px-4 py-2 text-gray-300 hover:bg-gray-700">Price-rating</a></li>
+                    <li><a href="?status=blocked" class="block px-4 py-2 text-gray-300 hover:bg-gray-700">Price-Featured</a></li>
+                    <li><a href="?status=blocked" class="block px-4 py-2 text-gray-300 hover:bg-gray-700">Price-New products</a></li>
+                    <li><a href="?status=blocked" class="block px-4 py-2 text-gray-300 hover:bg-gray-700">Aa-Zz</a></li>
+                    <li><a href="?status=blocked" class="block px-4 py-2 text-gray-300 hover:bg-gray-700">Zz-Aa</a></li>
+                </ul>
+            </div>
+            
+        </div>
+    </div>
+
+
+    <!-- Table -->
+    <div class="overflow-x-hidde">
+        <table class="w-full table-auto text-gray-400">
+            <thead>
+                <tr class="border-b border-gray-700">
+                    <th class="px-2 py-2 text-center">Sl No</th>
+                    <th class="px-2 py-2 text-center">Book Image</th>
+                    <th class="px-2 py-2 text-center">Name</th>
+                    <th class="px-2 py-2 text-center">Category</th>
+                    <th class="px-2 py-2 text-center">Additonal offer</th>
+                    <th class="px-2 py-2 text-center">Stock</th>
+                    <th class="px-2 py-2 text-center">Base price</th>
+                    <th class="px-2 py-2 text-center">Discount(%)</th>
+                    <th class="px-2 py-2 text-center">Offer price</th>
+                    <th class="px-2 py-2 text-center">Added date</th>
+                    <th class="px-2 py-2 text-center">Availability</th>
+                    <th class="px-2 py-2 text-center">Action</th>
+                </tr>
+            </thead>
+            <tbody id="product-table-body">
+                {% for book in books %}
+                    <tr data-product-id="{{ book.id }}" data-has-offer="{{ book.has_offer|yesno:'true,false' }}"class="transition-colors duration-200 hover:bg-gray-700 group">
+                        <td class="px-2 py-2 text-sm text-center">{{ forloop.counter }}</td>
+                        <td class="px-2 py-2 text-sm text-center">
+                            {% with book.images.first as image %}
+                                {% if image %}
+                                    <img class="w-20 h-30 object-cover" src="{{ image.image.url }}" alt="{{ book.book_name }}">
+                                {% else %}
+                                    <span>No Image</span>
+                                {% endif %}
+                            {% endwith %}
+                        </td>
+                        <td class="px-2 py-2 text-sm text-gray-400 group-hover:text-white text-center">{{ book.book_name }}</td>
+                        <td class="px-2 py-2 text-sm text-gray-400 group-hover:text-white text-center">{{ book.category }}</td>
+                        <td class="px-2 py-2 text-sm text-gray-400 group-hover:text-white text-center">
+                            <div class="flex items-center space-x-2">
+                                {% if book.has_offer %}
+                                    <!-- Edit Offer Button -->
+                                    <button 
+                                        class="edit-product-offer-btn px-1 py-0.5 text-xs bg-green-500 text-white text-center rounded-md hover:bg-green-600 transition-colors"
+                                        data-url="{% url 'edit_product_offer' book.id %}">
+                                        Edit Offer
+                                    </button>
+                                    <!-- Delete Offer Button -->
+                                    <button 
+                                        class="delete-product-offer-btn px-1 py-0.5 text-xs bg-red-500 text-white text-center rounded-md hover:bg-red-600 transition-colors"
+                                        data-url="{% url 'delete_product_offer' book.id %}">
+                                        Delete Offer
+                                    </button>
+                                {% else %}
+                                    <!-- Add Offer Button -->
+                                    <button 
+                                        class="add-product-offer-btn px-3 py-1 bg-blue-500 text-white text-center rounded-md hover:bg-blue-600 transition-colors"
+                                        data-url="{% url 'add_product_offer' book.id %}">
+                                        Add Offer
+                                    </button>
+                                {% endif %}
+                            </div>                                                                                                      
+                        </td>
+                        <td class="px-2 py-2 text-sm text-gray-400 group-hover:text-white text-center">{{ book.stock_quantity }}</td>
+                        <td class="px-2 py-2 text-sm text-gray-400 group-hover:text-white text-center">{{ book.base_price }}</td>
+                        <td class="px-2 py-2 text-sm text-gray-400 group-hover:text-white text-center">{{ book.discount_percentage }}</td>
+                        <td class="px-2 py-2 text-sm text-gray-400 group-hover:text-white text-center">{{ book.offer_price }}</td>
+                        <td class="px-2 py-2 text-sm text-gray-400 group-hover:text-white text-center">{{ book.publication_date }}</td>
+                        <td class="px-2 py-2 text-sm text-gray-400 group-hover:text-white text-center">
+                            <span class="{% if book.is_available %}text-green-500{% else %}text-red-500{% endif %}">
+                                {% if book.is_available %}Available{% else %}Not Available{% endif %}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 text-sm text-center">
+                            <div class="flex gap-2">
+                                <a href="{% url 'view_product' book.id %}">
+                                    <button class="p-1 hover:text-blue-500">👁️</button>
+                                </a>
+                                <a href="{% url 'edit_product' book.id %}">
+                                    <button class="p-1 hover:text-green-500">✏️</button>
+                                </a>
+                                <a href="{% url 'delete_product' book.pk %}">
+                                    <button id="deleteBookBtn" class="p-1 hover:text-red-500">🗑️</button>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    <div class="bg-gradient-to-br from-gray-700 to-gray-800 px-6 py-4 flex items-center justify-between border-t border-gray-600 rounded-b-xl shadow-sm">
+        <!-- Records per page selector -->
+        {% comment %} <div class="flex items-center space-x-3">
+            <span class="text-gray-400 mr-2">Showing</span>
+            <select id="product-table-body" class="form-select bg-gray-800 border-2 border-blue-500 text-gray-300 rounded-md px-3 py-1.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-300 ease-in-out hover:border-blue-400 hover:shadow-md" style="width: auto;">
+                <option value="5" {% if products.paginator.per_page == 5 %}selected{% endif %}>5</option>
+                <option value="10" {% if products.paginator.per_page == 10 %}selected{% endif %}>10</option>
+                <option value="15" {% if products.paginator.per_page == 15 %}selected{% endif %}>15</option>
+            </select>
+            <span class="text-sm font-medium">per page</span>
+        </div> {% endcomment %}
+        <div class="text-sm bg-gray-800/70 px-4 py-2 rounded-md shadow-sm">Showing {{ books.start_index }} to <span class="font-semibold text-blue-600"> {{ books.end_index }}</span> out of<span class="font-semibold text-blue-600"> {{ books.paginator.count }}</span> records</div>
+        <div>
+            <ul class="pagination mb-0 flex space-x-2">
+                <!-- Previous Page Button -->
+                {% if books.has_previous %}
+                    <a href="?page={{ books.previous_page_number }}" class="px-4 py-2 rounded-md 
+                        bg-gradient-to-r from-blue-500 to-blue-600 
+                        text-white font-semibold 
+                        hover:from-blue-600 hover:to-blue-700 
+                        transition duration-300 ease-in-out 
+                        transform hover:-translate-y-0.5 
+                        shadow-md hover:shadow-lg">
+                        Previous
+                    </a>
+                {% else %}
+                    <span class="px-4 py-2 rounded-md 
+                        bg-gray-300 text-gray-500 
+                        cursor-not-allowed opacity-70">
+                        Previous
+                    </span>
+                {% endif %}
+        
+                {% for page_num in books.paginator.page_range %}
+                    {% if books.number == page_num %}
+                        <span class="px-4 py-2 rounded-md 
+                            bg-gradient-to-r from-blue-600 to-blue-700 
+                            text-white font-bold 
+                            shadow-md">
+                            {{ page_num }}
+                        </span>
+                    {% else %}
+                        <a href="?page={{ page_num }}&product_per_page={{ books.paginator.per_page }}" 
+                            class="px-4 py-2 rounded-md 
+                            bg-white border border-gray-300 
+                            text-gray-700 font-semibold 
+                            hover:bg-blue-50 hover:text-blue-700 
+                            hover:border-blue-300 
+                            transition duration-300 ease-in-out 
+                            transform hover:-translate-y-0.5 
+                            shadow-sm hover:shadow-md">
+                            {{ page_num }}
+                        </a>
+                    {% endif %}
+                {% endfor %}
+        
+                {% if books.has_next %}
+                    <a href="?page={{ books.next_page_number }}" class="px-4 py-2 rounded-md 
+                        bg-gradient-to-r from-blue-500 to-blue-600 
+                        text-white font-semibold 
+                        hover:from-blue-600 hover:to-blue-700 
+                        transition duration-300 ease-in-out 
+                        transform hover:-translate-y-0.5 
+                        shadow-md hover:shadow-lg">
+                        Next
+                    </a>
+                {% else %}
+                    <span class="px-4 py-2 rounded-md 
+                        bg-gray-300 text-gray-500 
+                        cursor-not-allowed opacity-70">
+                        Next
+                    </span>
+                {% endif %}
+            </ul>
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // Handle Add, Edit, Delete Offer buttons functionality
+        document.addEventListener("click", (event) => {
+            const target = event.target;
+
+            // Handle Add Offer Button
+            if (target.matches(".add-product-offer-btn")) {
+                const url = target.getAttribute("data-url");
+                if (url) {
+                    window.location.href = url;
+                }
+            }
+
+            // Handle Edit Offer Button
+            if (target.matches(".edit-product-offer-btn")) {
+                const url = target.getAttribute("data-url");
+                if (url) {
+                    window.location.href = url;
+                }
+            }
+
+            // Handle Delete Offer Button with SweetAlert confirmation
+            if (target.matches(".delete-product-offer-btn")) {
+                const url = target.getAttribute("data-url");
+                if (url) {
+                    Swal.fire({
+                        title: 'Are you sure?',
+                        text: "This action will delete the offer permanently!",
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#d33',
+                        cancelButtonColor: '#3085d6',
+                        confirmButtonText: 'Yes, delete it!',
+                        cancelButtonText: 'Cancel'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            fetch(url, {
+                                method: 'POST',
+                                headers: {
+                                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                                }
+                            })
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.status === 'success') {
+                                    Swal.fire({
+                                        title: 'Deleted!',
+                                        text: data.message,
+                                        icon: 'success'
+                                    }).then(() => {
+                                        window.location.reload();
+                                    });
+                                } else {
+                                    Swal.fire({
+                                        title: 'Error!',
+                                        text: data.message,
+                                        icon: 'error'
+                                    });
+                                }
+                            })
+                            .catch(() => {
+                                Swal.fire({
+                                    title: 'Error!',
+                                    text: 'Something went wrong while deleting the offer.',
+                                    icon: 'error'
+                                });
+                            });
+                        }
+                    });
+                }
+            }
+        });
+
+        // Product Delete Button (with SweetAlert confirmation)
+        const deleteButton = document.getElementById('deleteBookBtn');
+        const form = document.getElementById('editProductForm');
+
+        if (deleteButton) {
+            deleteButton.addEventListener('click', (event) => {
+                event.preventDefault(); // Prevent the form from submitting immediately
+                
+                // Show SweetAlert2 confirmation
+                Swal.fire({
+                    title: 'Are you sure?',
+                    text: "This action will mark the book as deleted!",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#3085d6',
+                    confirmButtonText: 'Yes, delete it!',
+                    cancelButtonText: 'Cancel'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        // If confirmed, submit the form with 'delete_book' action
+                        const deleteInput = document.createElement('input');
+                        deleteInput.type = 'hidden';
+                        deleteInput.name = 'delete_book';
+                        form.appendChild(deleteInput);
+                        
+                        form.submit();  // Submit the form
+                    }
+                });
+            });
+        }
+
+        // Handle Filter Button Dropdown
+        const filterButton = document.getElementById('filter-button');
+        const filterDropdown = document.getElementById('filter-dropdown');
+        if (filterButton && filterDropdown) {
+            filterButton.addEventListener('click', () => {
+                filterDropdown.classList.toggle('hidden');
+            });
+
+            // Close the dropdown when clicking outside
+            document.addEventListener('click', (event) => {
+                if (!filterButton.contains(event.target) && !filterDropdown.contains(event.target)) {
+                    filterDropdown.classList.add('hidden');
+                }
+            });
+        }
+    });
+</script>
+
+{% endblock %}

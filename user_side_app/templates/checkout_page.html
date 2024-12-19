@@ -1,0 +1,406 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block css_link %}
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="bg-gray-50">
+    <div class="container mx-auto px-4 py-8">
+        <!-- Breadcrumb -->
+        <nav class="flex mb-8 text-gray-600 text-sm">
+            <a href="{% url 'homepage_after_login' %}" class="hover:text-gray-900">Home</a>
+            <span class="mx-2">/</span>
+            <a href="{% url 'shop_page' %}" class="hover:text-gray-900">Shop</a>
+            <span class="mx-2">/</span>
+            <a href="{% url 'cart_page' %}" class="hover:text-gray-900">Cart</a>
+            <span class="mx-2">/</span>
+            <span class="text-gray-900 font-medium">Checkout</span>
+        </nav>
+
+        <h2 class="text-3xl font-bold text-center mb-8">Billing Details</h2>
+        <div class="flex flex-col lg:flex-row gap-8">
+          
+            <!-- Left Column - Address Section -->
+            <div class="lg:w-2/3">
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h4 class="text-xl font-semibold">Saved Addresses</h4>
+                        <button id="addNewAddressBtn" type="button" class="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 flex items-center gap-2">
+                            <i class="fas fa-plus"></i> Add New Address
+                        </button>
+                        <button id="addNewAddressBtn" type="button" class="hidden px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 flex items-center gap-2">
+                            <i class="fas fa-list"></i> Show Addresses
+                        </button>
+                    </div>
+
+                    <!-- Saved Addresses Section -->
+                    <div id="savedAddressesSection">
+                        {% if addresses %}
+                        <div class="space-y-4">
+                            {% for address in addresses %}
+                            <div class="saved-address-item border rounded-lg p-4 cursor-pointer hover:border-yellow-500 transition-colors {% if address.is_default %}border-yellow-500{% endif %}"
+                                 data-address-id="{{ address.id }}">
+                                <div class="flex items-start gap-4">
+                                    <input type="radio" name="savedAddress" class="mt-1" value="{{ address.id }}" 
+                                           {% if address.is_default %}checked{% endif %} required>
+                                    <div class="flex-1">
+                                        <div class="flex items-center gap-2 mb-2">
+                                            <i class="fas fa-{% if address.address_type == 'home' %}home{% else %}building{% endif %} text-gray-600"></i>
+                                            <span class="font-medium">{{ address.address_type|title }}</span>
+                                            {% if address.is_default %}
+                                            <span class="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full">Default</span>
+                                            {% endif %}
+                                        </div>
+                                        <div class="space-y-1 text-gray-600">
+                                            <p class="font-semibold text-gray-900">{{ address.address_name }}</p>
+                                            <p>{{ address.street_name }}</p>
+                                            {% if address.landmark %}
+                                            <p>Near {{ address.landmark }}</p>
+                                            {% endif %}
+                                            <p>{{ address.city }}, {{ address.state }} {{ address.pincode }}</p>
+                                            <p>Phone: {{ address.address_phone }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <div class="text-center py-8 text-gray-500">
+                            <p>No saved addresses found. Please add a new address.</p>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- New Address Form -->
+                    <div id="newAddressFormSection" class="hidden">
+                        <h4 class="text-xl font-semibold mb-6 text-center">Add New Address</h4>
+                        <form id="addressForm" data-url="{% url 'checkout_add_address' %}" method="post" class="space-y-6">
+                            {% csrf_token %}
+                            <input type="hidden" id="applied-coupon-code" name="coupon_code" value="">
+                            <input type="hidden" id="grand_total" name="grand_total" value="{{ grand_total }}">
+                            <!-- Address Type Selector -->
+                            <div class="flex gap-5 mb-8">
+                                <div class="flex-1 p-4 border rounded-lg text-center cursor-pointer transition-all type-option active" name="home" data-type="home">
+                                    <span class="block text-2xl mb-2">🏠</span>
+                                    <div>Home</div>
+                                    <input type="hidden" name="address_type" id="address_type" value="home">
+                                </div>
+                                <div class="flex-1 p-4 border rounded-lg text-center cursor-pointer transition-all type-option" name="office" data-type="office">
+                                    <span class="block text-2xl mb-2">🏢</span>
+                                    <div>Office</div>
+                                    <input type="hidden" name="address_type" id="address_type" value="office">
+                                </div>
+                            </div>
+        
+                            <!-- Form Fields -->
+                            <div class="space-y-4">
+                                <div class="form-group">
+                                    <label class="block text-gray-600 text-sm mb-2">Full Name</label>
+                                    <input type="text" name="address_name" placeholder="Enter your full name"
+                                        class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-red-500 focus:border-red-500">
+                                </div>
+        
+                                <div class="form-group">
+                                    <label class="block text-gray-600 text-sm mb-2">Street Address</label>
+                                    <input type="text" name="street_name" placeholder="Enter your street address"
+                                        class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-red-500 focus:border-red-500">
+                                </div>
+        
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div class="form-group">
+                                        <label class="block text-gray-600 text-sm mb-2">Apartment/Suite</label>
+                                        <input type="text" name="building_no" placeholder="Enter apartment or suite number"
+                                            class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-red-500 focus:border-red-500">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="block text-gray-600 text-sm mb-2">Landmark</label>
+                                        <input type="text" name="landmark" placeholder="Enter nearby landmark"
+                                            class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-red-500 focus:border-red-500">
+                                    </div>
+                                </div>
+        
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div class="form-group">
+                                        <label class="block text-gray-600 text-sm mb-2">City</label>
+                                        <input type="text" name="city" placeholder="Enter city"
+                                            class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-red-500 focus:border-red-500">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="block text-gray-600 text-sm mb-2">Postal Code</label>
+                                        <input type="text" name="pincode" placeholder="Enter postal code"
+                                            class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-red-500 focus:border-red-500">
+                                    </div>
+                                </div>
+        
+                                <div class="form-group">
+                                    <label class="block text-gray-600 text-sm mb-2">Phone Number</label>
+                                    <input type="tel" name="address_phone" placeholder="Enter phone number"
+                                        class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-red-500 focus:border-red-500">
+                                </div>
+        
+                                <div class="form-group">
+                                    <label class="block text-gray-600 text-sm mb-2">State</label>
+                                    <input type="text" name="state" placeholder="Enter your state"
+                                        class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-red-500 focus:border-red-500">
+                                </div>
+        
+                                <!-- Form Actions -->
+                                <div class="flex justify-end gap-4 mt-8">
+                                    <button type="button"
+                                        class="px-6 py-3 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors">
+                                        Cancel
+                                    </button>
+                                    <button type="submit" id="submit"
+                                        class="px-6 py-3 rounded-lg bg-yellow-500 text-black hover:bg-yellow-600 transition-colors">
+                                        Save Address
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column - Order Summary -->
+            <div class="lg:w-1/3">
+                <form id="orderForm" method="post" data-url="{% url 'create-order' %}">
+                    {% csrf_token %}
+                    {% if cart_items %}
+                    <div class="bg-white rounded-lg shadow-md p-6">
+                        <h4 class="text-xl font-semibold mb-6">Order Summary</h4>
+                        
+                        <div class="space-y-4">
+                            {% for item in cart_items %}
+                            <div class="flex items-center gap-4">
+                                <img src="{{ item.book.images.first.image.url }}" alt="{{ item.book.book_name }}" class="w-20 h-30 object-cover rounded">
+                                <div class="flex-1">
+                                    <div class="font-medium">{{ item.book.book_name }}</div>
+                                    <div class="text-sm text-gray-500">Qty: {{ item.quantity }}</div>
+                                </div>
+                                <div class="font-medium">₹{{ item.total_price }}</div>
+                            </div>
+                            {% endfor %}
+                        </div>
+
+                        <hr class="my-6">
+
+                        <div class="space-y-3">
+                            <div class="flex justify-between">
+                                <span>Subtotal:</span>
+                                <span>₹{{ grand_total }}</span>
+                            </div>
+                            <div class="flex justify-between text-green-600">
+                                <span>Coupon Discount:</span>
+                                <span id="coupon-discount">- ₹0</span>
+                            </div>
+                            <div class="flex justify-between text-green-600">
+                                <span>Shipping:</span>
+                                <span>Free</span>
+                            </div>
+                        </div>
+
+                        <hr class="my-6">
+
+                        <div class="flex justify-between font-semibold text-lg">
+                            <span>Total:</span>
+                            <span id="total-amount">₹{{ grand_total }}</span>
+                        </div>
+
+                        <div class="mt-8">
+                            <h4 class="text-lg font-semibold mb-4">Delivery Address</h4>
+                            <div class="delivery-address text-gray-600">
+                                {% if addresses %}
+                                    {% for address in addresses %}
+                                        {% if address.is_default %}
+                                        <div id="currentDeliveryAddress" class="p-4 border rounded-lg" data-address-id="{{ address.id }}">
+                                            <div class="flex justify-between items-center mb-2">
+                                                <div class="flex items-center gap-2">
+                                                    <span class="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full">Default</span>
+                                                </div>
+                                                <a href="#savedAddressesSection" class="text-yellow-600 text-sm" id="changeAddressLink">Change Address</a>
+                                            </div>
+                                            <p class="font-semibold">{{ address.address_name }}</p>
+                                            <p>{{ address.street_name }}</p>
+                                            {% if address.landmark %}
+                                            <p>Near {{ address.landmark }}</p>
+                                            {% endif %}
+                                            <p>{{ address.city }}, {{ address.state }} {{ address.pincode }}</p>
+                                            <p>Phone: {{ address.address_phone }}</p>
+                                        </div>
+                                        {% endif %}
+                                    {% endfor %}
+                                {% else %}
+                                    <p>Please select a delivery address</p>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="mt-8">
+                            <h4 class="text-lg font-semibold mb-4">Payment Method</h4>
+                            <div class="space-y-4">
+                                <div class="payment-option p-4 border rounded-lg cursor-pointer hover:border-yellow-500">
+                                    <div class="flex items-center gap-3">
+                                        <input type="radio" name="payment" id="cod" value="COD" required>
+                                        <label for="cod" class="font-medium cursor-pointer">Cash on Delivery</label>
+                                    </div>
+                                    <p class="text-sm text-gray-500 ml-7">Pay when you receive your order</p>
+                                </div>
+                        
+                                <div class="payment-option p-4 border rounded-lg cursor-pointer hover:border-yellow-500">
+                                    <div class="flex items-center gap-3">
+                                        <input type="radio" name="payment" id="online" value="ONLINE">
+                                        <label for="online" class="font-medium cursor-pointer">Pay Online (Card/UPI/Netbanking)</label>
+                                    </div>
+                                    <p class="text-sm text-gray-500 ml-7">Pay securely with Razorpay</p>
+                                </div>
+                        
+                                <div class="payment-option p-4 border rounded-lg cursor-pointer hover:border-yellow-500">
+                                    <div class="flex items-center gap-3">
+                                        <input type="radio" name="payment" id="wallet" value="WALLET">
+                                        <label for="wallet" class="font-medium cursor-pointer">Pay with Wallet</label>
+                                    </div>
+                                    <p class="text-sm text-gray-500 ml-7">Pay through wallet amount</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Coupons Section -->
+                        <div class="mt-6">
+                            <h4 class="text-lg font-semibold mb-4">Available Coupons</h4>
+                            <div class="space-y-4">
+                                {% for coupon in available_coupons %}
+                                <a href="{% url 'user_coupon' %}"><div class="p-4 border rounded-lg">
+                                    <h5 class="font-medium text-yellow-500">{{ coupon.code }}</h5>
+                                    <p class="text-sm text-gray-500"></p>
+                                    <p class="text-sm text-green-600">Discount: {{ coupon.discount_value }}{{ coupon.coupon_type }}</p>
+                                    <p class="text-sm text-red-600">Valid until: {{ coupon.valid_to }}</p>
+                                </div></a>
+                                {% empty %}
+                                <p class="text-sm text-gray-500">No available coupons.</p>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        
+                        <!-- Coupon Input Section -->
+                        <div class="mt-6">
+                            <div class="flex gap-2">
+                                <input type="text" id="coupon-code" name="coupon_code" placeholder="Enter coupon code" class="flex-1 p-3 border rounded-md">
+                                <button type="button" id="coupon-button" data-action="apply" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">
+                                    Apply
+                                </button>
+                            </div>
+                        </div>
+                                               
+
+                        <button type="submit" id="place-order-button"  class="w-full mt-6 py-3 bg-gray-400 text-white rounded-md font-medium disabled:cursor-not-allowed disabled:opacity-75 transition-colors">
+                            Place Order <i class="fas fa-arrow-right ml-2"></i>
+                        </button>
+                    </div>
+                    {% endif %}
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+
+{% block script %}
+
+<script src="{% static 'user/js/checkout_page.js' %}"></script>
+<script src="{% static 'user/js/place_order.js' %}"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+    function loadRazorpayScript(callback) {
+        const script = document.createElement("script");
+        script.src = "https://checkout.razorpay.com/v1/checkout.js";
+        script.onload = callback;
+        document.body.appendChild(script);
+    }
+    
+    document.getElementById('coupon-button').addEventListener('click', function () {
+        const button = this;
+        const action = button.getAttribute('data-action'); // Check current action
+        const couponCodeInput = document.getElementById('coupon-code');
+        const couponCode = couponCodeInput.value;
+    
+        if (action === 'apply') {
+            // Apply coupon logic
+            if (couponCode) {
+                fetch("{% url 'apply_coupon' %}", {
+                    method: "POST",
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: JSON.stringify({ coupon_code: couponCode })
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'success') {
+                            // Update UI on success
+                            document.getElementById('total-amount').innerText = '₹' + data.new_total;
+                            document.getElementById('coupon-discount').innerText = '- ₹' + data.discount_amount;
+    
+                            // Change button to "Remove Coupon"
+                            button.textContent = 'Remove';
+                            button.setAttribute('data-action', 'remove');
+                            button.classList.replace('bg-red-600', 'bg-green-600');
+                            button.classList.replace('hover:bg-red-700', 'hover:bg-green-700');
+    
+                            couponCodeInput.disabled = true; // Disable input
+                            Swal.fire('Coupon Applied!', 'Discount applied successfully.', 'success');
+                        } else {
+                            Swal.fire('Error', data.message, 'error');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error applying coupon:', error);
+                        Swal.fire('Error', 'An error occurred while applying the coupon.', 'error');
+                    });
+            } else {
+                Swal.fire('Error', 'Please enter a coupon code.', 'error');
+            }
+        } else if (action === 'remove') {
+            // Remove coupon logic
+            fetch("{% url 'remove_coupon' %}", {
+                method: "POST",
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}'
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        // Update UI on success
+                        document.getElementById('total-amount').innerText = '₹{{ grand_total }}'; // Original total
+                        document.getElementById('coupon-discount').innerText = '- ₹0';
+    
+                        // Change button back to "Apply Coupon"
+                        button.textContent = 'Apply';
+                        button.setAttribute('data-action', 'apply');
+                        button.classList.replace('bg-green-600', 'bg-red-600');
+                        button.classList.replace('hover:bg-green-700', 'hover:bg-red-700');
+    
+                        couponCodeInput.disabled = false; // Enable input
+                        couponCodeInput.value = ''; // Clear input
+                        Swal.fire('Coupon Removed', 'The coupon has been removed.', 'info');
+                    } else {
+                        Swal.fire('Error', data.message, 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error removing coupon:', error);
+                    Swal.fire('Error', 'An error occurred while removing the coupon.', 'error');
+                });
+        }
+    });
+    
+</script>
+
+
+{% endblock %}

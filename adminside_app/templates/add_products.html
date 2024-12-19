@@ -1,0 +1,443 @@
+{% extends 'admin_base.html' %}
+{% load static %}
+
+{% block csslink %}
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+{% endblock %}
+
+
+{% block content %}
+<div class="bg-gray-900 text-white">
+    <div class="container mx-auto px-4 py-8">
+        <div class="bg-gray-800 rounded-lg shadow-lg p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h1 class="text-2xl font-bold">Add New Product</h1>
+                <nav aria-label="breadcrumb">
+                    <ol class="flex space-x-2 text-sm text-gray-400">
+                        <li><a href="{% url 'admin_dashboard' %}" class="hover:text-white">Admin</a></li>
+                        <li>/</li>
+                        <li><a href="{% url 'admin_products' %}" class="hover:text-white">Products</a></li>
+                        <li>/</li>
+                        <li class="text-white">Add Product</li>
+                    </ol>
+                </nav>
+            </div>
+
+            <form method="POST" action="{% url 'add_products' %}" enctype="multipart/form-data" class="space-y-6">
+                {% csrf_token %}
+                
+                <!-- General Information -->
+                <div class="bg-gray-700 rounded-lg p-4">
+                    <h2 class="text-xl font-semibold mb-4">General Information</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block mb-2">Book Name</label>
+                            <input type="text" name="book_name" 
+                                   class="w-full px-3 py-2 bg-gray-600 border border-gray-500 rounded focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                                   placeholder="Type product name here...">
+                        </div>
+                        <div class="col-span-2">
+                            <label class="block mb-2">Description</label>
+                            <textarea name="description" 
+                                      class="w-full px-3 py-2 bg-gray-600 border border-gray-500 rounded focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                                      rows="4" 
+                                      placeholder="Type product description here..."></textarea>
+                        </div>
+                        <div>
+                            <label class="block mb-2">Stock Quantity</label>
+                            <input type="number" name="stock_quantity" 
+                                   id="stock-quantity" 
+                                   class="w-full px-3 py-2 bg-gray-600 border border-gray-500 rounded focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                                   placeholder="Type Stock Quantity here..." 
+                                   min="1">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pricing -->
+                <div class="bg-gray-700 rounded-lg p-4">
+                    <h2 class="text-xl font-semibold mb-4">Pricing</h2>
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block mb-2">Base Price</label>
+                            <input type="text" name="base_price" 
+                                   class="w-full px-3 py-2 bg-gray-600 border border-gray-500 rounded focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                                   placeholder="Type base price here...">
+                        </div>
+                        <div>
+                            <label class="block mb-2">Discount Percentage (%)</label>
+                            <input type="text" name="discount_percentage" 
+                                   class="w-full px-3 py-2 bg-gray-600 border border-gray-500 rounded focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                                   placeholder="Type discount percentage...">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Category, Author, Language -->
+                <div class="bg-gray-700 rounded-lg p-4">
+                    <div class="grid md:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block mb-2">Category</label>
+                            <input list="categories" name="category" 
+                                   class="w-full px-3 py-2 bg-gray-600 border border-gray-500 rounded focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                                   placeholder="Select or type category">
+                            <datalist id="categories">
+                                {% for category in categories %}
+                                    <option value="{{ category.category_name }}">
+                                {% endfor %}
+                            </datalist>
+                        </div>
+                        <div>
+                            <label class="block mb-2">Author Name</label>
+                            <input type="text" name="author_name" 
+                                   class="w-full px-3 py-2 bg-gray-600 border border-gray-500 rounded focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                                   placeholder="Author name">
+                            <datalist id="authors">
+                                {% for author in authors %}
+                                    <option value="{{ author.author_name }}">
+                                {% endfor %}
+                            </datalist>
+                        </div>
+                        <div>
+                            <label class="block mb-2">Language</label>
+                            <input list="languages" name="language" 
+                                   class="w-full px-3 py-2 bg-gray-600 border border-gray-500 rounded focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                                   placeholder="Select or type language">
+                            <datalist id="languages">
+                                {% for language in languages %}
+                                    <option value="{{ language.language_name }}">
+                                {% endfor %}
+                            </datalist>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <label class="block mb-2">Author Details</label>
+                        <textarea name="bio" 
+                                  class="w-full px-3 py-2 bg-gray-600 border border-gray-500 rounded focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                                  rows="5" 
+                                  placeholder="Type author details here..."></textarea>
+                    </div>
+                </div>
+
+                <!-- Image Upload -->
+                <div class="bg-gray-700 rounded-lg p-4 flex flex-col items-center">
+                    <div class="w-full border-2 border-dashed border-gray-500 rounded-lg p-6 text-center">
+                        <div id="image-preview-container" class="flex gap-4 justify-center mb-4">
+                            <!-- Image previews will be added here -->
+                        </div>
+                
+                        <!-- Upload 4 images fields in a single line -->
+                        <div class="flex gap-4 justify-center mb-4">
+                            <div class="flex flex-col items-center">
+                                <label class="h-48 w-32 border-2 border-dashed border-gray-400 rounded flex flex-col items-center justify-center cursor-pointer hover:border-gray-300 transition-colors">
+                                    <input type="file" name="book_image_1" id="image-upload-1" class="hidden" accept="image/jpeg,image/png">
+                                    <span class="text-gray-400 text-3xl mb-2">+</span>
+                                    <span class="text-gray-400 text-sm">Cover Image 1</span>
+                                </label>
+                            </div>
+                
+                            <div class="flex flex-col items-center">
+                                <label class="h-48 w-32 border-2 border-dashed border-gray-400 rounded flex flex-col items-center justify-center cursor-pointer hover:border-gray-300 transition-colors">
+                                    <input type="file" name="book_image_2" id="image-upload-2" class="hidden" accept="image/jpeg,image/png">
+                                    <span class="text-gray-400 text-3xl mb-2">+</span>
+                                    <span class="text-gray-400 text-sm">Cover Image 2</span>
+                                </label>
+                            </div>
+                
+                            <div class="flex flex-col items-center">
+                                <label class="h-48 w-32 border-2 border-dashed border-gray-400 rounded flex flex-col items-center justify-center cursor-pointer hover:border-gray-300 transition-colors">
+                                    <input type="file" name="book_image_3" id="image-upload-3" class="hidden" accept="image/jpeg,image/png">
+                                    <span class="text-gray-400 text-3xl mb-2">+</span>
+                                    <span class="text-gray-400 text-sm">Cover Image 3</span>
+                                </label>
+                            </div>
+                
+                            <div class="flex flex-col items-center">
+                                <label class="h-48 w-32 border-2 border-dashed border-gray-400 rounded flex flex-col items-center justify-center cursor-pointer hover:border-gray-300 transition-colors">
+                                    <input type="file" name="book_image_4" id="image-upload-4" class="hidden" accept="image/jpeg,image/png">
+                                    <span class="text-gray-400 text-3xl mb-2">+</span>
+                                    <span class="text-gray-400 text-sm">Cover Image 4</span>
+                                </label>
+                            </div>
+                        </div>
+                
+                        <p id="upload-message" class="text-gray-400 mt-4">Please upload up to 4 book images</p>
+                        <p class="text-gray-400 text-sm mt-2">Recommended size: 600x900px (6:9 ratio)</p>
+                        <div id="error-message" class="hidden mt-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded"></div>
+                    </div>
+                </div>
+                             
+
+                <!-- Action Buttons -->
+                <div class="flex justify-end space-x-4 mt-6">
+                    <a href="{% url 'admin_users' %}" 
+                       class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded transition duration-300">
+                        Cancel
+                    </a>
+                    <button type="submit" 
+                            class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded transition duration-300">
+                        Add Product
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // Form elements
+        const form = document.querySelector('form');
+        const fields = {
+            bookName: form.querySelector('[name="book_name"]'),
+            description: form.querySelector('[name="description"]'),
+            stockQuantity: form.querySelector('[name="stock_quantity"]'),
+            basePrice: form.querySelector('[name="base_price"]'),
+            discountPercentage: form.querySelector('[name="discount_percentage"]'),
+            authorName: form.querySelector('[name="author_name"]'),
+            bio: form.querySelector('[name="bio"]'),
+            language: form.querySelector('[name="language"]'),
+            category: form.querySelector('[name="category"]')
+        };
+    
+        // Constants
+        const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+        const ALLOWED_FILE_TYPES = ['image/jpeg', 'image/png'];
+        const errorMessages = {};
+        const uploadedImages = new Map(); // Track uploaded images
+    
+        // Validation rules
+        const validationRules = {
+            bookName: {
+                pattern: /^[A-Za-z0-9\s\-_&(),.]+$/,
+                message: 'Book name should contain only letters, numbers, spaces, and basic punctuation.'
+            },
+            category: {
+                pattern: /^[A-Za-z\s\-&]+$/,
+                message: 'Category should contain only letters, spaces, and hyphens.'
+            },
+            authorName: {
+                pattern: /^[A-Za-z\s\-.']+$/,
+                message: 'Author name should contain only letters, spaces, and basic punctuation.'
+            },
+            language: {
+                pattern: /^[A-Za-z\s\-]+$/,
+                message: 'Language should contain only letters and spaces.'
+            }
+        };
+    
+        // Error handling functions
+        const displayError = (field, message) => {
+            clearError(field);
+            const errorElement = document.createElement('p');
+            errorElement.classList.add('text-red-500', 'text-sm', 'mt-1');
+            errorElement.textContent = message;
+            field.parentNode.appendChild(errorElement);
+            errorMessages[field.name] = errorElement;
+        };
+    
+        const clearError = (field) => {
+            if (errorMessages[field.name]) {
+                errorMessages[field.name].remove();
+                delete errorMessages[field.name];
+            }
+        };
+    
+        const showGlobalError = (message) => {
+            const errorDiv = document.getElementById('error-message');
+            errorDiv.textContent = message;
+            errorDiv.classList.remove('hidden');
+            setTimeout(() => errorDiv.classList.add('hidden'), 5000);
+        };
+    
+        // Field validation function
+        const validateField = (field) => {
+            const value = field.value.trim();
+            clearError(field);
+    
+            // Skip validation if field is empty and not required
+            if (!value && !field.hasAttribute('required')) {
+                return true;
+            }
+    
+            // Apply specific validation rules
+            if (validationRules[field.name]) {
+                if (!validationRules[field.name].pattern.test(value)) {
+                    displayError(field, validationRules[field.name].message);
+                    return false;
+                }
+            }
+    
+            // Additional field-specific validations
+            switch (field.name) {
+                case 'description':
+                case 'bio':
+                    if (value.length < 10) {
+                        displayError(field, `${field.name} must be at least 10 characters long.`);
+                        return false;
+                    }
+                    break;
+    
+                case 'stock_quantity':
+                    if (!/^\d+$/.test(value) || parseInt(value) < 0) {
+                        displayError(field, 'Stock quantity must be a positive whole number.');
+                        return false;
+                    }
+                    break;
+    
+                case 'base_price':
+                    if (!/^\d+(\.\d{1,2})?$/.test(value) || parseFloat(value) <= 0) {
+                        displayError(field, 'Base price must be a positive number with up to two decimal places.');
+                        return false;
+                    }
+                    break;
+    
+                case 'discount_percentage':
+                    const discount = parseFloat(value);
+                    if (value && (isNaN(discount) || discount < 0 || discount > 100)) {
+                        displayError(field, 'Discount percentage must be between 0 and 100.');
+                        return false;
+                    }
+                    break;
+            }
+    
+            return true;
+        };
+    
+        // Image handling functions
+        const setupImageUpload = (input, label) => {
+            const defaultLabelContent = label.innerHTML;
+    
+            const handleImageUpload = (file) => {
+                if (!file) return false;
+    
+                // Validate file
+                if (!ALLOWED_FILE_TYPES.includes(file.type)) {
+                    showGlobalError('Please upload JPG or PNG images only.');
+                    return false;
+                }
+    
+                if (file.size > MAX_FILE_SIZE) {
+                    showGlobalError('File size should not exceed 5MB.');
+                    return false;
+                }
+    
+                return new Promise((resolve) => {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        // Create preview
+                        label.innerHTML = '';
+                        const previewContainer = createPreviewContainer(e.target.result, file.name);
+                        label.appendChild(previewContainer);
+                        
+                        // Store uploaded image
+                        const inputIndex = parseInt(input.id.split('-').pop());
+                        uploadedImages.set(inputIndex, {
+                            file: file,
+                            preview: e.target.result
+                        });
+    
+                        resolve(true);
+                    };
+                    reader.readAsDataURL(file);
+                });
+            };
+    
+            const createPreviewContainer = (previewUrl, fileName) => {
+                const container = document.createElement('div');
+                container.className = 'relative w-full h-full';
+    
+                const img = document.createElement('img');
+                img.src = previewUrl;
+                img.alt = fileName;
+                img.className = 'absolute inset-0 w-full h-full object-cover rounded';
+    
+                const removeBtn = document.createElement('button');
+                removeBtn.innerHTML = '×';
+                removeBtn.className = 'absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600 transition-colors';
+                removeBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    input.value = '';
+                    label.innerHTML = defaultLabelContent;
+                    const inputIndex = parseInt(input.id.split('-').pop());
+                    uploadedImages.delete(inputIndex);
+                };
+    
+                container.appendChild(img);
+                container.appendChild(removeBtn);
+                return container;
+            };
+    
+            input.addEventListener('change', async (e) => {
+                const file = e.target.files[0];
+                await handleImageUpload(file);
+            });
+        };
+    
+        // Initialize form
+        const initializeForm = () => {
+            // Set up field validation
+            Object.values(fields).forEach(field => {
+                if (field) {
+                    field.addEventListener('input', () => validateField(field));
+                    field.addEventListener('blur', () => validateField(field));
+                }
+            });
+    
+            // Set up image uploads
+            document.querySelectorAll('input[type="file"][id^="image-upload-"]').forEach(input => {
+                setupImageUpload(input, input.closest('label'));
+            });
+    
+            // Form submission handler
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                let isValid = true;
+    
+                // Validate all fields
+                Object.values(fields).forEach(field => {
+                    if (!validateField(field)) {
+                        isValid = false;
+                    }
+                });
+    
+                // Validate at least one image is uploaded
+                if (uploadedImages.size === 0) {
+                    showGlobalError('Please upload at least one book image.');
+                    isValid = false;
+                }
+    
+                if (isValid) {
+                    try {
+                        const formData = new FormData(form);
+                        
+                        // Add uploaded images
+                        uploadedImages.forEach((imageData, inputIndex) => {
+                            // Use the actual input index to maintain correct field names
+                            formData.append(`book_image_${inputIndex}`, imageData.file);
+                        });
+    
+                        const response = await fetch(form.action, {
+                            method: 'POST',
+                            body: formData
+                        });
+    
+                        if (response.ok) {
+                            window.location.href = '/admin_products/';
+                        } else {
+                            const errorData = await response.json();
+                            showGlobalError(errorData.message || 'Error submitting form. Please try again.');
+                        }
+                    } catch (error) {
+                        showGlobalError('Network error. Please try again.');
+                        console.error('Form submission error:', error);
+                    }
+                }
+            });
+        };
+    
+        // Initialize the form
+        initializeForm();
+    });
+</script>
+{% endblock %}

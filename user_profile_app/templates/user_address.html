@@ -1,0 +1,289 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block css_link %}
+{% endblock %}
+
+{% block content %}
+<div  class="bg-gray-50">
+    <div class="font-sans">
+        <div class="max-w-7xl mx-auto px-4 py-8">
+            <!-- Breadcrumb -->
+            <div class="mb-8 text-sm">
+                <a href="{% url 'homepage_after_login' %}" class="text-blue-600 hover:text-blue-800">Home</a>
+                <span class="text-gray-500 mx-2">/</span>
+                <span class="text-gray-500">My Account</span>
+            </div>
+
+            <div class="flex flex-col lg:flex-row gap-8 bg-white rounded-xl p-8 shadow-sm">
+                <!-- Sidebar -->
+                <div class="w-full lg:w-72">
+                    <div class="bg-gray-50 rounded-lg p-6">
+                        <h2 class="text-2xl font-semibold text-gray-800 mb-6">Manage Account</h2>
+                        <ul class="space-y-4">
+                            <li>
+                                <a href="{% url 'user_profile' %}" class="flex items-center px-5 py-3 rounded-lg text-gray-700 hover:bg-gray-200">
+                                    <span class="mr-3 text-xl">👤</span>
+                                    My Profile
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{% url 'user_address' %}" class="flex items-center px-5 py-3 rounded-lg bg-blue-600 text-white">
+                                    <span class="mr-3 text-xl">📖</span>
+                                    Address Book
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{% url 'user_orders' %}" class="flex items-center px-5 py-3 rounded-lg text-gray-700 hover:bg-gray-200">
+                                    <span class="mr-3 text-xl">🛍️</span>
+                                    My Orders
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{% url 'user_wallet' %}" class="flex items-center px-5 py-3 rounded-lg text-gray-700 hover:bg-gray-200">
+                                    <span class="mr-3 text-xl">💰</span>
+                                    Wallet
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{% url 'user_coupon' %}" class="flex items-center px-5 py-3 rounded-lg text-gray-700 hover:bg-gray-200">
+                                    <span class="mr-3 text-xl">💳</span>
+                                    Coupon
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Main Content -->
+                <div class="flex-1 px-4">
+                    <div class="flex justify-between items-center mb-8">
+                        <h1 class="text-2xl font-bold text-gray-800">Address Book</h1>
+                        <a href="{% url 'add_address' %}" class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors">
+                            Add New Address
+                        </a>
+                    </div>
+                    {% if addresses %}
+                    <!-- Address Grid -->
+                    {% for address in addresses %}
+                    <div class="border border-gray-200 rounded-lg p-6 relative mb-4" data-address-id="{{ address.id }}">
+                        <div class="flex justify-between">
+                            <!-- Left side: Address Content -->
+                            <div class="flex-1">
+                                <h3 class="text-lg font-semibold text-gray-800 mb-2">{{ address.address_name }}</h3>
+                                <div class="text-gray-600 space-y-1">
+                                    <!-- Street Address -->
+                                    {% if address.street_name %}
+                                    <p>{{ address.street_name }}</p>
+                                    {% endif %}
+                                    
+                                    <!-- Building/Apartment -->
+                                    {% if address.building_no %}
+                                    <p>{{ address.building_no }}</p>
+                                    {% endif %}
+                                    
+                                    <!-- Landmark -->
+                                    {% if address.landmark %}
+                                    <p>{{ address.landmark }}</p>
+                                    {% endif %}
+                                    
+                                    <!-- City, State, Pincode -->
+                                    <p>{{ address.city }}, {{ address.state }} {{ address.pincode }}</p>
+                                    
+                                    <!-- Phone Number -->
+                                    <p class="mt-2">
+                                        <i class="fas fa-phone-alt mr-2"></i>
+                                        {{ address.address_phone }}
+                                    </p>
+                                </div>
+                            </div>
+
+                            <!-- Middle: Default Tag -->
+                            <div class="flex items-center mx-4">
+                                {% if address.is_default %}
+                                <span class="bg-green-500 text-white text-sm px-3 py-1 rounded whitespace-nowrap">Default</span>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Right side: Buttons -->
+                            <div class="flex flex-col gap-3 min-w-[140px]">
+                                {% if addresses.count > 1 %}
+                                    {% if address.is_default %}
+                                        <button class="w-full bg-gray-200 text-gray-700 px-4 py-2 rounded cursor-not-allowed" disabled>
+                                            Default Address
+                                        </button>
+                                    {% else %}
+                                        <button class="w-full bg-gray-200 text-gray-700 px-4 py-2 rounded hover:bg-gray-300 transition-colors" 
+                                                onclick="setDefaultAddress({{ address.id }})">
+                                            Set as Default
+                                        </button>
+                                    {% endif %}
+                                {% else %}
+                                    <button class="w-full bg-gray-200 text-gray-700 px-4 py-2 rounded cursor-not-allowed" disabled>
+                                        Default Address
+                                    </button>
+                                {% endif %}
+                                
+                                <button class="w-full bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition-colors"
+                                        onclick="showDeleteConfirmation({{ address.id }})">
+                                    Delete Address
+                                </button>
+                                
+                                <a href="{% url 'edit_address' address.id %}" class="w-full">
+                                    <button class="w-full bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors">
+                                        Edit Address
+                                    </button>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+
+                    <!-- Delete Modal -->
+                    <div id="deleteModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50">
+                        <div class="bg-white rounded-lg w-96 mx-auto mt-32 p-6">
+                            <h4 class="text-xl font-semibold mb-4">Delete Address</h4>
+                            <p class="text-gray-600 mb-6">Are you sure you want to delete this address?</p>
+                            <div class="flex justify-end gap-4">
+                                <button class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600" onclick="hideDeleteConfirmation()">
+                                    Cancel
+                                </button>
+                                <button class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700" onclick="confirmDelete()">
+                                    Delete
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% else %}
+            <div class="flex flex-col items-center justify-center py-16">
+                <img src="{% static 'user/images/logo/empty.jpeg' %}" alt="Empty Address" class="w-48 h-48 mb-8"/>
+                <h2 class="text-2xl font-semibold text-gray-800 mb-4">Your Address is Empty</h2>
+                <p class="text-gray-600 mb-8">Create Address to Delivery the Products</p>
+                <a href="{% url 'shop_page' %}" class="bg-yellow-500 text-gray-900 px-8 py-3 rounded-lg hover:bg-yellow-600 transition-colors">
+                    Explore Products
+                 </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block script %}
+    <script>
+    let addressToDelete = null;
+
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    function setDefaultAddress(addressId) {
+        const csrftoken = getCookie('csrftoken');
+        
+        fetch(`/set-default-address/${addressId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrftoken,
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Get all address cards
+                const allAddressCards = document.querySelectorAll('[data-address-id]');
+                
+                // Update all address cards
+                allAddressCards.forEach(card => {
+                    const currentId = card.getAttribute('data-address-id');
+                    const defaultTagContainer = card.querySelector('.flex.items-center.mx-4');
+                    const defaultButton = card.querySelector('.flex.flex-col.gap-3.min-w-\\[140px\\] button:first-child');
+                    
+                    if (currentId === addressId.toString()) {
+                        // This is the new default address
+                        // Add default tag
+                        defaultTagContainer.innerHTML = '<span class="bg-green-500 text-white text-sm px-3 py-1 rounded whitespace-nowrap">Default</span>';
+                        
+                        // Update button to "Default Address"
+                        defaultButton.className = 'w-full bg-gray-200 text-gray-700 px-4 py-2 rounded cursor-not-allowed';
+                        defaultButton.textContent = 'Default Address';
+                        defaultButton.disabled = true;
+                    } else {
+                        // This is not the default address
+                        // Remove default tag
+                        defaultTagContainer.innerHTML = '';
+                        
+                        // Update button to "Set as Default"
+                        defaultButton.className = 'w-full bg-gray-200 text-gray-700 px-4 py-2 rounded hover:bg-gray-300 transition-colors';
+                        defaultButton.textContent = 'Set as Default';
+                        defaultButton.disabled = false;
+                        defaultButton.onclick = () => setDefaultAddress(currentId);
+                    }
+                });
+            }
+        })
+        .catch(error => console.error('Error:', error));
+    }
+
+    function showDeleteConfirmation(addressId) {
+        addressToDelete = addressId;
+        document.getElementById('deleteModal').classList.remove('hidden');
+    }
+
+    function hideDeleteConfirmation() {
+        document.getElementById('deleteModal').classList.add('hidden');
+        addressToDelete = null;
+    }
+
+    function confirmDelete() {
+        if (!addressToDelete) return;
+        
+        const csrftoken = getCookie('csrftoken');
+        
+        fetch(`/delete-address/${addressToDelete}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrftoken,
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const addressCard = document.querySelector(`[data-address-id="${addressToDelete}"]`);
+                addressCard.remove();
+                
+                // Check if any addresses remain
+                const remainingAddresses = document.querySelectorAll('[data-address-id]');
+                if (remainingAddresses.length === 0) {
+                    location.reload();
+                }
+            }
+            hideDeleteConfirmation();
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            hideDeleteConfirmation();
+        });
+    }
+
+    // Close modal when clicking outside
+    window.onclick = function(event) {
+        const modal = document.getElementById('deleteModal');
+        if (event.target === modal) {
+            hideDeleteConfirmation();
+        }
+    }
+    </script>
+{% endblock %}

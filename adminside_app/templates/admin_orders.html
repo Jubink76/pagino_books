@@ -1,0 +1,319 @@
+{% extends 'admin_base.html' %}
+{% load custom_pagination %}
+{% load static %}
+
+{% block csslink %}
+<link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.16/dist/tailwind.min.css" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="flex-1 bg-gray-800 rounded-lg shadow-lg p-6 max-w-full mx-auto">
+    <div class="flex justify-between items-center mb-6">
+        <!-- Heading -->
+        <h1 class="text-2xl font-bold text-gray-100">Orders Management</h1>
+    
+        <!-- Breadcrumb -->
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-0 flex items-center space-x-2">
+                <li class="breadcrumb-item">
+                    <a href="{% url 'admin_dashboard' %}" class="text-gray-400 hover:text-gray-300">Admin / </a>
+                </li>
+                <li class="breadcrumb-item">
+                    <a href="{% url 'admin_orders' %}" class="text-gray-400 hover:text-gray-300">Orders / </a>
+                </li>
+                <li class="breadcrumb-item active text-gray-300" aria-current="page">Orders Management</li>
+            </ol>
+        </nav>
+    </div>
+    
+    <div class="px-6 py-4 bg-gray-800">
+        <div class="flex items-center justify-between space-x-4">
+            <div class="flex-grow">
+                <form method="GET" action="{% url 'admin_orders' %}" class="flex-1 max-w-lg">
+                    <div class="relative">
+                        <input 
+                            type="search" 
+                            class="bg-gray-700 text-gray-300 rounded-md px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                            name="search" 
+                            placeholder="Search" 
+                            value="{{search_query}}">
+                        <button 
+                            type="submit" 
+                            class="absolute inset-y-0 right-0 px-3 bg-yellow-400 hover:bg-yellow-500 text-black rounded-r-md focus:outline-none focus:ring-2 focus:ring-yellow-300">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
+                                <path fill-rule="evenodd" d="M11 4a7 7 0 100 14 7 7 0 000-14zm-9 7a9 9 0 1116.32 5.906l4.387 4.387a1 1 0 11-1.414 1.414l-4.387-4.387A9 9 0 012 11z" clip-rule="evenodd"/>
+                            </svg>
+                        </button>
+                        
+                    </div>
+                </form>
+            </div>
+
+            <div class="flex items-center space-x-4">
+
+                <div class="relative">
+                    <!-- Button -->
+                    <button id="filter-button" 
+                            class="inline-flex items-center px-4 py-2 bg-gray-700 border border-gray-600 text-gray-300 rounded-md shadow-sm hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors">
+                        <svg class="-ml-1 mr-2 h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V3z" clip-rule="evenodd"></path>
+                        </svg>
+                        Filter
+                    </button>
+                    
+                    <!-- Dropdown Menu -->
+                    <ul id="filter-dropdown" 
+                        class="absolute right-0 mt-2 w-48 bg-gray-800 border border-gray-600 rounded-md shadow-lg z-10 hidden">
+                        <li><a href="?" class="block px-4 py-2 text-gray-300 hover:bg-gray-700">All orders</a></li>
+                        <li><a href="?status=pending" class="block px-4 py-2 text-gray-300 hover:bg-gray-700">Pending</a></li>
+                        <li><a href="?status=shipped" class="block px-4 py-2 text-gray-300 hover:bg-gray-700">Shipped</a></li>
+                        <li><a href="?status=out_of_delivery" class="block px-4 py-2 text-gray-300 hover:bg-gray-700">Out of Delivery</a></li>
+                        <li><a href="?status=delivered" class="block px-4 py-2 text-gray-300 hover:bg-gray-700">Delivered</a></li>
+                        <li><a href="?status=canceled" class="block px-4 py-2 text-gray-300 hover:bg-gray-700">Canceled</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+  </div>
+<div class="grid grid-cols-4 gap-4 mb-6">
+    <div class="bg-blue-200 rounded-md p-4 flex flex-col items-center justify-center">
+        <svg class="h-10 w-10 text-blue-500 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"> 
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path> 
+        </svg> 
+        <p class="text-blue-500 text-4xl font-bold">{{ status_counts.pending }}</p>
+        <p class="text-gray-700">Pending Orders</p>  
+    </div>
+     <div class="bg-green-200 rounded-md p-4 flex flex-col items-center justify-center">
+        <svg class="h-10 w-10 text-green-500 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+            <p class="text-green-500 text-4xl font-bold">{{ status_counts.shipped }}</p>
+            <p class="text-gray-700">Completed</p>   
+        </div> 
+        <div class="bg-yellow-200 rounded-md p-4 flex flex-col items-center justify-center">
+                <svg class="h-10 w-10 text-yellow-500 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 15v-1a4 4 0 00-4-4H8m0 0l3 3m-3-3l3-3m9 14V5a2 2 0 00-2-2H6a2 2 0 00-2 2v16l4-2 4 2 4-2 4 2z"></path> </svg>
+                <p class="text-yellow-500 text-4xl font-bold">{{ status_counts.delivered }}</p>
+                <p class="text-gray-700">Refunded</p>
+            </div>
+            <div class="bg-red-200 rounded-md p-4 flex flex-col items-center justify-center">    
+                    <svg class="h-10 w-10 text-red-500 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg> 
+                    <p class="text-red-500 text-4xl font-bold">{{ status_counts.canceled }}</p> 
+                    <p class="text-gray-700">Cancelled</p> 
+                </div> 
+            </div>
+  <div class="bg-gray-800 rounded-md overflow-hidden">
+    <table class="w-full text-left">
+      <thead class="bg-gray-700 text-gray-500 font-medium">
+        <tr>
+          <th class="px-6 py-4">Order ID</th>
+          <th class="px-6 py-4">Customer</th>
+          <th class="px-6 py-4">Order Date</th>
+          <th class="px-6 py-4">Payment</th>
+          <th class="px-6 py-4">Total</th>
+          <th class="px-6 py-4">Status</th>
+          <th class="px-6 py-4">Action</th>
+        </tr>
+      </thead>
+      <tbody id="orders-per-page" class="divide-y divide-gray-700">
+        {% for order in orders %}
+        <tr class="hover:bg-gray-700 transition-colors duration-200">
+          <td class="px-6 py-4 text-blue-400">{{ order.order_id }}</td>
+          <td class="px-6 py-4">{{ order.user.first_name }}</td>
+          <td class="px-6 py-4">{{ order.order_date|date:"Y-m-d H:i" }}</td>
+          <td class="px-6 py-4">{{ order.payment_method }}</td>
+          <td class="px-6 py-4">{{ order.total_amount }}</td>
+          <td class="px-6 py-4">
+            <span 
+                class="px-3 py-1 rounded-full text-sm font-medium 
+                {% if order.order_status == 'Pending' %}bg-yellow-400 text-black{% endif %}
+                {% if order.order_status == 'Shipped' %}bg-blue-500 text-black{% endif %}
+                {% if order.order_status == 'Out of delivery' %}bg-indigo-500 text-black{% endif %}
+                {% if order.order_status == 'Delivered' %}bg-green-500 text-white{% endif %}
+                {% if order.order_status == 'Canceled' %}bg-gray-500 text-white{% endif %}">
+                {{ order.order_status }}
+            </span>
+          <td class="px-6 py-4 flex space-x-2">
+            <a href="{% url 'view_order' order.order_id %}" class="text-blue-500 hover:text-blue-600 transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                    <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd" />
+                </svg>
+            </a>
+            <a href="{% url 'update_order' order.order_id %}" class="text-green-500 hover:text-green-600 transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" />
+                    <path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd" />
+                </svg>
+            </a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <!--------------pagination --------------------->
+  <div class="bg-gradient-to-br from-gray-700 to-gray-800 px-6 py-4 flex items-center justify-between border-t border-gray-600 rounded-b-xl shadow-sm">
+    <div class="text-sm bg-gray-800/70 px-4 py-2 rounded-md shadow-sm">
+        <span class="font-semibold text-blue-600">Showing {{ orders.start_index }}</span> to 
+        <span class="font-semibold text-blue-600">{{ orders.end_index }}</span> out of 
+        <span class="font-semibold text-blue-600">{{ orders.paginator.count }}</span> records
+    </div>
+    <div class="flex space-x-2">
+        <!-- Previous Page -->
+        {% if orders.has_previous %}
+            <a href="?page={{ orders.previous_page_number }}" class="px-4 py-2 rounded-md 
+                bg-gradient-to-r from-blue-500 to-blue-600 
+                text-white font-semibold 
+                hover:from-blue-600 hover:to-blue-700 
+                transition duration-300 ease-in-out 
+                transform hover:-translate-y-0.5 
+                shadow-md hover:shadow-lg">
+                Previous
+            </a>
+        {% else %}
+            <span class="px-4 py-2 rounded-md 
+                bg-gray-300 text-gray-500 
+                cursor-not-allowed opacity-70">
+                Previous
+            </span>
+        {% endif %}
+
+        <!-- Ellipsis Pagination -->
+        {% get_proper_elided_page_range orders.paginator orders.number as page_range %}
+        {% for page_num in page_range %}
+            {% if page_num == 'ELLIPSIS' %}
+                <span class="px-4 py-2 rounded-md 
+                    bg-white border border-gray-300 
+                    text-gray-700 font-semibold 
+                    hover:bg-gray-50 cursor-default">
+                    ...
+                </span>
+            {% elif orders.number == page_num %}
+                <span class="px-4 py-2 rounded-md 
+                    bg-gradient-to-r from-blue-600 to-blue-700 
+                    text-white font-bold 
+                    shadow-md">
+                    {{ page_num }}
+                </span>
+            {% else %}
+                <a href="?page={{ page_num }}&orders_per_page={{ orders.paginator.per_page }}" 
+                    class="px-4 py-2 rounded-md 
+                    bg-white border border-gray-300 
+                    text-gray-700 font-semibold 
+                    hover:bg-blue-50 hover:text-blue-700 
+                    hover:border-blue-300 
+                    transition duration-300 ease-in-out 
+                    transform hover:-translate-y-0.5 
+                    shadow-sm hover:shadow-md">
+                    {{ page_num }}
+                </a>
+            {% endif %}
+        {% endfor %}
+
+        <!-- Next Page -->
+        {% if orders.has_next %}
+            <a href="?page={{ orders.next_page_number }}" class="px-4 py-2 rounded-md 
+                bg-gradient-to-r from-blue-500 to-blue-600 
+                text-white font-semibold 
+                hover:from-blue-600 hover:to-blue-700 
+                transition duration-300 ease-in-out 
+                transform hover:-translate-y-0.5 
+                shadow-md hover:shadow-lg">
+                Next
+            </a>
+        {% else %}
+            <span class="px-4 py-2 rounded-md 
+                bg-gray-300 text-gray-500 
+                cursor-not-allowed opacity-70">
+                Next
+            </span>
+        {% endif %}
+    </div>
+</div>
+</div>
+
+<script>
+    document.getElementById('orders-per-page').addEventListener('change', function() {
+        const ordersPerPage = this.value;
+        const currentUrl = new URL(window.location.href);
+        const searchQuery = currentUrl.searchParams.get('search') || '';
+    
+        currentUrl.searchParams.set('orders_per_page', ordersPerPage);
+        
+        // Fetch data from the server with selected number of orders per page
+        fetch(`/admin-orders/?orders_per_page=${ordersPerPage}&search=${searchQuery}`)
+            .then(response => response.json())
+            .then(data => {
+                const orderTableBody = document.getElementById('order-table-body');
+                orderTableBody.innerHTML = ''; // Clear current table rows
+    
+                // Populate with new rows from the response data
+                data.orders.forEach(order => {
+                    const row = document.createElement('tr');
+                    row.classList.add("hover:bg-gray-700", "group");
+    
+                    row.innerHTML = `
+                        <td class="px-6 py-4 text-sm group-hover:text-white">${order.counter}</td>
+                        <td class="px-6 py-4 text-sm group-hover:text-white">${order.order_id}</td>
+                        <td class="px-6 py-4 text-sm group-hover:text-white">${order.user}</td>
+                        <td class="px-6 py-4 text-sm group-hover:text-white">${order.order_date}</td>
+                        <td class="px-6 py-4 text-sm group-hover:text-white">${order.payment_method}</td>
+                        <td class="px-6 py-4 text-sm group-hover:text-white">${order.total_amount}</td>
+                        <td class="px-6 py-4 text-sm">
+                            <span class="${getOrderStatusClass(order.order_status)} group-hover:text-opacity-90">
+                                ${order.order_status}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 text-sm">
+                            <div class="flex gap-2">
+                                <a href=""><button class="p-1 hover:text-blue-500">👁️</button></a>
+                                <a href=""><button class="p-1 hover:text-green-500">✏️</button></a>
+                                <a href=""><button class="p-1 hover:text-red-500">🗑️</button></a>
+                            </div>
+                        </td>
+                    `;
+                    orderTableBody.appendChild(row);
+                });
+            })
+            .catch(error => console.error('Error fetching order data:', error));
+        
+        // Update URL without page reload
+        window.location.href = currentUrl.toString();
+    });
+    
+    // Helper function to get appropriate class for order status
+    function getOrderStatusClass(status) {
+        switch(status.toLowerCase()) {
+            case 'pending':
+                return 'text-yellow-500';
+            case 'shipped':
+                return 'text-blue-500';
+            case 'delivered':
+                return 'text-green-500';
+            case 'cancelled':
+                return 'text-red-500';
+            default:
+                return 'text-gray-500';
+        }
+    }
+</script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const filterButton = document.getElementById('filter-button');
+        const filterDropdown = document.getElementById('filter-dropdown');
+
+        filterButton.addEventListener('click', () => {
+            filterDropdown.classList.toggle('hidden');
+        });
+
+        // Optional: Close the dropdown when clicking outside
+        document.addEventListener('click', (event) => {
+            if (!filterButton.contains(event.target) && !filterDropdown.contains(event.target)) {
+                filterDropdown.classList.add('hidden');
+            }
+        });
+    });
+</script>
+{% endblock %}

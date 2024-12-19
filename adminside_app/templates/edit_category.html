@@ -1,0 +1,159 @@
+{% extends 'admin_base.html' %}
+{% load static %}
+
+{% block csslink %}
+<link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="col-md-9 ms-sm-auto col-lg-10 offset-md-3 offset-lg-2">
+    <div class="bg-gray-800 rounded-lg shadow-lg p-6">
+        <div class="flex justify-between items-center mb-6">
+            <!-- Heading -->
+            <h1 class="text-white text-2xl font-medium">Edit Category</h1>
+        
+            <!-- Breadcrumb -->
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0 flex items-center space-x-2">
+                    <li class="breadcrumb-item">
+                        <a href="{% url 'admin_dashboard' %}" class="text-gray-400 hover:text-gray-300">Admin /</a>
+                    </li>
+                    <li class="breadcrumb-item">
+                        <a href="{% url 'admin_category' %}" class="text-gray-400 hover:text-gray-300">Category /</a>
+                    </li>
+                    <li class="breadcrumb-item active text-gray-300" aria-current="page">View Category</li>
+                </ol>
+            </nav>
+        </div>
+        
+
+        <form method="POST" action="{% url 'edit_category' category.id %}" id="categoryForm">
+            {% csrf_token %}
+            <div class="mb-6">
+                <label class="block text-gray-300 font-medium mb-2" for="category_name">Category Name</label>
+                <input type="text" name="category_name" id="category_name" 
+                       class="bg-gray-700 text-gray-300 rounded-md px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                       value="{{ category.category_name }}">
+            </div>
+        
+            <div class="mb-6">
+                <label class="block text-gray-300 font-medium mb-2" for="description">Description</label>
+                <textarea name="description" id="description" rows="4" 
+                          class="bg-gray-700 text-gray-300 rounded-md px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500">{{ category.description }}</textarea>
+            </div>
+        
+            <div class="flex justify-end space-x-4">
+                {% if category.is_available %}
+                    <button type="button" id="deleteCategoryButton" 
+                            class="bg-red-500 hover:bg-red-600 text-white font-medium py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500">
+                        Delete Category
+                    </button>
+                {% else %}
+                    <button type="submit" name="readd_category" 
+                            class="bg-green-500 hover:bg-green-600 text-white font-medium py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500">
+                        Add to List Again
+                    </button>
+                {% endif %}
+                <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    Update Category
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    const deleteCategoryButton = document.getElementById('deleteCategoryButton');
+    const categoryForm = document.getElementById('categoryForm');
+
+    if (deleteCategoryButton) {
+        deleteCategoryButton.addEventListener('click', (event) => {
+            event.preventDefault(); // Prevent form submission immediately
+
+            // SweetAlert2 confirmation
+            Swal.fire({
+                title: 'Are you sure?',
+                text: "This action will mark the category as deleted!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Yes, delete it!',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // If confirmed, add the hidden 'delete_category' input and submit the form
+                    const deleteInput = document.createElement('input');
+                    deleteInput.type = 'hidden';
+                    deleteInput.name = 'delete_category';
+                    categoryForm.appendChild(deleteInput);
+                    categoryForm.submit(); // Submit the form to trigger the deletion
+                }
+            });
+        });
+    }
+</script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const form = document.querySelector('form');
+        const categoryNameField = document.getElementById('category_name');
+        const descriptionField = document.getElementById('description');
+        const categoryNameError = document.getElementById('category-name-error');
+        const descriptionError = document.getElementById('description-error');
+        const updateButton = document.getElementById('update-category');
+
+        const clearError = (field, errorElement) => {
+            field.classList.remove('border-red-500');
+            errorElement.classList.add('hidden');
+        };
+
+        const displayError = (field, errorElement, message) => {
+            field.classList.add('border-red-500');
+            errorElement.textContent = message;
+            errorElement.classList.remove('hidden');
+        };
+
+        const validateCategoryName = () => {
+            const value = categoryNameField.value.trim();
+            clearError(categoryNameField, categoryNameError);
+
+            if (!value) {
+                displayError(categoryNameField, categoryNameError, 'Category name cannot be empty.');
+                return false;
+            }
+
+            return true;
+        };
+
+        const validateDescription = () => {
+            const value = descriptionField.value.trim();
+            clearError(descriptionField, descriptionError);
+
+            if (!value) {
+                displayError(descriptionField, descriptionError, 'Description cannot be empty.');
+                return false;
+            }
+
+            return true;
+        };
+
+        const validateForm = () => {
+            const isCategoryNameValid = validateCategoryName();
+            const isDescriptionValid = validateDescription();
+            return isCategoryNameValid && isDescriptionValid;
+        };
+
+        categoryNameField.addEventListener('input', validateCategoryName);
+        descriptionField.addEventListener('input', validateDescription);
+
+        form.addEventListener('submit', (event) => {
+            if (!validateForm()) {
+                event.preventDefault();
+            }
+        });
+    });
+</script>
+{% endblock %}

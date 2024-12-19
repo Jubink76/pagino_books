@@ -1,0 +1,429 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block css_link %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<script src="{% static 'user/js/sweetAlert.js' %}"></script>
+{% endblock %}
+
+{% block content %}
+<main>
+  <div class="flex">
+<!-------------------------------Side bar  section ------------------------>
+      <div class="w-64 flex-shrink-0 mt-4 mx-4">
+          <!-- Categories Section -->
+          <div class="bg-yellow-400 p-4 rounded-t-lg">
+              <div class="flex items-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                  </svg>
+                  <h2 class="text-lg font-semibold">Categories</h2>
+              </div>
+          </div>
+          
+          <div class="bg-white shadow-md">
+          {% for category in categories %}
+              {% if category.is_available %}
+              <a href="{% url 'single_category' category.id %}" class="flex items-center p-4 border-b hover:bg-gray-50">
+                  <svg class="w-5 h-5 text-gray-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                  </svg>
+                  <span class="text-gray-700">{{ category.category_name }}</span>
+                  <svg class="w-4 h-4 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path d="M9 5l7 7-7 7"/>
+                  </svg>
+              </a>
+              {% endif %}
+          {% endfor %}
+          </div>
+          <!-- Deal of the day Section -->
+          <div class="mt-8">
+              <div class="flex items-center justify-between mb-4">
+                  <h2 class="text-lg font-semibold">Deal of the day</h2>
+                  <div class="flex space-x-2">
+                      <button class="p-1 bg-gray-200 rounded-full">
+                          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path d="M15 19l-7-7 7-7"/>
+                          </svg>
+                      </button>
+                      <button class="p-1 bg-gray-200 rounded-full">
+                          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path d="M9 5l7 7-7 7"/>
+                          </svg>
+                      </button>
+                  </div>
+              </div>
+              <div class="bg-white rounded-lg shadow-md w-64">
+                  <div class="relative">
+                      <img src="{% static '/api/placeholder/240/240' %}" alt="Deal Product" class="w-full h-96 object-cover rounded-t-lg">
+                      <div class="absolute top-2 right-2 bg-red-500 text-white rounded-full px-2 py-0.5 text-xs">
+                          49% OFF
+                      </div>
+                  </div>
+                  <div class="p-3">
+                      <!-- Timer Section -->
+                      <div class="flex justify-between space-x-2 mb-2">
+                          <div class="text-center px-1.5 py-0.5 bg-gray-100 rounded">
+                              <div class="font-semibold text-sm">120</div>
+                              <div class="text-xs text-gray-600">DAYS</div>
+                          </div>
+                          <div class="text-center px-1.5 py-0.5 bg-gray-100 rounded">
+                              <div class="font-semibold text-sm">20</div>
+                              <div class="text-xs text-gray-600">HRS</div>
+                          </div>
+                          <div class="text-center px-1.5 py-0.5 bg-gray-100 rounded">
+                              <div class="font-semibold text-sm">36</div>
+                              <div class="text-xs text-gray-600">MINS</div>
+                          </div>
+                          <div class="text-center px-1.5 py-0.5 bg-gray-100 rounded">
+                              <div class="font-semibold text-sm">60</div>
+                              <div class="text-xs text-gray-600">SEC</div>
+                          </div>
+                      </div>
+              
+                      <!-- Product Title -->
+                      <h3 class="font-semibold text-sm mb-1">Floral Print Buttoned</h3>
+              
+                      <!-- Star Rating -->
+                      <div class="flex items-center mb-1">
+                          <svg class="w-3 h-3 text-yellow-400 fill-current" viewBox="0 0 20 20">
+                              <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/>
+                          </svg>
+                          <svg class="w-3 h-3 text-yellow-400 fill-current" viewBox="0 0 20 20">
+                              <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/>
+                          </svg>
+                          <svg class="w-3 h-3 text-yellow-400 fill-current" viewBox="0 0 20 20">
+                              <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/>
+                          </svg>
+                          <svg class="w-3 h-3 text-yellow-400 fill-current" viewBox="0 0 20 20">
+                              <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/>
+                          </svg>
+                          <svg class="w-3 h-3 text-gray-300 fill-current" viewBox="0 0 20 20">
+                              <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/>
+                          </svg>
+                      </div>
+              
+                      <!-- Price -->
+                      <div class="flex items-center justify-between mb-2">
+                          <span class="text-blue-600 font-bold text-sm">$600.00</span>
+                          <span class="text-gray-500 line-through text-xs">$800.00</span>
+                      </div>
+              
+                      <!-- Buttons -->
+                      <div class="flex space-x-2">
+                          <button class="w-8 h-8 bg-yellow-400 text-white p-1.5 rounded">
+                              <svg class="w-full h-full" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+                              </svg>
+                          </button>
+                          <button class="flex-1 bg-blue-600 text-white py-1.5 px-3 rounded text-sm">ADD TO CART</button>
+                      </div>
+                  </div>
+              </div>
+          </div>
+      
+          <!-- Filters Section -->
+          <div class="mt-8">
+              <h2 class="text-lg font-semibold mb-4">Filters</h2>
+              <div class="flex flex-wrap gap-2 mb-6">
+                  <button class="px-4 py-2 bg-gray-100 rounded-md hover:bg-gray-200">Language</button>
+                  <button class="px-4 py-2 bg-blue-600 text-white rounded-md">Authors</button>
+                  <button class="px-4 py-2 bg-gray-100 rounded-md hover:bg-gray-200">Category</button>
+                  <button class="px-4 py-2 bg-gray-100 rounded-md hover:bg-gray-200">Price</button>
+              </div>
+          </div>
+      
+          <!-- Special Deals Section -->
+          <div class="mt-8">
+              <div class="flex items-center justify-between mb-4">
+                  <h2 class="text-lg font-semibold">Special Deals</h2>
+                  <div class="flex space-x-2">
+                      <button class="p-1 bg-gray-200 rounded-full">
+                          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path d="M15 19l-7-7 7-7"/>
+                          </svg>
+                      </button>
+                      <button class="p-1 bg-gray-200 rounded-full">
+                          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path d="M9 5l7 7-7 7"/>
+                          </svg>
+                      </button>
+                  </div>
+              </div>
+              <div class="space-y-4">
+                  <a href="#" class="flex items-center space-x-4 bg-white p-2 rounded-lg shadow-md">
+                      <img src="{% static '/api/placeholder/120/160' %}" alt="Product" class="w-[120px] h-[160px] object-cover rounded">
+                      <div>
+                          <h3 class="font-semibold">Floral Print Shirt</h3>
+                          <div class="flex items-center">
+                              <svg class="w-4 h-4 text-yellow-400 fill-current" viewBox="0 0 20 20">
+                                  <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/>
+                              </svg>
+                              <svg class="w-4 h-4 text-yellow-400 fill-current" viewBox="0 0 20 20">
+                                  <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/>
+                              </svg>
+                              <svg class="w-4 h-4 text-yellow-400 fill-current" viewBox="0 0 20 20">
+                                  <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/>
+                              </svg>
+                              <svg class="w-4 h-4 text-yellow-400 fill-current" viewBox="0 0 20 20">
+                                  <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/>
+                              </svg>
+                              <svg class="w-4 h-4 text-gray-300 fill-current" viewBox="0 0 20 20">
+                                  <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/>
+                              </svg>
+                          </div>
+                          <span class="text-green-600 font-bold">$450.99</span>
+                      </div>
+                  </a>
+              </div>
+          </div>
+      
+          <!-- Testimonial -->
+          <div class="mt-8 bg-white rounded-lg shadow-md p-6 text-center">
+              <img src="{% static '/api/placeholder/100/100' %}" alt="John Doe" class="w-20 h-20 rounded-full mx-auto mb-4">
+              <p class="text-gray-600 mb-4">"Vtae sodales aliq uam morbi non sem lacus port mollis. Nunc condime tum metus eud molest sed consectetuer sed quia non numquam eius modi tempora incidunt ut labore et dolore magnam aliquam quaerat."</p>
+              <h3 class="font-semibold">John Doe</h3>
+              <p class="text-gray-600 text-sm">Abc Company</p>
+              <div class="flex justify-center space-x-2 mt-4">
+                  <div class="w-2 h-2 rounded-full bg-blue-600"></div>
+                  <div class="w-2 h-2 rounded-full bg-gray-300"></div>
+                  <div class="w-2 h-2 rounded-full bg-gray-300"></div>
+              </div>
+          </div>
+          
+      </div>
+
+      <div class = "flex-1">
+        <div class="flex flex-wrap items-center justify-between border-b pb-4">
+            <!-- Grid/List Toggle -->
+            <div class="w-full sm:w-auto m-4 sm:mb-0 flex items-center space-x-4 ">
+              <div class="flex space-x-2">
+                <button class="flex items-center px-4 py-2 text-gray-700 hover:text-yellow-500 border rounded-md focus:outline-none">
+                  <i class="fa fa-th-large mr-2"></i> Grid
+                </button>
+                <button class="flex items-center px-4 py-2 text-gray-700 hover:text-yellow-500 border rounded-md focus:outline-none">
+                  <i class="fa fa-bars mr-2"></i> List
+                </button>
+              </div>
+            </div>
+                  <div class="flex-1 flex justify-center space-x-8 items-center">
+                      <!-- Sort by Dropdown -->
+                      <div class="flex items-center space-x-4 relative">
+                          <label class="text-gray-600 font-medium">Sort by</label>
+                          <div class="relative">
+                              <button 
+                                  id="sortDropdownBtn"
+                                  class="flex items-center px-4 py-2 border rounded-md text-gray-700 hover:text-yellow-500 focus:outline-none">
+                                  Position <i class="fa fa-caret-down ml-2"></i>
+                              </button>
+                              <ul 
+                                  id="sortDropdownMenu"
+                                  class="absolute z-10 hidden mt-2 w-48 bg-white border rounded-md shadow-lg">
+                                  <li><a href="?sort=position" class="block px-4 py-2 hover:bg-gray-100">Position</a></li>
+                                  <li><a href="?sort=price_low" class="block px-4 py-2 hover:bg-gray-100">Price: Lowest first</a></li>
+                                  <li><a href="?sort=price_high" class="block px-4 py-2 hover:bg-gray-100">Price: Highest first</a></li>
+                                  <li><a href="?sort=name_asc" class="block px-4 py-2 hover:bg-gray-100">Product Name: A to Z</a></li>
+                                  <li><a href="?sort=name_desc" class="block px-4 py-2 hover:bg-gray-100">Product Name: Z to A</a></li>
+                                  <li><a href="?sort=new_arrivals" class="block px-4 py-2 hover:bg-gray-100">New arrivals</a></li>
+                              </ul>
+                          </div>
+                          <!-- Show Dropdown -->
+                          <div class="flex items-center space-x-4 relative">
+                              <label class="text-gray-600 font-medium">Show</label>
+                              <div>
+                                  <button 
+                                      id="showDropdownBtn"
+                                      class="flex items-center px-4 py-2 border rounded-md text-gray-700 hover:text-yellow-500 focus:outline-none">
+                                      1 <i class="fa fa-caret-down ml-2"></i>
+                                  </button>
+                                  <ul 
+                                      id="showDropdownMenu"
+                                      class="absolute z-10 hidden mt-2 w-20 bg-white border rounded-md shadow-lg">
+                                      <li><a href="javascript:void(0);" class="block px-4 py-2 hover:bg-gray-100">1</a></li>
+                                      <li><a href="javascript:void(0);" class="block px-4 py-2 hover:bg-gray-100">2</a></li>
+                                      <li><a href="javascript:void(0);" class="block px-4 py-2 hover:bg-gray-100">3</a></li>
+                                  </ul>
+                              </div>
+                          </div>
+                      </div>
+                  </div>
+            <!-- Pagination -->
+            <div class="w-full sm:w-auto flex justify-end mr-5 mt-3">
+              <ul class="flex space-x-2">
+                {% if books.has_previous %}
+                <li>
+                  <a href="?page={{ books.previous_page_number }}" class="px-4 py-2 border rounded-md text-gray-700 hover:bg-yellow-100">
+                    <i class="fa fa-angle-left"></i>
+                  </a>
+                </li>
+                {% else %}
+                <li class="px-4 py-2 border rounded-md text-gray-300">
+                  <i class="fa fa-angle-left"></i>
+                </li>
+                {% endif %}
+          
+                {% for page_num in books.paginator.page_range %}
+                {% if books.number == page_num %}
+                <li class="px-4 py-2 border rounded-md bg-yellow-100 text-yellow-500">{{ page_num }}</li>
+                {% else %}
+                <li>
+                  <a href="?page={{ page_num }}" class="px-4 py-2 border rounded-md text-gray-700 hover:bg-yellow-100">{{ page_num }}</a>
+                </li>
+                {% endif %}
+                {% endfor %}
+          
+                {% if books.has_next %}
+                <li>
+                  <a href="?page={{ books.next_page_number }}" class="px-4 py-2 border rounded-md text-gray-700 hover:bg-yellow-100">
+                    <i class="fa fa-angle-right"></i>
+                  </a>
+                </li>
+                {% else %}
+                <li class="px-4 py-2 border rounded-md text-gray-300">
+                  <i class="fa fa-angle-right"></i>
+                </li>
+                {% endif %}
+              </ul>
+            </div>
+          </div>
+          <div class=" mx-4 mt-4">
+              <div class="relative overflow-hidden rounded-lg h-[300px]">
+                  <!-- Gradient overlay -->
+                  <div class="absolute inset-0 bg-gradient-to-r from-orange-400/60 to-cyan-500/30"></div>
+                  
+                  <!-- Banner image -->
+                  <img 
+                      src="{% static 'user/images/logo/banner1.jpg' %}" 
+                      alt="New Collections Banner" 
+                      class="w-full h-full object-cover"
+                  />
+                  
+                  <!-- Content overlay -->
+                  <div class="absolute inset-0 flex flex-col justify-center px-8">
+                      <span class="text-gray-100 text-lg mb-2">MUST READ</span>
+                      <h1 class="text-black text-5xl font-bold mb-2">New Collections</h1>
+                      <p class="text-gray-800 text-xl mb-6">From our great authors</p>
+                      <button class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-md w-fit transition-colors">
+                          SHOP NOW
+                      </button>
+                  </div>
+              </div>
+          </div>
+          <div class="p-8">
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+                {% for book in books %}
+                <div class="bg-white rounded-lg shadow-md overflow-hidden transform hover:scale-105 transition-transform duration-300 relative group 
+                    {% if not book.is_available %} opacity-50 {% endif %}">
+                    <!-- Image Section -->
+                    <div class="relative aspect-[3/4]">
+                        <a href="{% url 'single_detail' book.id %}">
+                            <img 
+                                src="{{ book.images.first.image.url }}" 
+                                alt="{{ book.book_name }}" 
+                                class="w-full h-full object-contain"
+                            />
+                            {% if not book.is_available %}
+                                <!-- Overlay for out-of-stock products -->
+                                <div class="absolute inset-0 bg-gradient-to-b from-gray-400 to-gray-700 opacity-70"></div>
+                                <span class="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded-full text-sm">Out of Stock</span>
+                                {% elif book.additional_offer_applied %}
+                                <!-- Tag for offers -->
+                                <span 
+                                    class="absolute top-2 right-2 bg-gradient-to-r from-pink-500 via-yellow-400 to-red-500 text-black px-6 py-2 rounded-full text-xs font-bold shadow-lg transform transition-all duration-300 ease-in-out hover:scale-110 hover:shadow-2xl hover:ring-4 hover:ring-pink-300 flex justify-center items-center text-center w-auto max-w-full break-words whitespace-normal animate-bounce"
+                                    style="line-height: 1.2; max-width: 80px; word-wrap: break-word;">
+                                    <span class="block">{{ book.applied_offer.offer_name }}</span>
+                                </span>
+                                {% else %}                                <!-- Tag for new products -->
+                                <span class="absolute top-2 right-2 bg-blue-400 text-white px-2 py-1 rounded-full text-sm">NEW</span>
+                            {% endif %}
+                        </a>
+                    </div>
+                
+                    <!-- Content Section -->
+                    <div class="p-4">
+                        <h3 class="font-semibold text-lg mb-2">{{ book.book_name }}</h3>
+                        <p class="text-gray-600 mb-2">{{ book.author }}</p>
+                        <div class="flex text-yellow-400 mb-2">★★★★☆</div>
+                        
+                        <!-- Price Section with Floating Icons -->
+                        <div class="relative flex justify-between items-center">
+                                <span class="text-green-600 font-bold">₹{{ book.offer_price }}</span>
+                                <span class="text-red-400 line-through">₹{{ book.base_price }}</span>
+                            
+                            <!-- Floating Icons -->
+                            <div class="absolute inset-x-0 top-1/2 transform -translate-y-1/2 flex justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10">
+                                <form class="m-0 z-20">
+                                    {% csrf_token %}
+                                    <button type="submit"
+                                        class="add-to-cart-btn w-10 h-10 flex justify-center items-center rounded-full shadow-md 
+                                        {% if not book.is_available %}
+                                            bg-gradient-to-r from-gray-400 to-gray-600 text-gray-300 cursor-not-allowed
+                                        {% else %}
+                                            bg-yellow-400 text-black hover:bg-yellow-500
+                                        {% endif %}"
+                                        data-url="{% url 'add_to_cart' book.id %}" 
+                                        {% if not book.is_available %} disabled {% endif %}>
+                                        <i class="fa fa-shopping-cart"></i>
+                                    </button>
+                                </form>
+                            
+                                <form class="m-0 z-20">
+                                    {% csrf_token %}
+                                    <button type="submit"
+                                        class="add-to-wishlist-btn w-10 h-10 flex justify-center items-center rounded-full shadow-md 
+                                        {% if not book.is_available %}
+                                            bg-gradient-to-r from-gray-400 to-gray-600 text-gray-300 cursor-not-allowed
+                                        {% else %}
+                                            bg-yellow-400 text-black hover:bg-yellow-500
+                                        {% endif %}"
+                                        data-url="{% url 'add_to_whishlist' book.id %}" 
+                                        {% if not book.is_available %} disabled {% endif %}>
+                                        <i class="fa fa-heart"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>                       
+            
+          </div>
+      </div>
+  </div>
+</main>
+
+{% endblock %}
+
+{% block script %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    // Dropdown functionality
+    document.getElementById('sortDropdownBtn').addEventListener('click', function (e) {
+        e.preventDefault(); // Prevent default action
+        const menu = document.getElementById('sortDropdownMenu');
+        menu.classList.toggle('hidden');
+    });
+
+    document.getElementById('showDropdownBtn').addEventListener('click', function (e) {
+        e.preventDefault(); // Prevent default behavior
+        const menu = document.getElementById('showDropdownMenu');
+        menu.classList.toggle('hidden');
+    });
+
+    // Optional: Close dropdown when clicking outside
+    document.addEventListener('click', function (event) {
+        const sortBtn = document.getElementById('sortDropdownBtn');
+        const sortMenu = document.getElementById('sortDropdownMenu');
+        const showBtn = document.getElementById('showDropdownBtn');
+        const showMenu = document.getElementById('showDropdownMenu');
+
+        if (!sortBtn.contains(event.target) && !sortMenu.contains(event.target)) {
+            sortMenu.classList.add('hidden');
+        }
+        if (!showBtn.contains(event.target) && !showMenu.contains(event.target)) {
+            showMenu.classList.add('hidden');
+        }
+    });
+</script>
+{% endblock %}

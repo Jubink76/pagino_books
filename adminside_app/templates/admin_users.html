@@ -1,0 +1,277 @@
+{% extends 'admin_base.html' %}
+{% load static %}
+
+{% block csslink %}
+<link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-1 py-1">
+    <div class="bg-gray-800 rounded-xl shadow-md overflow-hidden">
+        <div class="px-6 py-6 bg-gray-700 border-b border-gray-600">
+            <div class="flex justify-between items-center">
+                <h1 class="text-3xl font-bold text-gray-300">User Management</h1>
+                <nav aria-label="breadcrumb">
+                    <ol class="flex items-center space-x-2 text-sm text-gray-400">
+                        <li><a href="{% url 'admin_dashboard' %}" class="hover:text-blue-500 transition-colors">Admin</a></li>
+                        <li class="text-gray-500">/</li>
+                        <li class="font-semibold text-blue-500">Users</li>
+                    </ol>
+                </nav>
+            </div>
+        </div>
+
+        <!-- Search and Actions Bar -->
+        <div class="px-6 py-4 bg-gray-800">
+            <div class="flex items-center justify-between space-x-4">
+                <div class="flex-grow">
+                    <form method="GET" action="{% url 'admin_users' %}" class="flex-1 max-w-lg">
+                        <div class="relative">
+                            <input 
+                                type="search" 
+                                class="bg-gray-700 text-gray-300 rounded-md px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                                name="search" 
+                                placeholder="Search" 
+                                value="{{search_query}}">
+                            <button 
+                                type="submit" 
+                                class="absolute inset-y-0 right-0 px-3 bg-yellow-400 hover:bg-yellow-500 text-black rounded-r-md focus:outline-none focus:ring-2 focus:ring-yellow-300">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
+                                    <path fill-rule="evenodd" d="M11 4a7 7 0 100 14 7 7 0 000-14zm-9 7a9 9 0 1116.32 5.906l4.387 4.387a1 1 0 11-1.414 1.414l-4.387-4.387A9 9 0 012 11z" clip-rule="evenodd"/>
+                                </svg>
+                            </button>
+                            
+                        </div>
+                    </form>
+                </div>
+
+                <div class="flex items-center space-x-4">
+
+                    <div class="relative">
+                        <!-- Button -->
+                        <button id="filter-button" class="inline-flex items-center px-4 py-2 bg-gray-700 border border-gray-600 text-gray-300 rounded-md shadow-sm hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors">
+                            <svg class="-ml-1 mr-2 h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V3z" clip-rule="evenodd"></path>
+                            </svg>
+                            Filter
+                        </button>
+                    
+                        <!-- Dropdown Menu -->
+                        <ul id="filter-dropdown" class="absolute right-0 mt-2 w-48 bg-gray-800 border border-gray-600 rounded-md shadow-lg z-10 hidden">
+                            <li><a href="?status=active" class="block px-4 py-2 text-gray-300 hover:bg-gray-700">Active</a></li>
+                            <li><a href="?status=blocked" class="block px-4 py-2 text-gray-300 hover:bg-gray-700">Blocked</a></li>
+                        </ul>
+                    </div>
+                    
+                </div>
+            </div>
+        </div>
+
+        <!-- Table -->
+        <div class="overflow-x-auto">
+            <table class="w-full divide-y divide-gray-600">
+                <thead class="bg-gray-700">
+                    <tr>
+                        <th class="px-2 py-2 text-left text-xs font-medium text-white-400 uppercase tracking-wider">Sl No</th>
+                        <th class="px-2 py-2 text-left text-xs font-medium text-white-400 uppercase tracking-wider">Customer ID</th>
+                        <th class="px-2 py-2 text-left text-xs font-medium text-white-400 uppercase tracking-wider">First Name</th>
+                        <th class="px-2 py-2 text-left text-xs font-medium text-white-400 uppercase tracking-wider">Last Name</th>
+                        <th class="px-2 py-2 text-left text-xs font-medium text-white-400 uppercase tracking-wider">Email</th>
+                        <th class="px-2 py-2 text-left text-xs font-medium text-white-400 uppercase tracking-wider">Phone No</th>
+                        <th class="px-2 py-2 text-left text-xs font-medium text-white-400 uppercase tracking-wider">Gender</th>
+                        <th class="px-2 py-2 text-left text-xs font-medium text-white-400 uppercase tracking-wider">Role</th>
+                        <th class="px-2 py-2 text-left text-xs font-medium text-white-400 uppercase tracking-wider">Status</th>
+                        <th class="px-2 py-2 text-left text-xs font-medium text-white-400 uppercase tracking-wider">Added on</th>
+                        <th class="px-2 py-2 text-left text-xs font-medium text-white-400 uppercase tracking-wider">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="user-table-body" class="bg-gray-800 divide-y divide-gray-600">
+                    {% for row in users %}
+                    <tr class="hover:bg-gray-700 group">
+                        <td class="px-2 py-2 whitespace-nowrap text-sm text-gray-400 group-hover:text-white">{{ forloop.counter }}</td>
+                        <td class="px-2 py-2 whitespace-nowrap text-sm text-gray-400 group-hover:text-white">{{row.id}}</td>
+                        <td class="px-2 py-2 whitespace-nowrap text-sm text-gray-400 group-hover:text-white">{{row.first_name}}</td>
+                        <td class="px-2 py-2 whitespace-nowrap text-sm text-gray-400 group-hover:text-white">{{row.last_name}}</td>
+                        <td class="px-2 py-2 whitespace-nowrap text-sm text-gray-400 group-hover:text-white">{{row.email}}</td>
+                        <td class="px-2 py-2 whitespace-nowrap text-sm text-gray-400 group-hover:text-white">{{row.phone_number}}</td>
+                        <td class="px-2 py-2 whitespace-nowrap text-sm text-gray-400 group-hover:text-white">{{row.gender}}</td>
+                        <td class="px-2 py-2 whitespace-nowrap text-sm text-gray-400 group-hover:text-white">{{row.role}}</td>
+                        <td class="px-2 py-2 whitespace-nowrap text-sm">
+                            <span class="{% if row.is_blocked %}text-red-500{% elif row.is_pending %}text-yellow-500{% else %}text-green-500{% endif %} px-2 py-1 rounded-full text-xs font-semibold group-hover:text-opacity-90">
+                                {% if row.is_blocked %}
+                                    Blocked
+                                {% elif row.is_pending %}
+                                    Pending
+                                {% else %}
+                                    Active
+                                {% endif %}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-400 group-hover:text-white">{{row.date_joined}}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm">
+                            <div class="flex items-center space-x-2">
+                                <a href="{% url 'view_users' row.id %}" class="text-blue-500 hover:text-blue-600 transition-colors">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                        <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                                        <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd" />
+                                    </svg>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        <div class="bg-gradient-to-br from-gray-700 to-gray-800 px-6 py-4 flex items-center justify-between border-t border-gray-600 rounded-b-xl shadow-sm">
+            <div class="flex items-center space-x-3">
+                <span class="text-sm font-medium">Show</span>
+                <select id="users-per-page" class="form-select bg-gray-800 border-2 border-blue-500 text-gray-300 rounded-md px-3 py-1.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-300 ease-in-out hover:border-blue-400 hover:shadow-md">
+                    <option value="5" {% if users.paginator.per_page == 5 %}selected{% endif %}>5</option>
+                    <option value="10" {% if users.paginator.per_page == 10 %}selected{% endif %}>10</option>
+                    <option value="15" {% if users.paginator.per_page == 15 %}selected{% endif %}>15</option>
+                </select>
+                <span class="text-sm font-medium">per page</span>
+            </div>
+        
+            <div class="text-sm bg-gray-800/70 px-4 py-2 rounded-md shadow-sm">
+                Showing <span class="font-semibold text-blue-600">{{ users.start_index }}</span> to 
+                <span class="font-semibold text-blue-600">{{ users.end_index }}</span> of 
+                <span class="font-semibold text-blue-600">{{ users.paginator.count }}</span> records
+            </div>
+        
+            <div class="flex space-x-2">
+                {% if users.has_previous %}
+                    <a href="?page={{ users.previous_page_number }}" class="px-4 py-2 rounded-md 
+                        bg-gradient-to-r from-blue-500 to-blue-600 
+                        text-white font-semibold 
+                        hover:from-blue-600 hover:to-blue-700 
+                        transition duration-300 ease-in-out 
+                        transform hover:-translate-y-0.5 
+                        shadow-md hover:shadow-lg">
+                        Previous
+                    </a>
+                {% else %}
+                    <span class="px-4 py-2 rounded-md 
+                        bg-gray-300 text-gray-500 
+                        cursor-not-allowed opacity-70">
+                        Previous
+                    </span>
+                {% endif %}
+        
+                {% for page_num in users.paginator.page_range %}
+                    {% if users.number == page_num %}
+                        <span class="px-4 py-2 rounded-md 
+                            bg-gradient-to-r from-blue-600 to-blue-700 
+                            text-white font-bold 
+                            shadow-md">
+                            {{ page_num }}
+                        </span>
+                    {% else %}
+                        <a href="?page={{ page_num }}&users_per_page={{ users.paginator.per_page }}" 
+                            class="px-4 py-2 rounded-md 
+                            bg-white border border-gray-300 
+                            text-gray-700 font-semibold 
+                            hover:bg-blue-50 hover:text-blue-700 
+                            hover:border-blue-300 
+                            transition duration-300 ease-in-out 
+                            transform hover:-translate-y-0.5 
+                            shadow-sm hover:shadow-md">
+                            {{ page_num }}
+                        </a>
+                    {% endif %}
+                {% endfor %}
+        
+                {% if users.has_next %}
+                    <a href="?page={{ users.next_page_number }}" class="px-4 py-2 rounded-md 
+                        bg-gradient-to-r from-blue-500 to-blue-600 
+                        text-white font-semibold 
+                        hover:from-blue-600 hover:to-blue-700 
+                        transition duration-300 ease-in-out 
+                        transform hover:-translate-y-0.5 
+                        shadow-md hover:shadow-lg">
+                        Next
+                    </a>
+                {% else %}
+                    <span class="px-4 py-2 rounded-md 
+                        bg-gray-300 text-gray-500 
+                        cursor-not-allowed opacity-70">
+                        Next
+                    </span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    document.getElementById('users-per-page').addEventListener('change', function() {
+        const usersPerPage = this.value;
+        const currentUrl = new URL(window.location.href);
+
+        currentUrl.searchParams.set('users_per_page', usersPerPage);
+        // Fetch data from the server with selected number of users per page
+        fetch(`/admin-users/?users_per_page=${usersPerPage}&status={{ request.GET.status }}`)
+            .then(response => response.json())
+            .then(data => {
+                const userTableBody = document.getElementById('user-table-body');
+                userTableBody.innerHTML = ''; // Clear current table rows
+
+                // Populate with new rows from the response data
+                data.users.forEach(user => {
+                    const row = document.createElement('tr');
+                    row.classList.add("hover:bg-gray-700", "group");
+
+                    row.innerHTML = `
+                        <td class="px-6 py-4 text-sm group-hover:text-white">${user.counter}</td>
+                        <td class="px-6 py-4 text-sm group-hover:text-white">${user.id}</td>
+                        <td class="px-6 py-4 text-sm group-hover:text-white">${user.first_name}</td>
+                        <td class="px-6 py-4 text-sm group-hover:text-white">${user.last_name}</td>
+                        <td class="px-6 py-4 text-sm group-hover:text-white">${user.email}</td>
+                        <td class="px-6 py-4 text-sm group-hover:text-white">${user.phone_number}</td>
+                        <td class="px-6 py-4 text-sm group-hover:text-white">${user.gender}</td>
+                        <td class="px-6 py-4 text-sm group-hover:text-white">${user.role}</td>
+                        <td class="px-6 py-4 text-sm">
+                            <span class="${user.is_blocked ? 'text-red-500' : (user.is_pending ? 'text-yellow-500' : 'text-green-500')} group-hover:text-opacity-90">
+                                ${user.is_blocked ? 'Blocked' : (user.is_pending ? 'Pending' : 'Active')}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 text-sm">${user.date_joined}</td>
+                        <td class="px-6 py-4 text-sm">
+                            <div class="flex gap-2">
+                                <a href="{% url 'view_users' user.id %}"><button class="p-1 hover:text-blue-500">👁️</button></a>
+                                <a href=""><button class="p-1 hover:text-green-500">✏️</button></a>
+                                <a href=""><button class="p-1 hover:text-red-500">🗑️</button></a>
+                            </div>
+                        </td>
+                    `;
+                    userTableBody.appendChild(row);
+                });
+            })
+            .catch(error => console.error('Error fetching user data:', error));
+            window.location.href = currentUrl.toString();
+    });
+</script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const filterButton = document.getElementById('filter-button');
+        const filterDropdown = document.getElementById('filter-dropdown');
+
+        filterButton.addEventListener('click', () => {
+            filterDropdown.classList.toggle('hidden');
+        });
+
+        // Optional: Close the dropdown when clicking outside
+        document.addEventListener('click', (event) => {
+            if (!filterButton.contains(event.target) && !filterDropdown.contains(event.target)) {
+                filterDropdown.classList.add('hidden');
+            }
+        });
+    });
+</script>
+
+{% endblock %}

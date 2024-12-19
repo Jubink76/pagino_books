@@ -1,0 +1,422 @@
+{% extends 'admin_base.html' %}
+{% load static %}
+
+{% block csslink %}
+<link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet"> 
+{% endblock %}
+
+{% block content %}
+<div class="container mx-auto py-8">
+    <div class="bg-gray-800 rounded-xl shadow-md overflow-hidden">
+        <div class="px-6 py-6 bg-gray-700 border-b border-gray-600">
+            <div class="flex justify-between items-center">
+                <h1 class="text-3xl font-bold text-gray-300">Category Management</h1>
+                <nav aria-label="breadcrumb">
+                    <ol class="flex items-center space-x-2 text-sm text-gray-400">
+                        <li><a href="{% url 'admin_dashboard' %}" class="hover:text-blue-500 transition-colors">Admin</a></li>
+                        <li class="text-gray-500">/</li>
+                        <li class="font-semibold text-blue-500">Category</li>
+                    </ol>
+                </nav>
+            </div>
+        </div>
+
+        <!-- Search and Actions Bar -->
+        <div class="px-6 py-4 bg-gray-800">
+            <div class="flex flex-wrap justify-between items-center gap-4 mb-6">
+                <!-- Search Form -->
+                <form method="GET" action="{% url 'admin_category' %}" class="flex-1 max-w-lg">
+                    <div class="relative">
+                        <input 
+                            type="search" 
+                            class="bg-gray-700 text-gray-300 rounded-md px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                            name="search" 
+                            placeholder="Search" 
+                            value="{{search_query}}">
+                        <button 
+                            type="submit" 
+                            class="absolute inset-y-0 right-0 px-3 bg-yellow-400 hover:bg-yellow-500 text-black rounded-r-md focus:outline-none focus:ring-2 focus:ring-yellow-300">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
+                                <path fill-rule="evenodd" d="M11 4a7 7 0 100 14 7 7 0 000-14zm-9 7a9 9 0 1116.32 5.906l4.387 4.387a1 1 0 11-1.414 1.414l-4.387-4.387A9 9 0 012 11z" clip-rule="evenodd"/>
+                            </svg>
+                        </button>
+                        
+                    </div>
+                </form>
+                
+                <!-- Action Buttons -->
+                <div class="flex items-center space-x-4">
+                    <a href="{% url 'add_category' %}" class="inline-flex items-center px-4 py-2 bg-blue-500 text-white rounded-md shadow-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors">
+                        <svg class="-ml-1 mr-2 h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"></path>
+                        </svg>
+                        Add Category
+                    </a>
+        
+                    <div class="relative">
+                        <!-- Button -->
+                        <button id="filter-button" class="inline-flex items-center px-4 py-2 bg-gray-700 border border-gray-600 text-gray-300 rounded-md shadow-sm hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors">
+                            <svg class="-ml-1 mr-2 h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V3z" clip-rule="evenodd"></path>
+                            </svg>
+                            Filter
+                        </button>
+                    
+                        <!-- Dropdown Menu -->
+                        <ul id="filter-dropdown" class="absolute right-0 mt-2 w-48 bg-gray-800 border border-gray-600 rounded-md shadow-lg z-10 hidden">
+                            <li><a href="?status=active" class="block px-4 py-2 text-gray-300 hover:bg-gray-700">Active</a></li>
+                            <li><a href="?status=inactive" class="block px-4 py-2 text-gray-300 hover:bg-gray-700">Inactive</a></li>
+                            <li><a href="?status=pending" class="block px-4 py-2 text-gray-300 hover:bg-gray-700">Pending</a></li>
+                            <li><a href="?status=blocked" class="block px-4 py-2 text-gray-300 hover:bg-gray-700">Blocked</a></li>
+                        </ul>
+                    </div>
+                    
+                </div>
+            </div>
+        </div>
+
+        <!-- Table -->
+        <div class="overflow-x-auto">
+            <table class="w-full divide-y divide-gray-600">
+                {% csrf_token %}
+                <thead class="bg-gray-700">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Sl No</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Category</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Description</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Total Products</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Availability</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">additional offer</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">offer status</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="categories-table-body" class="bg-gray-800 divide-y divide-gray-600">
+                    {% for category in categories %}
+                    <tr data-category-id="{{ category.id }}" data-has-offer="{{ category.has_offer|yesno:'true,false' }}" class="hover:bg-gray-700 group">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-400 group-hover:text-white">
+                            {{ forloop.counter }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-400 group-hover:text-white">
+                            {{ category.category_name }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-400 group-hover:text-white">
+                            {{ category.description|truncatechars:30 }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-400 group-hover:text-white">
+                            {{ category.product_count }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm">
+                            {% if category.is_available %}
+                                <span class="px-2 py-1 rounded-full text-xs font-semibold text-green-500 bg-green-500/20">Available</span>
+                            {% else %}
+                                <span class="px-2 py-1 rounded-full text-xs font-semibold text-red-500 bg-red-500/20">Unavailable</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm">
+                            <div class="flex items-center space-x-2">
+                                {% if category.has_offer %}
+                                    <!-- Edit Offer Button -->
+                                    <button 
+                                        class="edit-offer-btn px-3 py-1 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors"
+                                        data-url="{% url 'edit_category_offer' category.id %}">
+                                        Edit Offer
+                                    </button>
+                            
+                                    <!-- Delete Offer Button -->
+                                    <button 
+                                        class="delete-offer-btn px-3 py-1 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors"
+                                        data-url="{% url 'delete_category_offer' category.id %}">
+                                        Delete Offer
+                                    </button>
+                                {% else %}
+                                    <!-- Add Offer Button -->
+                                    <button 
+                                        class="add-offer-btn px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
+                                        data-url="{% url 'add_category_offer' category.id %}">
+                                        Add Offer
+                                    </button>
+                                {% endif %}
+                            </div>                                                                                                      
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-400 group-hover:text-white">
+                            price change
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm">
+                            <div class="flex items-center space-x-2">
+                                <a href="{% url 'edit_category' category.pk %}" class="text-green-500 hover:text-green-600 transition-colors">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                        <path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" />
+                                        <path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd" />
+                                    </svg>
+                                </a>
+                                <a href="{% url 'delete_category' category.pk %}" id="deleteCategoryLink" class="text-red-500 hover:text-red-600 transition-colors">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                                    </svg>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        <div class="bg-gradient-to-br from-gray-700 to-gray-800 px-6 py-4 flex items-center justify-between border-t border-gray-600 rounded-b-xl shadow-sm">
+            {% comment %} <div class="flex items-center space-x-3">
+                <span class="text-sm font-medium">Show</span>
+                <select id="categories-table-body" class="form-select bg-gray-800 border-2 border-blue-500 text-gray-300 rounded-md px-3 py-1.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-300 ease-in-out hover:border-blue-400 hover:shadow-md">
+                    <option value="5" {% if categories.paginator.per_page == 5 %}selected{% endif %}>5</option>
+                    <option value="10" {% if categories.paginator.per_page == 10 %}selected{% endif %}>10</option>
+                    <option value="15" {% if categories.paginator.per_page == 15 %}selected{% endif %}>15</option>
+                </select>
+                <span class="text-sm font-medium">per page</span>
+            </div> {% endcomment %}
+            <div class="text-sm bg-gray-800/70 px-4 py-2 rounded-md shadow-sm">
+                Showing <span class="font-semibold text-blue-500">{{ categories.start_index }}</span> to <span class="font-semibold text-blue-500">{{ categories.end_index }}</span> of <span class="font-semibold text-blue-500">{{ categories.paginator.count }}</span> records
+            </div>
+            <div class="flex space-x-2">
+                {% if categories.has_previous %}
+                    <a href="?page={{ categories.previous_page_number }}" class="px-4 py-2 rounded-md 
+                        bg-gradient-to-r from-blue-500 to-blue-600 
+                        text-white font-semibold 
+                        hover:from-blue-600 hover:to-blue-700 
+                        transition duration-300 ease-in-out 
+                        transform hover:-translate-y-0.5 
+                        shadow-md hover:shadow-lg">
+                        Previous
+                    </a>
+                {% else %}
+                    <span class="px-4 py-2 rounded-md 
+                        bg-gray-300 text-gray-500 
+                        cursor-not-allowed opacity-70">
+                        Previous
+                    </span>
+                {% endif %}
+                {% for page_num in categories.paginator.page_range %}
+                    {% if categories.number == page_num %}
+                        <span class="px-4 py-2 rounded-md 
+                            bg-gradient-to-r from-blue-600 to-blue-700 
+                            text-white font-bold 
+                            shadow-md">
+                            {{ page_num }}
+                        </span>
+                    {% else %}
+                        <a href="?page={{ page_num }}&categories_per_page={{ categories.paginator.per_page }}" 
+                            class="px-4 py-2 rounded-md 
+                            bg-white border border-gray-300 
+                            text-gray-700 font-semibold 
+                            hover:bg-blue-50 hover:text-blue-700 
+                            hover:border-blue-300 
+                            transition duration-300 ease-in-out 
+                            transform hover:-translate-y-0.5 
+                            shadow-sm hover:shadow-md">
+                            {{ page_num }}
+                        </a>
+                    {% endif %}
+                {% endfor %}
+        
+                {% if categories.has_next %}
+                    <a href="?page={{ categories.next_page_number }}" class="px-4 py-2 rounded-md 
+                        bg-gradient-to-r from-blue-500 to-blue-600 
+                        text-white font-semibold 
+                        hover:from-blue-600 hover:to-blue-700 
+                        transition duration-300 ease-in-out 
+                        transform hover:-translate-y-0.5 
+                        shadow-md hover:shadow-lg">
+                        Next
+                    </a>
+                {% else %}
+                    <span class="px-4 py-2 rounded-md 
+                        bg-gray-300 text-gray-500 
+                        cursor-not-allowed opacity-70">
+                        Next
+                    </span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block script %}
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // Event delegation for dynamic elements
+        document.addEventListener("click", (event) => {
+            const target = event.target;
+    
+            // Handle Add Offer Button
+            if (target.matches(".add-offer-btn")) {
+                const url = target.getAttribute("data-url");
+                if (url) {
+                    window.location.href = url;
+                }
+            }
+    
+            // Handle Edit Offer Button
+            if (target.matches(".edit-offer-btn")) {
+                const url = target.getAttribute("data-url");
+                if (url) {
+                    window.location.href = url;
+                }
+            }
+    
+            // Handle Delete Offer Button with SweetAlert confirmation
+            if (target.matches(".delete-offer-btn")) {
+                const url = target.getAttribute("data-url");
+                if (url) {
+                    Swal.fire({
+                        title: 'Are you sure?',
+                        text: "This action will delete the offer permanently!",
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#d33',
+                        cancelButtonColor: '#3085d6',
+                        confirmButtonText: 'Yes, delete it!',
+                        cancelButtonText: 'Cancel'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            fetch(url, {
+                                method: 'POST',
+                                headers: {
+                                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                                }
+                            })
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.status === 'success') {
+                                    Swal.fire({
+                                        title: 'Deleted!',
+                                        text: data.message,
+                                        icon: 'success'
+                                    }).then(() => {
+                                        window.location.reload();
+                                    });
+                                } else {
+                                    Swal.fire({
+                                        title: 'Error!',
+                                        text: data.message,
+                                        icon: 'error'
+                                    });
+                                }
+                            })
+                            .catch(() => {
+                                Swal.fire({
+                                    title: 'Error!',
+                                    text: 'Something went wrong while deleting the offer.',
+                                    icon: 'error'
+                                });
+                            });
+                        }
+                    });
+                }
+            }
+    
+            // Handle Delete Category with SweetAlert confirmation
+            if (target.matches("#deleteCategoryLink")) {
+                event.preventDefault();
+                const deleteCategoryLink = target;
+    
+                Swal.fire({
+                    title: 'Are you sure?',
+                    text: "This action will delete the category permanently!",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#3085d6',
+                    confirmButtonText: 'Yes, delete it!',
+                    cancelButtonText: 'Cancel'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        window.location.href = deleteCategoryLink.href;
+                    }
+                });
+            }
+        });
+    
+        // Handle Categories Per Page Dropdown
+        const categoriesPerPageDropdown = document.getElementById('categories-table-body');
+
+        if (categoriesPerPageDropdown) {
+            categoriesPerPageDropdown.addEventListener('change', function () {
+                const categoriesPerPage = this.value; // Get the selected value
+                const currentUrl = new URL(window.location.href);
+
+                // Update the query parameter for categories per page
+                currentUrl.searchParams.set('categories_per_page', categoriesPerPage);
+
+                // Fetch updated categories data from the server
+                fetch(`/admin-categories/?categories_per_page=${categoriesPerPage}`)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        const categoriesTableBody = document.getElementById('categories-table-body');
+
+                        // Clear existing rows
+                        const tableBody = document.querySelector('#categories-table-body tbody');
+                        tableBody.innerHTML = '';
+
+                        // Populate the table with the new rows
+                        data.categories.forEach(category => {
+                            const row = document.createElement('tr');
+                            row.classList.add("hover:bg-gray-700", "group");
+
+                            row.innerHTML = `
+                                <td class="px-6 py-4 text-sm group-hover:text-white">${category.counter}</td>
+                                <td class="px-6 py-4 text-sm group-hover:text-white">${category.id}</td>
+                                <td class="px-6 py-4 text-sm group-hover:text-white">${category.category_name}</td>
+                                <td class="px-6 py-4 text-sm group-hover:text-white">${category.description}</td>
+                                <td class="px-6 py-4 text-sm">
+                                    <div class="flex gap-2">
+                                        <a href="/view_category/${category.id}">
+                                            <button class="p-1 hover:text-blue-500">👁️</button>
+                                        </a>
+                                        <a href="/edit_category/${category.id}">
+                                            <button class="p-1 hover:text-green-500">✏️</button>
+                                        </a>
+                                        <a href="/delete_category/${category.id}">
+                                            <button class="p-1 hover:text-red-500">🗑️</button>
+                                        </a>
+                                    </div>
+                                </td>
+                            `;
+                            tableBody.appendChild(row);
+                        });
+                    })
+                    .catch(error => {
+                        console.error('Error fetching category data:', error);
+                    });
+
+                // Update the URL in the browser's address bar without reloading the page
+                window.history.pushState({}, '', currentUrl.toString());
+            });
+        } 
+    
+        // Handle Filter Button Dropdown
+        const filterButton = document.getElementById('filter-button');
+        const filterDropdown = document.getElementById('filter-dropdown');
+        if (filterButton && filterDropdown) {
+            filterButton.addEventListener('click', () => {
+                filterDropdown.classList.toggle('hidden');
+            });
+    
+            // Close the dropdown when clicking outside
+            document.addEventListener('click', (event) => {
+                if (!filterButton.contains(event.target) && !filterDropdown.contains(event.target)) {
+                    filterDropdown.classList.add('hidden');
+                }
+            });
+        }
+    });    
+</script>
+{% endblock %}

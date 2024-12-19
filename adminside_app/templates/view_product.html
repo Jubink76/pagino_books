@@ -1,0 +1,194 @@
+{% extends 'admin_base.html' %}
+{% load static %}
+
+{% block csslink %}
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+    .thumbnail-hover {
+        @apply opacity-80 cursor-pointer transition-opacity;
+    }
+    .active-thumbnail {
+        @apply border-2 border-blue-600;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="bg-gray-800 rounded-lg shadow-lg p-6">
+        <!-- Header with Breadcrumbs -->
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-white text-2xl font-bold">Product Details</h1>
+            <nav aria-label="breadcrumb" class="text-sm">
+                <ol class="flex space-x-2 text-gray-400">
+                    <li><a href="{% url 'admin_dashboard' %}" class="hover:text-white">Admin</a></li>
+                    <li>/</li>
+                    <li><a href="{% url 'admin_products' %}" class="hover:text-white">Products</a></li>
+                    <li>/</li>
+                    <li class="text-white">{{ book.book_name }}</li>
+                </ol>
+            </nav>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-8">
+            <!-- Product Images Section -->
+            <div class="flex items-start space-x-4">
+                <!-- Main Image -->
+                <div class="flex-grow">
+                    {% if images %}
+                        <img id="mainImage" 
+                             src="{{ images.first.image.url }}" 
+                             alt="{{ book.book_name }}" 
+                             class="w-full max-h-[500px] object-contain rounded-lg shadow-md"
+                        >
+                    {% else %}
+                        <p class="text-gray-400">No main image available for this book.</p>
+                    {% endif %}
+                </div>
+
+                <!-- Thumbnail Images -->
+                <div class="flex flex-col space-y-2">
+                    {% if images %}
+                        {% for image in images %}
+                            <img src="{{ image.image.url }}" 
+                                 alt="Thumbnail {{ forloop.counter }}"
+                                 class="thumbnail w-24 h-24 object-cover rounded cursor-pointer 
+                                        {% if forloop.first %}active-thumbnail{% endif %}"
+                                 onclick="updateMainImage(this.src)"
+                            >
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-gray-400">No images available for this book.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Product Details Section -->
+            <div>
+                <!-- General Information -->
+                <div class="mb-6">
+                    <h2 class="text-xl font-semibold text-white mb-4">General Information</h2>
+                    <div class="space-y-3">
+                        <div>
+                            <label class="block text-gray-300 font-medium mb-1">Book Name</label>
+                            <p class="text-white">{{ book.book_name }}</p>
+                        </div>
+                        <div>
+                            <label class="block text-gray-300 font-medium mb-1">Description</label>
+                            <p class="text-white">{{ book.description }}</p>
+                        </div>
+                        <div>
+                            <label class="block text-gray-300 font-medium mb-1">Stock Quantity</label>
+                            <p class="text-white">{{ book.stock_quantity }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pricing -->
+                <div class="mb-6">
+                    <h2 class="text-xl font-semibold text-white mb-4">Pricing</h2>
+                    <div class="grid grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-gray-300 font-medium mb-1">Base Price</label>
+                            <p class="text-white">${{ book.price }}</p>
+                        </div>
+                        <div>
+                            <label class="block text-gray-300 font-medium mb-1">VAT Amount</label>
+                            <p class="text-white">{{ book.vat_amount }}%</p>
+                        </div>
+                        <div>
+                            <label class="block text-gray-300 font-medium mb-1">Discount</label>
+                            <p class="text-white">{{ book.discount_percentage }}%</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Category, Author, Language -->
+                <div class="mb-6">
+                    <div class="grid grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-gray-300 font-medium mb-1">Category</label>
+                            <p class="text-white">{{ book.category.category_name }}</p>
+                        </div>
+                        <div>
+                            <label class="block text-gray-300 font-medium mb-1">Author</label>
+                            <p class="text-white">{{ book.author }}</p>
+                        </div>
+                        <div>
+                            <label class="block text-gray-300 font-medium mb-1">Language</label>
+                            <p class="text-white">{{ book.language }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Author Details -->
+                <div class="mb-6">
+                    <label class="block text-gray-300 font-medium mb-1">Author Details</label>
+                    <p class="text-white">{{ book.author.bio }}</p>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex justify-end space-x-4 mt-6">
+                    <a href="{% url 'edit_product' book.id %}" 
+                       class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition">
+                        Edit Product
+                    </a>
+                    <button type="button" 
+                            id="deleteProductBtn"
+                            class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition">
+                        Delete Product
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap JS and Image Update Script -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script><script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    // Select the delete button
+    const deleteButton = document.getElementById('deleteProductBtn');
+
+    if (deleteButton) {
+        deleteButton.addEventListener('click', (event) => {
+            event.preventDefault(); // Prevent the default behavior
+
+            // Show SweetAlert2 confirmation
+            Swal.fire({
+                title: 'Are you sure?',
+                text: "This action will permanently delete the product.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Yes, delete it!',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Redirect to the delete view or submit form to delete
+                    // Option 1: Redirect to a URL that will handle the delete action
+                    window.location.href = "{% url 'edit_product' book.id %}?delete_book=true";
+
+                    // Option 2: Submit a form (if you want to do it without redirecting)
+                    // You can submit a form here, or do AJAX if needed
+                }
+            });
+        });
+    }
+</script>
+<script>
+    function updateMainImage(src) {
+        const mainImage = document.getElementById('mainImage');
+        mainImage.src = src;
+
+        // Update thumbnail highlighting
+        document.querySelectorAll('.thumbnail').forEach(thumb => {
+            thumb.classList.remove('active-thumbnail');
+            if (thumb.src === src) {
+                thumb.classList.add('active-thumbnail');
+            }
+        });
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,211 @@
+{% extends 'admin_base.html' %}
+{% load static %}
+
+{% block csslink %}
+<link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="col-md-9 ms-sm-auto col-lg-10 offset-md-3 offset-lg-2">
+    <div class="bg-gray-800 rounded-lg shadow-lg p-6">
+        <!-- Header Section -->
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-white text-2xl font-medium">Offer Management</h1>
+            <nav aria-label="breadcrumb">
+                <ol class="flex space-x-2 text-sm text-gray-400">
+                    <li><a href="#" class="hover:text-white">Admin</a></li>
+                    <li>/</li>
+                    <li class="text-white">Offers</li>
+                </ol>
+            </nav>
+        </div>
+
+        <!-- Active Offers Section -->
+        <div class="mt-8">
+            <h2 class="text-white text-xl font-medium mb-4">Active Offers</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {% for offer in active_offers %}
+                <div class="bg-gray-700 rounded-lg p-4 border border-gray-600">
+                    <div class="flex justify-between items-start mb-3">
+                        {% if offer.offer_type == 'category' %}
+                        <div>
+                            <span class="bg-purple-500 text-white px-2 py-1 rounded-full text-sm">Category Offer</span>
+                            <h3 class="text-white font-bold mt-2">{{ offer.offer_name }}</h3>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button class="edit-offer-btn text-gray-400 hover:text-white"
+                                data-url="{% url 'edit_category_offer' offer.category.id %}">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                </svg>
+                            </button>
+                            <button class="delete-offer-btn text-gray-400 hover:text-white"
+                                data-url="{% url 'delete_category_offer' offer.category.id %}">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                            </button>
+                        </div>
+                        {% elif offer.offer_type == 'product' %}
+                        <div>
+                            <span class="bg-green-500 text-white px-2 py-1 rounded-full text-sm">Product Offer</span>
+                            <h3 class="text-white font-bold mt-2">{{ offer.offer_name }}</h3>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button class="edit-offer-btn text-gray-400 hover:text-white"
+                                data-url="{% url 'edit_product_offer' offer.product.id %}">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                </svg>
+                            </button>
+                            <button class="delete-offer-btn text-gray-400 hover:text-white"
+                                data-url="{% url 'delete_product_offer' offer.product.id %}">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                            </button>
+                        </div>
+                        {% elif offer.offer_type == 'special' %}
+                        <div>
+                            <span class="bg-red-500 text-white px-2 py-1 rounded-full text-sm">Special Offer</span>
+                            <h3 class="text-white font-bold mt-2">{{ offer.offer_name }}</h3>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button class="edit-offer-btn text-gray-400 hover:text-white"
+                                data-url="">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                </svg>
+                            </button>
+                            <button class="delete-offer-btn text-gray-400 hover:text-white"
+                                data-url="">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                            </button>
+                        </div>
+                        {% else %}
+                        <div>
+                            <span class="bg-yellow-500 text-white px-2 py-1 rounded-full text-sm">Seasonal Offer</span>
+                            <h3 class="text-white font-bold mt-2">{{ offer.offer_name }}</h3>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button class="edit-offer-btn text-gray-400 hover:text-white"
+                                data-url="">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                </svg>
+                            </button>
+                            <button class="delete-offer-btn text-gray-400 hover:text-white"
+                                data-url="">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                            </button>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <p class="text-gray-400 text-sm mb-3">{{ offer.description }}</p>
+                    <div class="space-y-2 text-sm">
+                        {% if offer.category %}
+                        <div class="flex justify-between text-gray-400">
+                            <span>Category:</span>
+                            <span class="text-gray-300">{{ offer.category }}</span>
+                        </div>
+                        {% elif offer.product %}
+                        <div class="flex justify-between text-gray-400">
+                            <span>Product:</span>
+                            <span class="text-gray-300">{{ offer.product.book_name }}</span>
+                        </div>
+                        {% endif %}
+                        <div class="flex justify-between text-gray-400">
+                            <span>Valid Until:</span>
+                            <span class="text-gray-300">{{ offer.valid_to|date:"M d, Y" }}</span>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <p class="text-gray-400 text-center">No active offers available.</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block script %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    document.addEventListener("click", (event) => {
+        const target = event.target.closest("button");
+        if (!target) return;
+    
+        // Handle Add Offer Button
+        if (target.classList.contains("add-offer-btn")) {
+            const url = target.getAttribute("data-url");
+            if (url) {
+                window.location.href = url;
+            }
+        }
+    
+        // Handle Edit Offer Button
+        if (target.classList.contains("edit-offer-btn")) {
+            const url = target.getAttribute("data-url");
+            if (url) {
+                window.location.href = url;
+            }
+        }
+    
+        // Handle Delete Offer Button with SweetAlert confirmation
+        if (target.classList.contains("delete-offer-btn")) {
+            const url = target.getAttribute("data-url");
+            if (url) {
+                Swal.fire({
+                    title: 'Are you sure?',
+                    text: "This action will delete the offer permanently!",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#3085d6',
+                    confirmButtonText: 'Yes, delete it!',
+                    cancelButtonText: 'Cancel'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        fetch(url, {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                            }
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.status === 'success') {
+                                Swal.fire({
+                                    title: 'Deleted!',
+                                    text: data.message,
+                                    icon: 'success'
+                                }).then(() => {
+                                    window.location.reload();
+                                });
+                            } else {
+                                Swal.fire({
+                                    title: 'Error!',
+                                    text: data.message,
+                                    icon: 'error'
+                                });
+                            }
+                        })
+                        .catch(() => {
+                            Swal.fire({
+                                title: 'Error!',
+                                text: 'Something went wrong while deleting the offer.',
+                                icon: 'error'
+                            });
+                        });
+                    }
+                });
+            }
+        }
+    });       
+</script>
+{% endblock %}
