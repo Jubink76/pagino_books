@@ -6,7 +6,7 @@ from django.core.paginator import Paginator
 from django.db.models import Q, Count
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.cache import cache_control,never_cache
-from .models import CategoryTable,Language,Author,BookTable,BookImage
+from .models import CategoryTable,Language,Author,BookTable,BookImage,calculate_offer_price
 from django.http import JsonResponse
 from order_detail_app.models import OrderDetails,OrderItem
 from django.db import transaction
@@ -1303,7 +1303,7 @@ def add_category_offer(request, category_id):
 
            
             # Create new offer
-            OfferTable.objects.create(
+            new_offer = OfferTable.objects.create(
                 category=category,
                 offer_name=offer_name,
                 offer_type=offer_type,
@@ -1316,42 +1316,45 @@ def add_category_offer(request, category_id):
             )
             
             # Apply offer to products in the category
-            products_in_category = BookTable.objects.filter(category=category)
-            for product in products_in_category:
-                if not product.additional_offer_applied:
-                    if product.previous_offer_price is None:
-                        product.previous_offer_price = product.offer_price  # Store the existing price
-
-                # Apply the discount to the book's price based on the discount type
-                new_offer_price = apply_discount(product.base_price, discount_type, discount_value)
-
-                # If the new offer price is lower than the existing offer price, update it
-                if new_offer_price < product.offer_price:
-                    product.offer_price = new_offer_price
-                    product.additional_offer_applied = True  
-                    product.save()
+            if is_active:
+                products_in_category = BookTable.objects.filter(category=category)
+                for product in products_in_category:
+                    new_offer_price = calculate_offer_price(
+                        product.base_price,
+                        discount_type,
+                        discount_value
+                    )
                     
-            # Redirect URL (adjust as needed)
+                    if new_offer_price < product.offer_price:
+                        product.previous_offer_price = product.offer_price
+                        product.offer_price = new_offer_price
+                        product.additional_offer_applied = True
+                        product.applied_offer = new_offer
+                        product.save(update_fields=[
+                            'previous_offer_price', 
+                            'offer_price',
+                            'additional_offer_applied',
+                            'applied_offer'
+                        ])
+
             return JsonResponse({
-                'status': 'success', 
+                'status': 'success',
                 'message': 'Offer added successfully!',
-                'redirect_url': reverse('admin_category')  # Make sure to import reverse
+                'redirect_url': reverse('admin_category')
             })
 
         except Exception as e:
             return JsonResponse({
-                'status': 'error', 
+                'status': 'error',
                 'message': str(e)
             }, status=500)
 
-    # GET request - render the form
     context = {
         'category': category,
         'OFFER_TYPES': OfferTable.OFFER_TYPES,
         'default_offer_type': 'category',
     }
     return render(request, 'add_category_offer.html', context)
-
 #################################################################################################################
 
 @require_http_methods(["GET", "POST"])
@@ -1363,7 +1366,6 @@ def edit_category_offer(request, category_id):
     offer = category.category_offers.filter(is_active=True).first()
 
     if not offer:
-        # Handle case when no active offer exists for the category
         return JsonResponse({
             'status': 'error', 
             'message': 'No active offer exists for this category.'
@@ -1380,6 +1382,11 @@ def edit_category_offer(request, category_id):
             valid_to = request.POST.get('valid_to')
             description = request.POST.get('description')
             is_active = request.POST.get('is_active') == 'on'
+
+            # Store old values for comparison
+            old_discount_type = offer.discount_type
+            old_discount_value = offer.discount_value
+            old_is_active = offer.is_active
 
             # Perform form validation
             errors = []
@@ -1424,13 +1431,60 @@ def edit_category_offer(request, category_id):
             offer.valid_from = valid_from
             offer.valid_to = valid_to
             offer.description = description
-            offer.is_active = is_active  # Use the checkbox value
+            offer.is_active = is_active
             offer.save()
+
+            # Only recalculate prices if discount details changed or offer status changed
+            if (old_discount_type != discount_type or 
+                old_discount_value != discount_value or 
+                old_is_active != is_active):
+                
+                products_in_category = BookTable.objects.filter(category=category)
+                
+                if is_active:
+                    # Apply new offer prices
+                    for product in products_in_category:
+                        new_offer_price = calculate_offer_price(
+                            product.base_price,
+                            discount_type,
+                            discount_value
+                        )
+                        
+                        if new_offer_price < product.offer_price:
+                            product.previous_offer_price = product.offer_price
+                            product.offer_price = new_offer_price
+                            product.additional_offer_applied = True
+                            product.applied_offer = offer
+                            product.save(update_fields=[
+                                'previous_offer_price',
+                                'offer_price',
+                                'additional_offer_applied',
+                                'applied_offer'
+                            ])
+                else:
+                    # Revert prices for products that were using this offer
+                    for product in products_in_category.filter(applied_offer=offer):
+                        if product.previous_offer_price is not None:
+                            product.offer_price = product.previous_offer_price
+                            product.previous_offer_price = None
+                        else:
+                            # Calculate regular price if no previous offer price exists
+                            regular_discount = (product.base_price * product.discount_percentage) / Decimal('100')
+                            product.offer_price = product.base_price - regular_discount
+                            
+                        product.additional_offer_applied = False
+                        product.applied_offer = None
+                        product.save(update_fields=[
+                            'previous_offer_price',
+                            'offer_price',
+                            'additional_offer_applied',
+                            'applied_offer'
+                        ])
 
             return JsonResponse({
                 'status': 'success', 
                 'message': 'Offer updated successfully!',
-                'redirect_url': reverse('admin_category')  # Adjust the redirect URL as necessary
+                'redirect_url': reverse('admin_category')
             })
 
         except Exception as e:
@@ -1439,10 +1493,10 @@ def edit_category_offer(request, category_id):
                 'message': str(e)
             }, status=500)
 
-    # For GET request - Render the form with existing offer details
+    # For GET request
     context = {
         'category': category,
-        'offer': offer,  # Pass the existing offer to the template
+        'offer': offer,
         'OFFER_TYPES': OfferTable.OFFER_TYPES,
     }
     return render(request, 'edit_category_offer.html', context)
@@ -1525,10 +1579,10 @@ def add_product_offer(request, product_id):
                 }, status=400)
 
             # Create new offer
-            OfferTable.objects.create(
+            new_offer = OfferTable.objects.create(
                 product=product,
                 offer_name=offer_name,
-                offer_type='product',  # Default to "Single Product Offer"
+                offer_type='product',
                 discount_type=discount_type,
                 discount_value=discount_value,
                 valid_from=valid_from,
@@ -1537,11 +1591,30 @@ def add_product_offer(request, product_id):
                 is_active=is_active
             )
 
-            # Redirect URL (adjust as needed)
+            # Calculate and update product price if offer is active
+            if is_active:
+                new_offer_price = calculate_offer_price(
+                    product.base_price,
+                    discount_type,
+                    discount_value
+                )
+                
+                if new_offer_price < product.offer_price:
+                    product.previous_offer_price = product.offer_price
+                    product.offer_price = new_offer_price
+                    product.additional_offer_applied = True
+                    product.applied_offer = new_offer
+                    product.save(update_fields=[
+                        'previous_offer_price', 
+                        'offer_price',
+                        'additional_offer_applied',
+                        'applied_offer'
+                    ])
+
             return JsonResponse({
                 'status': 'success',
                 'message': 'Product offer added successfully!',
-                'redirect_url': reverse('admin_products')  # Adjust this to your admin products page
+                'redirect_url': reverse('admin_products')
             })
 
         except Exception as e:
@@ -1550,13 +1623,13 @@ def add_product_offer(request, product_id):
                 'message': str(e)
             }, status=500)
 
-    # GET request - render the form
     context = {
         'product': product,
         'OFFER_TYPES': OfferTable.OFFER_TYPES,
         'default_offer_type': 'product',
     }
     return render(request, 'add_product_offer.html', context)
+
 
 ##############################################################################################
 
@@ -1569,7 +1642,6 @@ def edit_product_offer(request, product_id):
     offer = product.product_offer.filter(is_active=True).first()
 
     if not offer:
-        # Handle case when no active offer exists for the product
         return JsonResponse({
             'status': 'error', 
             'message': 'No active offer exists for this product.'
@@ -1579,13 +1651,18 @@ def edit_product_offer(request, product_id):
         try:
             # Get form data from POST request
             offer_name = request.POST.get('offer_name')
-            offer_type = request.POST.get('offer_type')
+            offer_type = request.POST.get('offer_type', 'product')  # Default to product
             discount_type = request.POST.get('discount_type')
             discount_value = request.POST.get('discount_value')
             valid_from = request.POST.get('valid_from')
             valid_to = request.POST.get('valid_to')
             description = request.POST.get('description')
             is_active = request.POST.get('is_active') == 'on'
+
+            # Store old values for comparison
+            old_discount_type = offer.discount_type
+            old_discount_value = offer.discount_value
+            old_is_active = offer.is_active
 
             # Perform form validation
             errors = []
@@ -1630,13 +1707,56 @@ def edit_product_offer(request, product_id):
             offer.valid_from = valid_from
             offer.valid_to = valid_to
             offer.description = description
-            offer.is_active = is_active  # Use the checkbox value
+            offer.is_active = is_active
             offer.save()
+
+            # Only recalculate price if discount details changed or offer status changed
+            if (old_discount_type != discount_type or 
+                old_discount_value != discount_value or 
+                old_is_active != is_active):
+                
+                if is_active:
+                    # Calculate and apply new offer price
+                    new_offer_price = calculate_offer_price(
+                        product.base_price,
+                        discount_type,
+                        discount_value
+                    )
+                    
+                    if new_offer_price < product.offer_price:
+                        product.previous_offer_price = product.offer_price
+                        product.offer_price = new_offer_price
+                        product.additional_offer_applied = True
+                        product.applied_offer = offer
+                        product.save(update_fields=[
+                            'previous_offer_price',
+                            'offer_price',
+                            'additional_offer_applied',
+                            'applied_offer'
+                        ])
+                else:
+                    # Revert price if offer is deactivated
+                    if product.previous_offer_price is not None:
+                        product.offer_price = product.previous_offer_price
+                        product.previous_offer_price = None
+                    else:
+                        # Calculate regular price if no previous offer price exists
+                        regular_discount = (product.base_price * product.discount_percentage) / Decimal('100')
+                        product.offer_price = product.base_price - regular_discount
+                        
+                    product.additional_offer_applied = False
+                    product.applied_offer = None
+                    product.save(update_fields=[
+                        'previous_offer_price',
+                        'offer_price',
+                        'additional_offer_applied',
+                        'applied_offer'
+                    ])
 
             return JsonResponse({
                 'status': 'success', 
                 'message': 'Offer updated successfully!',
-                'redirect_url': reverse('admin_products')  # Adjust the redirect URL as necessary
+                'redirect_url': reverse('admin_products')
             })
 
         except Exception as e:
@@ -1645,14 +1765,13 @@ def edit_product_offer(request, product_id):
                 'message': str(e)
             }, status=500)
 
-    # For GET request - Render the form with existing offer details
+    # For GET request
     context = {
         'product': product,
-        'offer': offer,  # Pass the existing offer to the template
+        'offer': offer,
         'OFFER_TYPES': OfferTable.OFFER_TYPES,
     }
     return render(request, 'edit_product_offer.html', context)
-
 
 
 ##############################################################################################
