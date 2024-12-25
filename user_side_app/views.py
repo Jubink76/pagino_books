@@ -171,8 +171,23 @@ def single_detail(request,pk):
         is_available = True,
         is_deleted = False
     ).exclude(id=pk)[:6]
-    return render(request,'single_detail.html',{'book':book,'images':images,
-                                                'related_books':related_books,
+
+    related_books_data = []
+
+    for related_book in related_books:
+        related_rating_data = ReviewTable.objects.filter(book=related_book).aggregate(
+            average_rating=Avg('rating'),
+            review_count=Count('id')
+        )
+        related_books_data.append({
+            'book': related_book,
+            'average_rating': related_rating_data['average_rating'] or 0,
+            'review_count': related_rating_data['review_count'] or 0,
+        })
+        
+    return render(request,'single_detail.html',{'book':book,
+                                                'images':images,
+                                                'related_books':related_books_data,
                                                 'average_rating': average_rating,
                                                 'review_count': review_count,
                                                 'rating_range': range(1, 6),})

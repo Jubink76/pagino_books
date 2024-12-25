@@ -57,19 +57,6 @@
         <!-- Search Bar -->
         <form method="get" action="{% url 'shop_page' %}" class="flex-1 max-w-2xl mx-8 flex items-center">
             <div class="flex rounded-lg overflow-hidden bg-white border border-gray-200 w-full">
-                <!-- Categories Dropdown -->
-                {% comment %} <div class="relative inline-block">
-                    <button 
-                        type="button" 
-                        id="categoryDropdownButton"
-                        class="h-full px-6 flex items-center bg-gray-50 text-gray-700 border-r border-gray-200 font-medium hover:bg-gray-100 transition-colors duration-300"
-                    >
-                        Categories
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-2 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                        </svg>
-                    </button>
-                </div> {% endcomment %}
 
                 <!-- Search Input -->
                 <input 
@@ -154,49 +141,14 @@
                         <span>Shop</span>
                         <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-yellow-300 group-hover:w-full transition-all duration-300"></span>
                     </a>
-                    <a href="#" class="flex items-center hover:text-yellow-300 transition-colors duration-300 relative group">
-                        <span>Best Sellers</span>
-                        <span class="ml-2 px-2 py-0.5 text-xs bg-red-500 rounded-full font-medium">HOT</span>
+                    <a href="{% url 'cart_page' %}" class="hover:text-yellow-300 transition-colors duration-300 relative group">
+                        <span>Cart_page</span>
                         <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-yellow-300 group-hover:w-full transition-all duration-300"></span>
                     </a>
-                    <a href="#" class="flex items-center hover:text-yellow-300 transition-colors duration-300 relative group">
-                        <span>New Arrivals</span>
-                        <span class="ml-2 px-2 py-0.5 text-xs bg-yellow-400 text-black rounded-full font-medium">NEW</span>
+                    <a href="{% url 'whishlist_page' %}" class="hover:text-yellow-300 transition-colors duration-300 relative group">
+                        <span>Whishlist</span>
                         <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-yellow-300 group-hover:w-full transition-all duration-300"></span>
                     </a>
-                    <a href="#" class="hover:text-yellow-300 transition-colors duration-300 relative group">
-                        <span>Blogs</span>
-                        <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-yellow-300 group-hover:w-full transition-all duration-300"></span>
-                    </a>
-                    <a href="#" class="hover:text-yellow-300 transition-colors duration-300 relative group">
-                        <span>About Us</span>
-                        <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-yellow-300 group-hover:w-full transition-all duration-300"></span>
-                    </a>
-                    <a href="#" class="hover:text-yellow-300 transition-colors duration-300 relative group">
-                        <span>Contact</span>
-                        <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-yellow-300 group-hover:w-full transition-all duration-300"></span>
-                    </a>
-                    <a href="#" class="hover:text-yellow-300 transition-colors duration-300 relative group">
-                        <span>Pages</span>
-                        <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-yellow-300 group-hover:w-full transition-all duration-300"></span>
-                        <!-- Dropdown menu -->
-                        <div class="hidden group-hover:block absolute left-0 mt-2 bg-white text-gray-800 rounded-md shadow-lg w-48">
-                            <a href="{% url 'homepage_after_login' %}" class="block px-4 py-2 hover:bg-gray-100">Home</a>
-                            <a href="{% url 'shop_page' %}" class="block px-4 py-2 hover:bg-gray-100">Shop</a>
-                            <a href="#" class="block px-4 py-2 hover:bg-gray-100">Authors</a>
-                            <a href="#" class="block px-4 py-2 hover:bg-gray-100">Blogs</a>
-                            <a href="{% url 'user_signup' %}" class="block px-4 py-2 hover:bg-gray-100">SignUp</a>
-                            <a href="{% url 'user_login' %}" class="block px-4 py-2 hover:bg-gray-100">LogIn</a>
-                            <a href="{% url 'cart_page' %}" class="block px-4 py-2 hover:bg-gray-100">Shopping Cart</a>
-                            <a href="{% url 'whishlist_page' %}" class="block px-4 py-2 hover:bg-gray-100">Wishlist</a>
-                            <a href="#" class="block px-4 py-2 hover:bg-gray-100">About Us</a>
-                            <a href="#" class="block px-4 py-2 hover:bg-gray-100">My Profile</a>
-                            <a href="#" class="block px-4 py-2 hover:bg-gray-100">T & C</a>
-                            <a href="#" class="block px-4 py-2 hover:bg-gray-100">404</a>
-                        </div>
-                    </a>
-                    
-                    
                 </nav>
                 <div class="text-yellow-400 font-medium hover:text-yellow-300 transition-colors duration-300 cursor-pointer">
                     Get 30% off on selected items
