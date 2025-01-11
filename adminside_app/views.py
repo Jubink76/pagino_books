@@ -357,21 +357,45 @@ def add_category(request):
         description = request.POST.get('description', '').strip()
 
         if not category_name and description:
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'status': 'error',
+                    'message': "Fields can't be empty."
+                })
             messages.error(request, "Fields can't be empty.")
             return render(request, 'add_category.html')
         
-        if CategoryTable.objects.filter(category_name__iexact = category_name).exists():
-            messages.error(request,f"The category '{category_name}' already exists")
-            return render(request,'add_category.html')
+        if CategoryTable.objects.filter(category_name__iexact=category_name).exists():
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'status': 'error',
+                    'message': f"The category '{category_name}' already exists"
+                })
+            messages.error(request, f"The category '{category_name}' already exists")
+            return render(request, 'add_category.html')
         
-        CategoryTable.objects.create(
-            category_name = category_name,
-            description = description
-        )
-        messages.success(request, f"The category '{category_name}' has been added successfully!")
-        return redirect('admin_category')
+        try:
+            CategoryTable.objects.create(
+                category_name=category_name,
+                description=description
+            )
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'status': 'success',
+                    'message': f"The category '{category_name}' has been added successfully!"
+                })
+            messages.success(request, f"The category '{category_name}' has been added successfully!")
+            return redirect('admin_category')
+        except Exception as e:
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'status': 'error',
+                    'message': "An error occurred while saving the category."
+                })
+            messages.error(request, "An error occurred while saving the category.")
+            return render(request, 'add_category.html')
         
-    return render(request,'add_category.html')
+    return render(request, 'add_category.html')
 
 ################################################################################################################################
 @login_required(login_url='admin_login')
