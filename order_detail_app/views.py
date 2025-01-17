@@ -739,16 +739,37 @@ def generate_invoice(request, order_id):
         # Fetch the order details
         order = OrderDetails.objects.get(order_id=order_id)
         order_items = OrderItem.objects.filter(order=order)
+        
+        # Calculate totals
         total_product_amount = sum(item.total_price for item in order_items)
+        final_amount = total_product_amount
         refunded_amount = 0
+        
+        # Calculate refunds for canceled items
         for item in order_items:
             if item.is_canceled:
-                refunded_amount += item.total_price  # Refund based on the total price of the canceled item
+                refunded_amount += item.total_price
 
-        # Calculate the remaining amount after refund
-        remaining_amount = total_product_amount - refunded_amount
-        if order.coupon_applied:
-            amount_after_offers_coupon = total_product_amount-order.coupon.discount_value
+        # Calculate discounts and final amount
+        coupon_discount = 0
+        offer_discount = 0
+
+        # Apply coupon discount if exists
+        if order.coupon_applied and order.coupon:
+            if order.coupon.coupon_type == 'percentage':
+                coupon_discount = (total_product_amount * order.coupon.discount_value) / 100
+            else:  # fixed amount
+                coupon_discount = order.coupon.discount_value
+            final_amount -= coupon_discount
+
+        # Apply offer discount if exists
+        if order.offer_applied and order.offer:
+            offer_discount = order.offer.discount_value
+            final_amount -= offer_discount
+
+        # Calculate remaining amount after refund
+        remaining_amount = final_amount - refunded_amount
+
         # Create PDF
         buffer = BytesIO()
         p = canvas.Canvas(buffer, pagesize=letter)
@@ -756,54 +777,47 @@ def generate_invoice(request, order_id):
 
         # Title and Header (Centered)
         p.setFont("Helvetica-Bold", 24)
-        p.drawCentredString(width / 2, height - 30, f"Pagino Books")
+        p.drawCentredString(width / 2, height - 30, "Pagino Books")
         p.setFont("Helvetica-Bold", 14)
         p.drawCentredString(width / 2, height - 60, f"Invoice for Order-{order_id}")
 
-        address_components = []
-        if order.delivery_address.street_name:
-            address_components.append(order.delivery_address.street_name)
-        if order.delivery_address.building_no:
-            address_components.append(order.delivery_address.building_no)
-        if order.delivery_address.landmark:
-            address_components.append(f"Near {order.delivery_address.landmark}")
-        if order.delivery_address.city:
-            address_components.append(order.delivery_address.city)
-        if order.delivery_address.state:
-            address_components.append(order.delivery_address.state)
-        if order.delivery_address.pincode:
-            address_components.append(order.delivery_address.pincode)
-
-        formatted_address = ", ".join(filter(None, address_components))
-
-
-        # Customer Info (Centered)
+        # Customer and Address Info
         p.setFont("Helvetica", 12)
         y_pos = height - 80
         p.drawCentredString(width / 2, y_pos, f"Customer: {order.user.username} ({order.user.phone_number})")
         y_pos -= 25
 
-        formatted_address = f"Shipping Address: {formatted_address}"
-        if len(formatted_address) > 60:
-            chunks = [formatted_address[i:i+60] for i in range(0, len(formatted_address), 60)]
-            for chunk in chunks:
-                p.drawCentredString(width / 2, y_pos, chunk)
+        # Format and display delivery address
+        if order.delivery_address:
+            address_components = [
+                order.delivery_address.street_name,
+                order.delivery_address.building_no,
+                f"Near {order.delivery_address.landmark}" if order.delivery_address.landmark else None,
+                order.delivery_address.city,
+                order.delivery_address.state,
+                order.delivery_address.pincode
+            ]
+            formatted_address = "Shipping Address: " + ", ".join(filter(None, address_components))
+            
+            # Handle long addresses
+            if len(formatted_address) > 60:
+                chunks = [formatted_address[i:i+60] for i in range(0, len(formatted_address), 60)]
+                for chunk in chunks:
+                    p.drawCentredString(width / 2, y_pos, chunk)
+                    y_pos -= 20
+            else:
+                p.drawCentredString(width / 2, y_pos, formatted_address)
                 y_pos -= 20
-        else:
-            p.drawCentredString(width / 2, y_pos, formatted_address)
-            y_pos -= 20
 
-        y_pos -= 20 
-
+        y_pos -= 20
 
         # Draw a Line Separator
         p.setLineWidth(1)
         p.line(50, y_pos, width - 50, y_pos)
         y_pos -= 30
 
-        # Order Summary Header
+        # Order Items
         p.setFont("Helvetica-Bold", 12)
-        # Center the column headers
         p.drawString(100, y_pos, "Item Description")
         p.drawString(350, y_pos, "Quantity")
         p.drawString(450, y_pos, "Price")
@@ -812,71 +826,82 @@ def generate_invoice(request, order_id):
         p.setFont("Helvetica", 10)
         for item in order_items:
             p.drawString(100, y_pos, f"{item.book.book_name}")
-            p.drawRightString(360, y_pos, str(item.quantity))  # Right-align quantity
-            p.drawRightString(500, y_pos, f"₹{item.price_per_item:,.2f}")  # Right-align price
+            p.drawRightString(360, y_pos, str(item.quantity))
+            p.drawRightString(500, y_pos, f"₹{item.price_per_item:,.2f}")
             y_pos -= 20
 
         y_pos -= 10
 
         # Draw a Line Separator
-        p.setLineWidth(1)
         p.line(50, y_pos, width - 50, y_pos)
         y_pos -= 30
 
-        # Payment Details
+        # Helper function for drawing payment info
         def draw_info_line(label, value, bold_value=False):
             nonlocal y_pos
             p.setFont("Helvetica-Bold", 12)
             p.drawString(100, y_pos, label)
             p.setFont("Helvetica-Bold" if bold_value else "Helvetica", 12)
             p.drawString(300, y_pos, value)
-            y_pos -= 25  # Consistent spacing between lines
+            y_pos -= 25
 
         # Payment Details
         draw_info_line("Payment Method:", str(order.payment_method))
-        
-        payment_status = "Completed" if order.payment_method in ['ONLINE', 'WALLET'] \
-                        else "Paid" if order.order_status == "Delivered" \
-                        else "Pending"
+        payment_status = "Completed" if order.payment_method in ['ONLINE', 'WALLET'] else \
+                        "Paid" if order.order_status == "Delivered" else "Pending"
         draw_info_line("Payment Status:", payment_status)
-        
+
         # Amount Details
         draw_info_line("Total Amount:", f"₹{total_product_amount:,.2f}")
-        if amount_after_offers_coupon:
-            draw_info_line("Amount Paid:", f"₹{amount_after_offers_coupon:,.2f}", True)
 
+        # Show discounts if applied
+        if coupon_discount > 0:
+            draw_info_line("Coupon Discount:", f"₹{coupon_discount:,.2f}")
+            
+        if offer_discount > 0:
+            draw_info_line("Offer Discount:", f"₹{offer_discount:,.2f}")
+
+        # Show final amount if different from total
+        if final_amount != total_product_amount:
+            draw_info_line("Final Amount:", f"₹{final_amount:,.2f}", True)
+
+        # Show refund information if applicable
         if refunded_amount > 0:
             draw_info_line("Refunded Amount:", f"₹{refunded_amount:,.2f}")
             draw_info_line("Remaining Amount:", f"₹{remaining_amount:,.2f}", True)
 
-        y_pos -= 10  # Extra space before discount section
+        y_pos -= 10
 
-        # Discount Section
-        if order.coupon_applied:
+        # Discount Information
+        if order.coupon_applied and order.coupon:
+            discount_type = "%" if order.coupon.coupon_type == 'percentage' else "₹"
             draw_info_line("Coupon Applied:", 
-                          f"Code: {order.coupon.code} - {order.coupon.discount_value} {order.coupon.coupon_type}")
+                          f"Code: {order.coupon.code} - {order.coupon.discount_value}{discount_type}")
         else:
             draw_info_line("Coupon Status:", "No Coupon Applied")
 
-        if order.offer_applied:
+        if order.offer_applied and order.offer:
             draw_info_line("Offer Applied:", 
-                          f"Offer: {order.offer.offer_name} - {order.offer.discount_value}")
+                          f"Offer: {order.offer.offer_name} - ₹{order.offer.discount_value}")
         else:
             draw_info_line("Offer Status:", "No Offer Applied")
 
-        # Cancellation Details
+        # Cancellation Details if order is canceled
         if order.is_canceled:
-            y_pos -= 10  # Extra space before cancellation details
+            y_pos -= 10
             p.setFont("Helvetica-Bold", 12)
             p.drawString(100, y_pos, "Order Canceled")
             y_pos -= 20
             p.setFont("Helvetica", 12)
-            p.drawString(100, y_pos, f"Refunded Amount: ₹{order.total_amount:,.2f}")
-            y_pos -= 20
-            p.drawString(100, y_pos, f"Reason: {order.cancel_description}")
-            y_pos -= 20
-            p.drawString(100, y_pos, f"Refund Date: {order.refund_date}")
-            y_pos -= 30
+            if order.cancel_description:
+                p.drawString(100, y_pos, f"Reason: {order.cancel_description}")
+                y_pos -= 20
+            if order.cancel_date:
+                p.drawString(100, y_pos, f"Cancel Date: {order.cancel_date.strftime('%Y-%m-%d %H:%M:%S')}")
+                y_pos -= 20
+            if order.is_refund and order.refund_date:
+                p.drawString(100, y_pos, f"Refund Date: {order.refund_date.strftime('%Y-%m-%d %H:%M:%S')}")
+                y_pos -= 30
 
         # Footer
         p.setFont("Helvetica", 10)
@@ -886,28 +911,22 @@ def generate_invoice(request, order_id):
         p.save()
         buffer.seek(0)
 
-
-        # Define the path for saving the PDF in the invoices folder
+        # Save to file system
         pdf_name = f"invoice_{order_id}.pdf"
-        
-        # Use os.path.join to create the correct file path
-        media_path = os.path.join('media', 'invoices')  # Path to the 'invoices' folder
+        media_path = os.path.join('media', 'invoices')
         pdf_path = os.path.join(media_path, pdf_name)
 
-        # Ensure the directory exists
         os.makedirs(media_path, exist_ok=True)
 
-        # Save the PDF to the 'invoices' folder
         with open(pdf_path, 'wb') as f:
             f.write(buffer.getvalue())
 
         buffer.close()
 
-        # Return the URL to access the PDF
         return JsonResponse({
             'status': 'success',
             'message': 'Invoice generated successfully!',
-            'file_url': f'/media/invoices/{pdf_name}'  # URL to download the invoice
+            'file_url': f'/media/invoices/{pdf_name}'
         })
 
     except OrderDetails.DoesNotExist:
