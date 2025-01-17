@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', function () {
-    const forms = document.querySelectorAll('form');
+    const forms = document.querySelectorAll('form.ajax-form');
 
     forms.forEach(form => {
         form.addEventListener('submit', async (e) => {

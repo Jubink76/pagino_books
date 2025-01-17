@@ -73,6 +73,7 @@ def shop_page(request):
         books = books.filter(
             Q(book_name__icontains=search_query) |
             Q(author__name__icontains=search_query) |
+            Q(language__name__icontains=search_query)|
             Q(description__icontains=search_query)
         ).distinct()
 
