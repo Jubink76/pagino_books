@@ -2,6 +2,7 @@
 {% load static %}
 {% block css_link %} 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 <script src="{% static 'user/js/sweetAlert.js' %}"></script>
 <script src="https://cdn.jsdelivr.net/npm/jquery-zoom@1.7.21/jquery.zoom.min.js"></script>
 
@@ -165,7 +166,7 @@
 				  			</div>
 							  
 							<div class="flex items-center space-x-4">
-								<form id="cart-form" class="m-0">
+								<form id="cart-form" class="ajax-form m-0">
 									{% csrf_token %}
 									<button type="submit"
 										class="add-to-cart-btn px-8 py-3 rounded-md transition flex items-center space-x-2 
@@ -184,7 +185,7 @@
 									</button>
 								</form>
 								
-								<form id="wishlist-form" class="m-0">
+								<form id="wishlist-form" class="ajax-form m-0">
 									{% csrf_token %}
 									<button type="submit"
 										class="add-to-wishlist-btn px-4 py-3 rounded-md transition flex items-center space-x-2 
@@ -213,40 +214,63 @@
 				<h2 class="text-2xl font-bold mb-6">Related Products</h2>
 				<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-6">
 					{% for related_book_data in related_books %}
-					<div class="bg-white rounded-lg shadow-md overflow-hidden transform hover:scale-105 transition-transform duration-300">
-						<div class="relative aspect-[3/4]">
-							<a href="{% url 'single_detail' related_book_data.book.id %}">
-								<img 
-									src="{{ related_book_data.book.images.first.image.url }}" 
-									alt="{{ related_book_data.book.book_name }}" 
-									class="w-full h-full object-contain"
-								/>
-							</a>
-							<span class="absolute top-2 right-2 bg-blue-400 text-white px-2 py-1 rounded-full text-sm">NEW</span>
-						</div>
-						<div class="p-4">
-							<h3 class="font-semibold text-lg mb-2">{{ related_book_data.book.book_name }}</h3>
-							<p class="text-gray-600 mb-2">{{ related_book_data.book.author }}</p>
-							<div class="flex items-center mb-2">
-								{% for i in rating_range %}
-									{% if i <= related_book_data.average_rating %}
-										<svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
-											<path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
-										</svg>
-									{% else %}
-										<svg class="w-5 h-5 text-gray-300" fill="currentColor" viewBox="0 0 20 20">
-											<path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
-										</svg>
-									{% endif %}
-								{% endfor %}
+						<div class="bg-white rounded-lg shadow-md overflow-hidden transform hover:scale-105 transition-transform duration-300 relative group">
+							<div class="relative aspect-[3/4]">
+								<a href="{% url 'single_detail' related_book_data.book.id %}">
+									<img 
+										src="{{ related_book_data.book.images.first.image.url }}" 
+										alt="{{ related_book_data.book.book_name }}" 
+										class="w-full h-full object-contain"
+									/>
+								</a>
+								<span class="absolute top-2 right-2 bg-blue-400 text-white px-2 py-1 rounded-full text-sm">NEW</span>
 							</div>
-							<div class="flex justify-between items-center">
-								<span class="text-green-600 font-bold">₹{{ related_book_data.book.offer_price }}</span>
-								<span class="text-gray-400 line-through">₹{{ related_book_data.book.base_price }}</span>                       
+							<div class="p-4">
+								<h3 class="font-semibold text-lg mb-2">{{ related_book_data.book.book_name }}</h3>
+								<p class="text-gray-600 mb-2">{{ related_book_data.book.author }}</p>
+								<div class="flex items-center mb-2">
+									{% for i in rating_range %}
+										{% if i <= related_book_data.average_rating %}
+											<svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+												<path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+											</svg>
+										{% else %}
+											<svg class="w-5 h-5 text-gray-300" fill="currentColor" viewBox="0 0 20 20">
+												<path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+											</svg>
+										{% endif %}
+									{% endfor %}
+								</div>
+								<div class="relative flex justify-between items-center">
+									<span class="text-green-600 font-bold">₹{{ related_book_data.book.offer_price }}</span>
+									<span class="text-gray-400 line-through">₹{{ related_book_data.book.base_price }}</span>
+									
+									<!-- Floating Icons -->
+									<div class="absolute inset-x-0 top-1/2 transform -translate-y-1/2 flex justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10">
+										<form class="ajax-form m-0 z-20">
+											{% csrf_token %}
+											<button type="submit"
+												class="add-to-cart-btn w-10 h-10 bg-yellow-400 text-black flex justify-center items-center rounded-full shadow-md hover:bg-yellow-500"
+												data-url="{% url 'add_to_cart' related_book_data.book.id %}"
+												data-success-redirect="{% url 'cart_page' %}">
+												<i class="fa fa-shopping-cart"></i>
+											</button>
+										</form>
+									
+										<form class="ajax-form m-0 z-20">
+											{% csrf_token %}
+											<button type="submit"
+												class="add-to-wishlist-btn w-10 h-10 bg-yellow-400 text-black flex justify-center items-center rounded-full shadow-md hover:bg-yellow-500"
+												data-url="{% url 'add_to_whishlist' related_book_data.book.id %}"
+												data-success-redirect="{% url 'whishlist_page' %}">
+												<i class="fa fa-heart"></i>
+											</button>
+										</form>
+									</div>
+								</div>
 							</div>
 						</div>
-					</div>
-				{% endfor %}
+					{% endfor %}
 				</div>
 			</div>
 		</div>

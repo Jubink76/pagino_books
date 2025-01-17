@@ -5,6 +5,7 @@ from log_reg_app.models import UserTable
 from user_profile_app.models import AddressTable
 from adminside_app.models import BookTable,CategoryTable
 
+
 import uuid 
 
 def generate_order_id():
@@ -26,6 +27,7 @@ class CouponTable(models.Model):
     discount_value = models.DecimalField(max_digits=10, decimal_places=2,null=True, blank=True)
     min_purchase_amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     max_uses = models.PositiveIntegerField(null=True, blank=True)
+    max_uses_per_user = models.PositiveIntegerField(default=1)
     valid_from = models.DateTimeField()
     valid_to = models.DateTimeField()
     is_active = models.BooleanField(default=True)
@@ -38,7 +40,11 @@ class CouponUsage(models.Model):
     user = models.ForeignKey('log_reg_app.UserTable', on_delete=models.CASCADE) 
     coupon = models.ForeignKey(CouponTable, on_delete=models.CASCADE)  
     discount_value = models.DecimalField(max_digits=10, decimal_places=2)  
-    used_at = models.DateTimeField(auto_now_add=True)  
+    used_at = models.DateTimeField(auto_now_add=True) 
+    is_used = models.BooleanField(default=False)
+
+    class Meta:
+        ordering = ['-used_at']
 
     def __str__(self):
         return f"{self.user.username} used {self.coupon.code} on {self.used_at}"
@@ -80,6 +86,7 @@ class OrderDetails(models.Model):
     order_id = models.CharField(max_length =10, primary_key=True)
     user = models.ForeignKey(UserTable,on_delete=models.CASCADE,null=True,blank=True)
     address = models.ForeignKey(AddressTable, on_delete=models.SET_NULL, null=True)
+    delivery_address = models.ForeignKey('order_detail_app.OrderAddress', on_delete=models.PROTECT,null=True,blank=True)
     total_amount = models.DecimalField(max_digits=10, decimal_places=2)
     payment_method = models.CharField(max_length=20,
                                       choices=[('COD', 'Cash on Delivery'),
@@ -110,7 +117,24 @@ class OrderDetails(models.Model):
     
     def __str__(self):
         return f"Order {self.order_id} by {self.user.username}"
+
+class OrderAddress(models.Model):
+    address_name = models.CharField(max_length=255)  
+    street_name = models.CharField(max_length=255)   
+    building_no = models.CharField(max_length=100)   
+    landmark = models.CharField(max_length=255)      
+    city = models.CharField(max_length=100)
+    pincode = models.CharField(max_length=20)        
+    address_phone = models.CharField(max_length=20)  
+    state = models.CharField(max_length=100)
+    address_type = models.CharField(                 
+        max_length=10,
+        choices=[('home', 'Home'), ('office', 'Office')],
+        default='home'
+    )
     
+    def __str__(self):
+        return f"{self.address_name}'s {self.address_type} - {self.city}"    
 
 class OrderItem(models.Model):
     order = models.ForeignKey(OrderDetails, on_delete=models.CASCADE, to_field='order_id',db_column='order_id', null=True)

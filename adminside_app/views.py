@@ -1074,7 +1074,7 @@ def admin_orders(request):
 @login_required(login_url='admin_login')
 def view_order(request,order_id):
     order_detail = get_object_or_404(
-        OrderDetails.objects.select_related('address', 'user', 'coupon', 'offer'),
+        OrderDetails.objects.select_related('delivery_address', 'user', 'coupon', 'offer'),
         order_id=order_id
     )
     book_detail = OrderItem.objects.filter(order=order_detail).select_related('book')
@@ -1084,7 +1084,7 @@ def view_order(request,order_id):
 @login_required(login_url='admin_login')
 def update_order(request,order_id):
     order_detail = get_object_or_404(
-        OrderDetails.objects.select_related('address', 'user', 'coupon', 'offer'),
+        OrderDetails.objects.select_related('delivery_address', 'user', 'coupon', 'offer'),
         order_id=order_id
     )
     book_detail = OrderItem.objects.filter(order=order_detail).select_related('book')

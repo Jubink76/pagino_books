@@ -67,7 +67,7 @@ class WalletTransaction(models.Model):
 
     wallet = models.ForeignKey(WalletTable, on_delete=models.CASCADE, related_name='transactions')
     transaction_type = models.CharField(max_length=10, choices=TRANSACTION_TYPE_CHOICES)
-    transaction_amount = models.DecimalField(max_digits=10, decimal_places=2)
+    transaction_amount = models.DecimalField(max_digits=10, decimal_places=2,default=0.00)
     description = models.TextField(blank=True, null=True)
     transaction_time = models.DateTimeField(default=now)
 

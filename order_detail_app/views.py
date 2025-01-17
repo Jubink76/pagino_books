@@ -3,7 +3,7 @@ from django.contrib import messages
 from adminside_app.models import BookTable
 from user_profile_app.models import AddressTable,WalletTable, WalletTransaction
 from user_side_app.models import CartTable
-from .models import OrderDetails, OrderItem,CouponTable,CouponUsage,ReturnRequest,ReturnItem,ReviewTable
+from .models import OrderDetails, OrderItem,CouponTable,CouponUsage,ReturnRequest,ReturnItem,ReviewTable,OrderAddress
 import random
 import string
 from django.db import transaction
@@ -21,6 +21,7 @@ from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
 import os
 from io import BytesIO
+import textwrap
 # Initialize Razorpay client
 razorpay_client = razorpay.Client(
     auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET)
@@ -53,7 +54,22 @@ def create_order(request):
             
         try:
             with transaction.atomic():
-                address = AddressTable.objects.get(id=address_id)
+                # Get the original address
+                original_address = AddressTable.objects.get(id=address_id)
+                
+                # Create a permanent copy of the address with all fields
+                order_address = OrderAddress.objects.create(
+                    address_name=original_address.address_name,
+                    street_name=original_address.street_name,
+                    building_no=original_address.building_no,
+                    landmark=original_address.landmark,
+                    city=original_address.city,
+                    pincode=original_address.pincode,
+                    address_phone=original_address.address_phone,
+                    state=original_address.state,
+                    address_type=original_address.address_type
+                )
+                
                 cart_items = CartTable.objects.filter(user=request.user)
                 
                 if not cart_items.exists():
@@ -92,27 +108,52 @@ def create_order(request):
 
                 # Apply coupon if provided
                 if coupon_code:
-                    coupon_usage = CouponUsage.objects.filter(
-                        user=request.user,
-                        coupon__code=coupon_code
-                    ).last()
-                    
-
-                    if coupon_usage and coupon_usage.coupon.is_active:
-                        coupon = coupon_usage.coupon
+                    try:
+                        coupon = CouponTable.objects.get(code=coupon_code, is_active=True)
+                        
+                        # Check if user has already used this coupon maximum times
+                        usage_count = CouponUsage.objects.filter(
+                            user=request.user,
+                            coupon=coupon,
+                            is_used=True  # Add this field to CouponUsage model
+                        ).count()
+                        
+                        if usage_count >= coupon.max_uses_per_user:  # Add this field to Coupon model
+                            return JsonResponse({
+                                'status': 'error', 
+                                'message': 'You have already used this coupon the maximum number of times.'
+                            })
+                        
+                        # Calculate discount
                         if coupon.coupon_type == 'PERCENTAGE':
                             discount_amount = grand_total * (coupon.discount_value / 100)
-                        elif coupon.coupon_type == 'fixed':
+                        elif coupon.coupon_type == 'FIXED':
                             discount_amount = coupon.discount_value
                         else:
                             return JsonResponse({'status': 'error', 'message': 'Invalid coupon type.'})
+
+                        # Check if coupon has minimum order amount requirement
+                        if grand_total < coupon.minimum_order_amount:  # Add this field to Coupon model
+                            return JsonResponse({
+                                'status': 'error',
+                                'message': f'Minimum order amount of ₹{coupon.minimum_order_amount} required for this coupon.'
+                            })
 
                         applied_coupon = coupon
                         grand_total -= discount_amount
 
                         if grand_total < 0:
-                            grand_total = 0  # Ensure grand total doesn't go negative
-                    else:
+                            grand_total = 0
+
+                        # Create new coupon usage record
+                        CouponUsage.objects.create(
+                            user=request.user,
+                            coupon=coupon,
+                            is_used=True,
+                            used_at=timezone.now()
+                        )
+
+                    except coupon.DoesNotExist:
                         return JsonResponse({'status': 'error', 'message': 'Invalid or expired coupon.'})
 
                     
@@ -120,7 +161,8 @@ def create_order(request):
                 order = OrderDetails.objects.create(
                     order_id=single_order_id,
                     user=request.user,
-                    address=address,
+                    address=original_address,
+                    delivery_address=order_address,
                     payment_method=payment_method,
                     total_amount=grand_total,
                     order_status='Ordered' if payment_method != 'COD' else 'Pending',
@@ -264,6 +306,11 @@ def cancel_order(request, order_id):
             order.order_status = 'Canceled'
             order.is_canceled = True
             order.save()
+
+            OrderItem.objects.filter(order=order).update(
+                order_status='Canceled',
+                is_canceled=True
+            )
 
             # Handle refund if payment method is ONLINE
             if order.payment_method in ['ONLINE', 'WALLET']:
@@ -692,7 +739,6 @@ def generate_invoice(request, order_id):
         # Fetch the order details
         order = OrderDetails.objects.get(order_id=order_id)
         order_items = OrderItem.objects.filter(order=order)
-
         total_product_amount = sum(item.total_price for item in order_items)
         refunded_amount = 0
         for item in order_items:
@@ -714,124 +760,128 @@ def generate_invoice(request, order_id):
         p.setFont("Helvetica-Bold", 14)
         p.drawCentredString(width / 2, height - 60, f"Invoice for Order-{order_id}")
 
+        address_components = []
+        if order.delivery_address.street_name:
+            address_components.append(order.delivery_address.street_name)
+        if order.delivery_address.building_no:
+            address_components.append(order.delivery_address.building_no)
+        if order.delivery_address.landmark:
+            address_components.append(f"Near {order.delivery_address.landmark}")
+        if order.delivery_address.city:
+            address_components.append(order.delivery_address.city)
+        if order.delivery_address.state:
+            address_components.append(order.delivery_address.state)
+        if order.delivery_address.pincode:
+            address_components.append(order.delivery_address.pincode)
+
+        formatted_address = ", ".join(filter(None, address_components))
+
+
         # Customer Info (Centered)
         p.setFont("Helvetica", 12)
-        p.drawCentredString(width / 2, height - 80, f"Customer: {order.user.username} ({order.user.phone_number})")
-        p.drawCentredString(width / 2, height - 100, f"Shipping Address: {order.address.street_name}, {order.address.city}, {order.address.state} - {order.address.pincode}")
+        y_pos = height - 80
+        p.drawCentredString(width / 2, y_pos, f"Customer: {order.user.username} ({order.user.phone_number})")
+        y_pos -= 25
+
+        formatted_address = f"Shipping Address: {formatted_address}"
+        if len(formatted_address) > 60:
+            chunks = [formatted_address[i:i+60] for i in range(0, len(formatted_address), 60)]
+            for chunk in chunks:
+                p.drawCentredString(width / 2, y_pos, chunk)
+                y_pos -= 20
+        else:
+            p.drawCentredString(width / 2, y_pos, formatted_address)
+            y_pos -= 20
+
+        y_pos -= 20 
+
 
         # Draw a Line Separator
         p.setLineWidth(1)
-        p.line(50, height - 120, width - 50, height - 120)
+        p.line(50, y_pos, width - 50, y_pos)
+        y_pos -= 30
 
-        # Order Summary (Items)
-        y = height - 150
+        # Order Summary Header
         p.setFont("Helvetica-Bold", 12)
-        p.drawString(100, y, "Item Description")
-        p.drawString(400, y, "Quantity")
-        p.drawString(500, y, "Price")
-        y -= 20  # Space for items
-        p.setFont("Helvetica", 10)
+        # Center the column headers
+        p.drawString(100, y_pos, "Item Description")
+        p.drawString(350, y_pos, "Quantity")
+        p.drawString(450, y_pos, "Price")
+        y_pos -= 20
 
+        p.setFont("Helvetica", 10)
         for item in order_items:
-            p.drawString(100, y, f"{item.book.book_name}")
-            p.drawString(400, y, f"{item.quantity}")
-            p.drawString(500, y, f"₹{item.price_per_item}")
-            y -= 20  # Move to next line
+            p.drawString(100, y_pos, f"{item.book.book_name}")
+            p.drawRightString(360, y_pos, str(item.quantity))  # Right-align quantity
+            p.drawRightString(500, y_pos, f"₹{item.price_per_item:,.2f}")  # Right-align price
+            y_pos -= 20
+
+        y_pos -= 10
 
         # Draw a Line Separator
         p.setLineWidth(1)
-        p.line(50, y, width - 50, y)
-        y -= 20
+        p.line(50, y_pos, width - 50, y_pos)
+        y_pos -= 30
 
         # Payment Details
-        p.setFont("Helvetica-Bold", 12)
-        p.drawString(100, y, "Payment Method:")
-        p.setFont("Helvetica", 12)
-        p.drawString(300, y, f"{order.payment_method}")
-        y -= 20
+        def draw_info_line(label, value, bold_value=False):
+            nonlocal y_pos
+            p.setFont("Helvetica-Bold", 12)
+            p.drawString(100, y_pos, label)
+            p.setFont("Helvetica-Bold" if bold_value else "Helvetica", 12)
+            p.drawString(300, y_pos, value)
+            y_pos -= 25  # Consistent spacing between lines
 
-        if order.payment_method in ['ONLINE', 'WALLET']:
-            payment_status = "Completed"
-        elif order.order_status == "Delivered":
-            payment_status = "Paid"
-        else:
-            payment_status = "Pending"
+        # Payment Details
+        draw_info_line("Payment Method:", str(order.payment_method))
+        
+        payment_status = "Completed" if order.payment_method in ['ONLINE', 'WALLET'] \
+                        else "Paid" if order.order_status == "Delivered" \
+                        else "Pending"
+        draw_info_line("Payment Status:", payment_status)
+        
+        # Amount Details
+        draw_info_line("Total Amount:", f"₹{total_product_amount:,.2f}")
+        draw_info_line("Amount Paid:", f"₹{amount_after_offers_coupon:,.2f}", True)
 
-        p.setFont("Helvetica-Bold", 12)
-        p.drawString(100, y, "Payment Status:")
-        p.setFont("Helvetica", 12)
-        p.drawString(300, y, f"{payment_status}")
-        y -= 20
-
-        # Show Total Amount for All Products
-        p.setFont("Helvetica-Bold", 12)
-        p.drawString(100, y, "Total Amount for All Products:")
-        p.setFont("Helvetica", 12)
-        p.drawString(300, y, f"₹{total_product_amount}")
-        y -= 20
-
-        #paid amount
-        p.setFont("Helvetica-Bold", 12)
-        p.drawString(100, y, "Amount paid:")
-        p.setFont("Helvetica", 12)
-        p.drawString(300, y, f"{amount_after_offers_coupon}")
-        y -= 20
-
-        # Show refunded details if any item is canceled
         if refunded_amount > 0:
-            p.setFont("Helvetica-Bold", 12)
-            p.drawString(100, y, "Refunded Amount:")
-            p.setFont("Helvetica", 12)
-            p.drawString(300, y, f"₹{refunded_amount}")
-            y -= 20
+            draw_info_line("Refunded Amount:", f"₹{refunded_amount:,.2f}")
+            draw_info_line("Remaining Amount:", f"₹{remaining_amount:,.2f}", True)
 
-        # Show the remaining amount after refund
-        p.setFont("Helvetica-Bold", 12)
-        p.drawString(100, y, "Remaining Amount After Refund:")
-        p.setFont("Helvetica", 12)
-        p.drawString(300, y, f"₹{remaining_amount}")
-        y -= 20
+        y_pos -= 10  # Extra space before discount section
 
-        # Handle Coupons and Offers
+        # Discount Section
         if order.coupon_applied:
-            coupon = order.coupon
-            p.setFont("Helvetica-Bold", 12)
-            p.drawString(100, y, "Coupon Applied:")
-            p.setFont("Helvetica", 12)
-            p.drawString(200, y, f"Code: {coupon.code} - {coupon.discount_value} {coupon.coupon_type}")
-            y -= 20
+            draw_info_line("Coupon Applied:", 
+                          f"Code: {order.coupon.code} - {order.coupon.discount_value} {order.coupon.coupon_type}")
         else:
-            p.setFont("Helvetica-Bold", 12)
-            p.drawString(100, y, "No Coupon Applied")
-            y -= 20
+            draw_info_line("Coupon Status:", "No Coupon Applied")
 
         if order.offer_applied:
-            offer = order.offer
-            p.setFont("Helvetica-Bold", 12)
-            p.drawString(100, y, "Offer Applied:")
-            p.setFont("Helvetica", 12)
-            p.drawString(300, y, f"Offer: {offer.offer_name} - {offer.discount_value}")
-            y -= 20
+            draw_info_line("Offer Applied:", 
+                          f"Offer: {order.offer.offer_name} - {order.offer.discount_value}")
         else:
-            p.setFont("Helvetica-Bold", 12)
-            p.drawString(100, y, "No Offer Applied")
-            y -= 20
+            draw_info_line("Offer Status:", "No Offer Applied")
 
-        # Show Refund Details if the order is canceled or refunded
+        # Cancellation Details
         if order.is_canceled:
+            y_pos -= 10  # Extra space before cancellation details
             p.setFont("Helvetica-Bold", 12)
-            p.drawString(100, y, "Order Canceled:")
+            p.drawString(100, y_pos, "Order Canceled")
+            y_pos -= 20
             p.setFont("Helvetica", 12)
-            p.drawString(100, y, f"Refunded Amount: ₹{order.total_amount}")
-            p.drawString(100, y - 20, f"Reason: {order.cancel_description}")
-            p.drawString(100, y - 40, f"Refund Date: {order.refund_date}")
-            y -= 60
+            p.drawString(100, y_pos, f"Refunded Amount: ₹{order.total_amount:,.2f}")
+            y_pos -= 20
+            p.drawString(100, y_pos, f"Reason: {order.cancel_description}")
+            y_pos -= 20
+            p.drawString(100, y_pos, f"Refund Date: {order.refund_date}")
+            y_pos -= 30
 
         # Footer
         p.setFont("Helvetica", 10)
-        p.drawCentredString(width / 2, y - 30, "Thank you for shopping with us!")
+        p.drawCentredString(width / 2, 30, "Thank you for shopping with us!")
 
-        # Save and get the PDF content
+        # Save PDF
         p.save()
         buffer.seek(0)
 
@@ -920,4 +970,3 @@ def submit_review(request, order_id):
     return JsonResponse({'status': 'error', 'message': 'Invalid request method.'}, status=405)
 
 ###################################################################################################################
-

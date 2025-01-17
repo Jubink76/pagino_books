@@ -9,7 +9,7 @@ from log_reg_app.models import UserTable
 from django.contrib.auth import update_session_auth_hash
 from order_detail_app.models import OrderDetails,OrderItem,CouponTable,CouponUsage,ReturnRequest,ReviewTable
 from django.db.models import Count
-from django.db.models import Q
+from django.db.models import Q,F
 from django.urls import reverse
 from paypalrestsdk import Payment
 from django.conf import settings
@@ -353,17 +353,45 @@ def user_orders(request, order_id=None):
 ########################################################################################################################
 
 def user_coupon(request):
-
     current_time = timezone.now()
-    # Fetch active coupons that are within the valid date range and still active
+    
+    # Get all active coupons within valid date range
     available_coupons = CouponTable.objects.filter(
-            is_active=True,
-            valid_from__lte=current_time,
-            valid_to__gte=current_time
+        is_active=True,
+        valid_from__lte=current_time,
+        valid_to__gte=current_time
+    )
+    
+    # Get the user's used coupons
+    used_coupons = CouponUsage.objects.filter(
+        user=request.user, 
+        is_used=True
+    ).order_by('-used_at')
+    
+    # Get the coupon IDs that the user has already used
+    used_coupon_ids = used_coupons.values_list('coupon_id', flat=True)
+    
+    available_coupons = available_coupons.exclude(
+        id__in=used_coupon_ids
+    ).annotate(
+        total_uses=Count('couponusage'),
+        user_uses=Count(
+            'couponusage',
+            filter=Q(couponusage__user=request.user)
         )
-    used_coupons = CouponUsage.objects.filter(user=request.user).order_by('-used_at')   
+    ).filter(
+        Q(max_uses__isnull=True) | Q(total_uses__lt=F('max_uses')),
+        user_uses__lt=F('max_uses_per_user')
+    )
 
-    return render(request,'user_coupon.html',{'coupons':available_coupons,'used_coupons':used_coupons})
+    return render(
+        request,
+        'user_coupon.html',
+        {
+            'coupons': available_coupons,
+            'used_coupons': used_coupons
+        }
+    )
 
 ########################################################################################################################
 paypalrestsdk.configure({
@@ -467,7 +495,6 @@ def paypal_success(request):
             return redirect("user_wallet")
 
         payment = Payment.find(payment_id)
-        print(payment)
         if payment.execute({"payer_id": payer_id}):
             amount = Decimal(request.session.get('payment_amount'))
             currency = request.session.get('payment_currency')

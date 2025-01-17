@@ -9,13 +9,13 @@ from django.http import JsonResponse
 import json
 from user_profile_app.models import AddressTable
 from django.contrib.auth.decorators import login_required
-from order_detail_app.models import OrderDetails,OrderItem, OfferTable, CouponTable,ReviewTable
+from order_detail_app.models import OrderDetails,OrderItem, OfferTable, CouponTable,ReviewTable,CouponUsage
 from django.urls import reverse
 import re
-from django.db.models import Q
+from django.db.models import Q,F
 from django.utils.timezone import now, localtime
 from django.db.models import Avg, Count
-
+from django.utils import timezone
 ##########################################################################################################
 
 def shop_page(request):
@@ -560,20 +560,48 @@ def del_whishlist_item(request,book_id):
 ###################################################################################################################
 @login_required
 def checkout_page(request):
+    user = request.user
+    current_time = timezone.now()
+    
+    # Fetch active coupons within valid date range
+    available_coupons = CouponTable.objects.filter(
+        is_active=True,
+        valid_from__lte=current_time,
+        valid_to__gte=current_time
+    )
+    
+    # Get user's used coupons
+    used_coupon_ids = CouponUsage.objects.filter(
+        user=user,
+        is_used=True
+    ).values_list('coupon_id', flat=True)
+    
+    # Filter available coupons based on usage limits
+    available_coupons = available_coupons.exclude(
+        id__in=used_coupon_ids
+    ).annotate(
+        total_uses=Count('couponusage'),
+        user_uses=Count(
+            'couponusage',
+            filter=Q(couponusage__user=user)
+        )
+    ).filter(
+        Q(max_uses__isnull=True) | Q(total_uses__lt=F('max_uses')),
+        user_uses__lt=F('max_uses_per_user')
+    )
 
-    if request.user.is_authenticated:
-        user = request.user
-        # Fetch coupons available for the user
-        available_coupons = CouponTable.objects.filter(is_active=True)
-    else:
-        available_coupons = CouponTable.objects.none()
-
-    addresses = AddressTable.objects.filter(user=request.user)
-    cart_items = CartTable.objects.filter(user=request.user)
+    # Fetch addresses and cart items
+    addresses = AddressTable.objects.filter(user=user)
+    cart_items = CartTable.objects.filter(user=user)
+    
+    # Calculate totals
     grand_total = sum(item.quantity * item.item_price for item in cart_items)
     discount = 0  # Placeholder for discount logic
     final_total = grand_total - discount
+    
+    # Get show_new_address_form parameter
     show_new_address_form = request.GET.get('show_new_address_form', 'false') == 'true'
+
     context = {
         "addresses": addresses,
         "cart_items": cart_items,
@@ -581,10 +609,10 @@ def checkout_page(request):
         "discount": discount,
         "final_total": final_total,
         'show_new_address_form': show_new_address_form,
-        'available_coupons':available_coupons
+        'available_coupons': available_coupons
     }
 
-    return render(request,'checkout_page.html',context)
+    return render(request, 'checkout_page.html', context)
 
 ###################################################################################################################
 @login_required
