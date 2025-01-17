@@ -842,7 +842,8 @@ def generate_invoice(request, order_id):
         
         # Amount Details
         draw_info_line("Total Amount:", f"₹{total_product_amount:,.2f}")
-        draw_info_line("Amount Paid:", f"₹{amount_after_offers_coupon:,.2f}", True)
+        if amount_after_offers_coupon:
+            draw_info_line("Amount Paid:", f"₹{amount_after_offers_coupon:,.2f}", True)
 
         if refunded_amount > 0:
             draw_info_line("Refunded Amount:", f"₹{refunded_amount:,.2f}")
