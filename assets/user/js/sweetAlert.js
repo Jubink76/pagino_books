@@ -6,6 +6,9 @@ document.addEventListener('DOMContentLoaded', function () {
             e.preventDefault();
             const button = form.querySelector('button[data-url]');
             const formData = new FormData(form);
+            
+            // Disable the submit button to prevent double submission
+            if (button) button.disabled = true;
 
             try {
                 const response = await fetch(button.dataset.url, {
@@ -19,23 +22,52 @@ document.addEventListener('DOMContentLoaded', function () {
                 
                 const data = await response.json();
                 
-                Swal.fire({
-                    title: data.status === 'success' ? 'Success!' : 'Error!',
-                    text: data.message,
-                    icon: data.status,
-                    timer: data.status === 'success' ? 2000 : null,
-                    showConfirmButton: data.status !== 'success'
-                }).then(() => {
-                    if (data.redirect_url && data.status === 'success') {
-                        window.location.href = data.redirect_url;
-                    }
-                });
+                if (data.status === 'login_required') {
+                    Swal.fire({
+                        title: 'Login Required',
+                        text: 'Please login to add items to your cart',
+                        icon: 'warning',
+                        confirmButtonText: 'Login Now',
+                        showCancelButton: true,
+                        cancelButtonText: 'Cancel'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            // Store current page URL in session storage before redirecting
+                            sessionStorage.setItem('redirectAfterLogin', window.location.href);
+                            window.location.href = data.redirect_url;
+                        }
+                    });
+                } else if (data.status === 'success') {
+                    Swal.fire({
+                        title: 'Success!',
+                        text: data.message,
+                        icon: 'success',
+                        timer: 2000,
+                        showConfirmButton: false
+                    }).then(() => {
+                        if (data.redirect_url) {
+                            window.location.href = data.redirect_url;
+                        }
+                    });
+                } else {
+                    // Handle error cases
+                    Swal.fire({
+                        title: 'Notice',
+                        text: data.message,
+                        icon: 'error',
+                        confirmButtonText: 'OK'
+                    });
+                }
             } catch (error) {
                 Swal.fire({
-                    title: 'Error!',
-                    text: 'An error occurred.',
-                    icon: 'error'
+                    title: 'Error',
+                    text: 'An error occurred while processing your request.',
+                    icon: 'error',
+                    confirmButtonText: 'OK'
                 });
+            } finally {
+                // Re-enable the submit button
+                if (button) button.disabled = false;
             }
         });
     });

@@ -39,14 +39,10 @@
                 <!-- Offer Type -->
                 <div>
                     <label class="block text-gray-300 font-medium mb-2">Offer Type</label>
-                    <select class="bg-gray-700 text-gray-300 rounded-md px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500" name="offer_type">
-                        {% for value, display in OFFER_TYPES %}
-                            <option value="{{ value }}" 
-                                {% if value == offer.offer_type %}selected{% endif %}>
-                                {{ display }}
-                            </option>
-                        {% endfor %}
-                    </select>
+                    <input type="text" class="bg-gray-700 text-gray-300 rounded-md px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                           name="offer_type"
+                           value="{{ offer.offer_type }}"
+                           readonly>
                 </div>
                 
                 <!-- Discount Type -->
@@ -72,17 +68,23 @@
                 <!-- Valid From -->
                 <div>
                     <label class="block text-gray-300 font-medium mb-2">Valid From</label>
-                    <input type="datetime-local" class="bg-gray-700 text-gray-300 rounded-md px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                    <input type="datetime-local" 
+                           id="valid-from"
+                           class="bg-gray-700 text-gray-300 rounded-md px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500" 
                            name="valid_from"
-                           value="{{ offer.valid_from|date:'Y-m-d\TH:i' }}">
+                           value="{{ offer.valid_from|date:'Y-m-d\TH:i' }}"
+                           novalidate>
                 </div>
         
                 <!-- Valid Until -->
                 <div>
                     <label class="block text-gray-300 font-medium mb-2">Valid Until</label>
-                    <input type="datetime-local" class="bg-gray-700 text-gray-300 rounded-md px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                    <input type="datetime-local" 
+                           id="valid-to"
+                           class="bg-gray-700 text-gray-300 rounded-md px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500" 
                            name="valid_to"
-                           value="{{ offer.valid_to|date:'Y-m-d\TH:i' }}">
+                           value="{{ offer.valid_to|date:'Y-m-d\TH:i' }}"
+                           novalidate>
                 </div>
         
                 <!-- Description -->
@@ -93,11 +95,18 @@
                               name="description">{{ offer.description }}</textarea>
                 </div>
         
-                <!-- Is Active -->
-                <div class="flex items-center space-x-3">
-                    <input type="checkbox" class="bg-gray-700 text-blue-500 rounded focus:ring-blue-500 h-5 w-5" 
-                        name="is_active"
-                        {% if offer.is_active %}checked{% endif %}>
+                <!-- Active status -->
+                <div class="flex items-center space-x-2">
+                    <input 
+                        type="checkbox" 
+                        name="is_active" 
+                        id="active-status"
+                        class="w-4 h-4 text-blue-500 border-gray-300 rounded focus:ring-blue-500"
+                        {% if offer.is_active %}checked{% endif %}
+                    >
+                    <label for="active-status" class="text-gray-300 font-medium">
+                        Active Status
+                    </label>
                 </div>
             </div>
         
@@ -115,6 +124,142 @@
 {% block script %}
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
+    const validFromInput = document.getElementById('valid-from');
+    const validToInput = document.getElementById('valid-to');
+    const form = document.querySelector('#couponForm');
+    const isEditMode = form.hasAttribute('data-edit');
+
+    // Store the original values
+    const originalFromValue = validFromInput.value;
+    const originalToValue = validToInput.value;
+
+    // Function to get current date in YYYY-MM-DDThh:mm format
+    function getCurrentDateTime() {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        return `${year}-${month}-${day}T${hours}:${minutes}`;
+    }
+
+    // Function to set end of day time (23:59) for valid_to
+    function setEndOfDay() {
+        if (validToInput.value) {
+            const date = validToInput.value.split('T')[0];
+            validToInput.value = `${date}T23:59`;
+        }
+    }
+
+    // Function to check if a date is in the past
+    function isDateInPast(dateStr) {
+        const currentDateTime = new Date();
+        const selectedDateTime = new Date(dateStr);
+        return selectedDateTime < currentDateTime;
+    }
+
+    // Function to update validation rules based on edit mode
+    function updateDateTimeValidation() {
+        const currentDateTime = getCurrentDateTime();
+        
+        if (!isEditMode) {
+            // For new coupons, enforce future dates
+            validFromInput.min = currentDateTime;
+            validToInput.min = currentDateTime;
+
+            if (validFromInput.value && isDateInPast(validFromInput.value)) {
+                validFromInput.value = currentDateTime;
+            }
+            
+            if (validToInput.value && isDateInPast(validToInput.value)) {
+                validToInput.value = currentDateTime;
+            }
+        } else {
+            // For editing, preserve original dates
+            if (validFromInput.value === '') {
+                validFromInput.value = originalFromValue;
+            }
+            if (validToInput.value === '') {
+                validToInput.value = originalToValue;
+            }
+        }
+
+        // Always ensure valid-to is after valid-from
+        if (validFromInput.value && validToInput.value) {
+            const fromDate = new Date(validFromInput.value);
+            const toDate = new Date(validToInput.value);
+            
+            if (toDate < fromDate) {
+                if (isEditMode && originalToValue) {
+                    validToInput.value = originalToValue;
+                } else {
+                    validToInput.value = validFromInput.value;
+                    setEndOfDay();
+                }
+            }
+        }
+    }
+
+    // Add event listeners for date changes
+    validFromInput.addEventListener('change', function() {
+        if (this.value !== originalFromValue) {
+            // Only modify if it's not the original value
+            if (isDateInPast(this.value)) {
+                this.value = getCurrentDateTime();
+            }
+            
+            // Update valid-to if needed
+            if (this.value && validToInput.value) {
+                const selectedDateTime = new Date(this.value);
+                const validToDate = new Date(validToInput.value);
+                if (validToDate < selectedDateTime) {
+                    validToInput.value = this.value;
+                    setEndOfDay();
+                }
+            }
+        }
+    });
+
+    validFromInput.addEventListener('change', function() {
+        if (!isEditMode || this.value !== originalFromValue) {
+            if (!isEditMode && isDateInPast(this.value)) {
+                this.value = getCurrentDateTime();
+            }
+            updateDateTimeValidation();
+        }
+    });
+
+    validToInput.addEventListener('change', function() {
+        if (!isEditMode || this.value !== originalToValue) {
+            if (!isEditMode && isDateInPast(this.value)) {
+                this.value = getCurrentDateTime();
+            }
+            updateDateTimeValidation();
+            setEndOfDay();
+        }
+    });
+
+    updateDateTimeValidation();
+
+    // Create a MutationObserver to watch for dynamically added min attributes
+    const observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+            if (mutation.type === "attributes" && mutation.attributeName === "min") {
+                const target = mutation.target;
+                if (target.value === (target === validFromInput ? originalFromValue : originalToValue)) {
+                    // Remove min attribute for original values
+                    target.removeAttribute("min");
+                }
+            }
+        });
+    });
+
+    // Start observing both inputs for min attribute changes
+    observer.observe(validFromInput, { attributes: true });
+    observer.observe(validToInput, { attributes: true });
+
+    // Form submission handling
     document.addEventListener('DOMContentLoaded', function() {
         document.getElementById("offer-form").addEventListener("submit", function (e) {
             e.preventDefault();

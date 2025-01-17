@@ -57,6 +57,7 @@
           {% endfor %}
           </div>
           
+          
       </div>
 
       <div class = "flex-1">
@@ -149,6 +150,7 @@
               </div>
           </div>
           <div class="p-8">
+            {% if books %}
             <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-6">
                 {% for book in books %}
                 <div class="bg-white rounded-lg shadow-md overflow-hidden transform hover:scale-105 transition-transform duration-300 relative group 
@@ -166,19 +168,19 @@
                                 <!-- Overlay for out-of-stock products -->
                                 <div class="absolute inset-0 bg-gradient-to-b from-gray-400 to-gray-700 opacity-70"></div>
                                 <span class="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded-full text-sm">Out of Stock</span>
-                                {% elif book.additional_offer_applied %}
+                            {% elif book.additional_offer_applied and book.applied_offer %}
                                 <!-- Tag for offers -->
                                 <span 
                                     class="absolute top-2 right-2 bg-gradient-to-r from-pink-500 via-yellow-400 to-red-500 text-black px-6 py-2 rounded-full text-xs font-bold shadow-lg transform transition-all duration-300 ease-in-out hover:scale-110 hover:shadow-2xl hover:ring-4 hover:ring-pink-300 flex justify-center items-center text-center w-auto max-w-full break-words whitespace-normal animate-bounce"
                                     style="line-height: 1.2; max-width: 80px; word-wrap: break-word;">
                                     <span class="block">{{ book.applied_offer.offer_name }}</span>
                                 </span>
-                                {% else %}                                <!-- Tag for new products -->
+                            {% else %}
+                                <!-- Tag for new products -->
                                 <span class="absolute top-2 right-2 bg-blue-400 text-white px-2 py-1 rounded-full text-sm">NEW</span>
                             {% endif %}
                         </a>
                     </div>
-                    
                     
                     <!-- Content Section -->
                     <div class="p-4">
@@ -189,7 +191,12 @@
                         <!-- Price Section with Floating Icons -->
                         <div class="relative flex justify-between items-center">
                                 <span class="text-green-600 font-bold">₹{{ book.offer_price }}</span>
-                                <span class="text-red-400 line-through">₹{{ book.base_price }}</span>
+                                {% if book.base_price != book.offer_price %}
+                                    <span class="text-red-400 line-through text-sm">₹{{ book.base_price }}</span>
+                                    {% if book.applied_offer %}
+                                    <span class="text-xs text-green-500">Save {{ book.applied_offer.discount_value }}{% if book.applied_offer.discount_type == 'percentage' %}%{% else %}₹{% endif %}</span>
+                                    {% endif %}
+                                {% endif %}
                             
                             {% if book.is_available %}
                             <!-- Floating Icons -->
@@ -217,10 +224,24 @@
                             {% endif %}
                         </div>
                     </div>
-                </div>                
+                </div>
                 {% endfor %}
-            </div>                       
-          </div>
+            </div>
+        {% else %}
+            <div class="flex flex-col items-center justify-center py-12">
+                <img src="{% static 'user/images/logo/empty.jpeg' %}" 
+                     alt="No product" 
+                     class="mx-auto max-w-xs mb-6">
+                <h3 class="text-xl font-medium text-gray-900 mb-2">No Products Found</h3>
+                {% if search_query %}
+                    <p class="text-gray-500">No results found for "{{ search_query }}". Try different keywords or browse our categories.</p>
+                {% else %}
+                    <p class="text-gray-500">No products are available at the moment. Please check back later.</p>
+                {% endif %}
+            </div>
+        {% endif %}
+        </div>
+        
       </div>
   </div>
 </main>

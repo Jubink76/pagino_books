@@ -109,7 +109,12 @@
                                     <!-- Price Section -->
                                     <div class="flex justify-between items-center relative">
                                         <span class="text-green-600 font-bold">₹{{ book.offer_price }}</span>
-                                        <span class="text-red-400 line-through">₹{{ book.base_price }}</span>
+                                        {% if book.base_price != book.offer_price %}
+                                            <span class="text-red-400 line-through text-sm">₹{{ book.base_price }}</span>
+                                            {% if book.applied_offer %}
+                                            <span class="text-xs text-green-500">Save {{ book.applied_offer.discount_value }}{% if book.applied_offer.discount_type == 'percentage' %}%{% else %}₹{% endif %}</span>
+                                            {% endif %}
+                                        {% endif %}
                             
                                         <!-- Floating Icons -->
                                         <div class="absolute inset-x-0 top-1/2 transform -translate-y-1/2 flex justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10">
@@ -253,7 +258,12 @@
                                         <!-- Price and Floating Icons Section -->
                                         <div class="flex justify-between items-center relative">
                                             <span class="text-green-600 font-bold">₹{{ book.offer_price }}</span>
-                                            <span class="text-red-400 line-through">₹{{ book.base_price }}</span>
+                                            {% if book.base_price != book.offer_price %}
+                                                <span class="text-red-400 line-through text-sm">₹{{ book.base_price }}</span>
+                                                {% if book.applied_offer %}
+                                                <span class="text-xs text-green-500">Save {{ book.applied_offer.discount_value }}{% if book.applied_offer.discount_type == 'percentage' %}%{% else %}₹{% endif %}</span>
+                                                {% endif %}
+                                            {% endif %}
                                 
                                             <!-- Floating Icons -->
                                             <div class="absolute inset-x-0 top-1/2 transform -translate-y-1/2 flex justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10">
@@ -321,6 +331,7 @@
                         </div>
                     </div>
                 </div>
+                
                 <!------------------------------------last products --------------------------------------->
                 <div class="p-8">
                     <!-- Featured Books Header -->
@@ -348,7 +359,7 @@
                                                 style="line-height: 1.2; max-width: 80px; word-wrap: break-word;">
                                                 <span class="block">{{ book.applied_offer.offer_name }}</span>
                                             </span>
-                                            {% else %}
+                                    {% else %}
                                     <span class="absolute top-2 right-2 bg-blue-400 text-white px-2 py-1 rounded-full text-sm">NEW</span>
                                     {% endif %}
                                 </a>
@@ -365,7 +376,12 @@
                                 <!-- Price Section -->
                                 <div class="flex justify-between items-center relative">
                                     <span class="text-green-600 font-bold">₹{{ book.offer_price }}</span>
-                                    <span class="text-red-400 line-through">₹{{ book.base_price }}</span>
+                                        {% if book.base_price != book.offer_price %}
+                                            <span class="text-red-400 line-through text-sm">₹{{ book.base_price }}</span>
+                                            {% if book.applied_offer %}
+                                            <span class="text-xs text-green-500">Save {{ book.applied_offer.discount_value }}{% if book.applied_offer.discount_type == 'percentage' %}%{% else %}₹{% endif %}</span>
+                                            {% endif %}
+                                        {% endif %}
                         
                                     <!-- Floating Icons -->
                                     <div class="absolute inset-x-0 top-1/2 transform -translate-y-1/2 flex justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10">
@@ -413,5 +429,4 @@
 <!-------------------------------Footer section ------------------------>
 {% block script %}
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script src="{% static 'user/js/deal_of_the_day_timer.js' %}"></script>
 {% endblock %}

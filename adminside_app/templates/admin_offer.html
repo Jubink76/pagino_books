@@ -6,6 +6,7 @@
 {% endblock %}
 
 {% block content %}
+{% csrf_token %}
 <div class="col-md-9 ms-sm-auto col-lg-10 offset-md-3 offset-lg-2">
     <div class="bg-gray-800 rounded-lg shadow-lg p-6">
         <!-- Header Section -->
@@ -24,23 +25,30 @@
         <div class="mt-8">
             <h2 class="text-white text-xl font-medium mb-4">Active Offers</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {% for offer in active_offers %}
+                {% for offer in all_offers %}
                 <div class="bg-gray-700 rounded-lg p-4 border border-gray-600">
                     <div class="flex justify-between items-start mb-3">
                         {% if offer.offer_type == 'category' %}
                         <div>
-                            <span class="bg-purple-500 text-white px-2 py-1 rounded-full text-sm">Category Offer</span>
+                            <div class="flex items-center space-x-2">
+                                <span class="bg-purple-500 text-white px-2 py-1 rounded-full text-sm">Category Offer</span>
+                                {% if offer.is_active %}
+                                    <span class="text-green-500 text-sm">Active</span>
+                                {% else %}
+                                    <span class="text-red-500 text-sm">Inactive</span>
+                                {% endif %}
+                            </div>
                             <h3 class="text-white font-bold mt-2">{{ offer.offer_name }}</h3>
                         </div>
                         <div class="flex space-x-2">
                             <button class="edit-offer-btn text-gray-400 hover:text-white"
-                                data-url="{% url 'edit_category_offer' offer.category.id %}">
+                                data-url="{% url 'edit_category_offer' offer.category_id %}">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                                 </svg>
                             </button>
                             <button class="delete-offer-btn text-gray-400 hover:text-white"
-                                data-url="{% url 'delete_category_offer' offer.category.id %}">
+                                data-url="{% url 'delete_category_offer' offer.id %}">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                                 </svg>
@@ -48,18 +56,25 @@
                         </div>
                         {% elif offer.offer_type == 'product' %}
                         <div>
-                            <span class="bg-green-500 text-white px-2 py-1 rounded-full text-sm">Product Offer</span>
+                            <div class="flex items-center space-x-2">
+                                <span class="bg-green-500 text-white px-2 py-1 rounded-full text-sm">Product Offer</span>
+                                {% if offer.is_active %}
+                                    <span class="text-green-500 text-sm">Active</span>
+                                {% else %}
+                                    <span class="text-red-500 text-sm">Inactive</span>
+                                {% endif %}
+                            </div>
                             <h3 class="text-white font-bold mt-2">{{ offer.offer_name }}</h3>
                         </div>
                         <div class="flex space-x-2">
                             <button class="edit-offer-btn text-gray-400 hover:text-white"
-                                data-url="{% url 'edit_product_offer' offer.product.id %}">
+                                data-url="{% url 'edit_product_offer' offer.product_id %}">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                                 </svg>
                             </button>
                             <button class="delete-offer-btn text-gray-400 hover:text-white"
-                                data-url="{% url 'delete_product_offer' offer.product.id %}">
+                                data-url="{% url 'delete_product_offer' offer.id %}">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                                 </svg>
@@ -160,6 +175,18 @@
         if (target.classList.contains("delete-offer-btn")) {
             const url = target.getAttribute("data-url");
             if (url) {
+                // Get CSRF token
+                const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value;
+                
+                if (!csrfToken) {
+                    Swal.fire({
+                        title: 'Error!',
+                        text: 'CSRF token not found. Please refresh the page.',
+                        icon: 'error'
+                    });
+                    return;
+                }
+
                 Swal.fire({
                     title: 'Are you sure?',
                     text: "This action will delete the offer permanently!",
@@ -174,7 +201,8 @@
                         fetch(url, {
                             method: 'POST',
                             headers: {
-                                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                                'X-CSRFToken': csrfToken,
+                                'Content-Type': 'application/json'
                             }
                         })
                         .then(response => response.json())
@@ -190,12 +218,13 @@
                             } else {
                                 Swal.fire({
                                     title: 'Error!',
-                                    text: data.message,
+                                    text: data.message || 'Something went wrong',
                                     icon: 'error'
                                 });
                             }
                         })
-                        .catch(() => {
+                        .catch(error => {
+                            console.error('Error:', error);
                             Swal.fire({
                                 title: 'Error!',
                                 text: 'Something went wrong while deleting the offer.',

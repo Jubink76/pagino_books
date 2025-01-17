@@ -36,12 +36,13 @@
               {% endif %}
           {% endfor %}
           </div>
-          
+            
       </div>
 
       <div class = "flex-1">
         <div class="flex flex-wrap items-center justify-between border-b pb-4">
-            <h1 class="text-2xl font-bold space-x-4 px-4 py-4 mt-2">Shop Page</h1>
+            <h1 class="text-2xl font-bold space-x-4 px-4 py-4 mt-2">Single Category</h1>
+            
                   <div class="flex-1 flex justify-center space-x-8 items-center">
                       <!-- Sort by Dropdown -->
                       <div class="flex items-center space-x-4 relative">
@@ -63,6 +64,7 @@
                                   <li><a href="?sort=new_arrivals" class="block px-4 py-2 hover:bg-gray-100">New arrivals</a></li>
                               </ul>
                           </div>
+                          
                       </div>
                   </div>
             <!-- Pagination -->
@@ -166,7 +168,12 @@
                         <!-- Price Section with Floating Icons -->
                         <div class="relative flex justify-between items-center">
                                 <span class="text-green-600 font-bold">₹{{ book.offer_price }}</span>
-                                <span class="text-red-400 line-through">₹{{ book.base_price }}</span>
+                                {% if book.base_price != book.offer_price %}
+                                    <span class="text-red-400 line-through text-sm">₹{{ book.base_price }}</span>
+                                    {% if book.applied_offer %}
+                                    <span class="text-xs text-green-500">Save {{ book.applied_offer.discount_value }}{% if book.applied_offer.discount_type == 'percentage' %}%{% else %}₹{% endif %}</span>
+                                    {% endif %}
+                                {% endif %}
                             
                             <!-- Floating Icons -->
                             <div class="absolute inset-x-0 top-1/2 transform -translate-y-1/2 flex justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10">

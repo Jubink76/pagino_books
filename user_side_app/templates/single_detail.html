@@ -51,7 +51,8 @@
 				</a>
 				{% endif %}
 			{% endfor %}
-			</div>	
+			</div>
+			
 		</div>
   
 		<div class="flex-1">
@@ -159,7 +160,7 @@
 							{% endif %}
 				  			<!-- Price -->
 				  			<div class="flex items-center space-x-4">
-								<span class="text-3xl font-bold text-pink-500">₹{{ book.offer_price }}</span>
+								<span class="text-3xl font-bold text-pink-500">₹{{ book.offer_price|floatformat:2 }}</span>
 								<span class="text-xl text-gray-400 line-through">₹{{ book.base_price }}</span>
 				  			</div>
 							  

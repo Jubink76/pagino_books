@@ -13,19 +13,19 @@ from order_detail_app.models import OrderDetails,OrderItem, OfferTable, CouponTa
 from django.urls import reverse
 import re
 from django.db.models import Q
-from django.utils.timezone import now
+from django.utils.timezone import now, localtime
 from django.db.models import Avg, Count
 
 ##########################################################################################################
 
 def shop_page(request):
-    # Get filters and sorting options from the request
-    search_query = request.GET.get('search', '').strip()  # Search text
+
     sort = request.GET.get('sort', 'popularity')  # Default sort
     filter_category = request.GET.get('category', '')  
     filter_author = request.GET.get('author', '')  
     price_min = request.GET.get('price_min', 0)  
-    price_max = request.GET.get('price_max', 10000)  
+    price_max = request.GET.get('price_max', 10000) 
+    search_query = request.GET.get('search', '') 
 
     books = BookTable.objects.prefetch_related('images').filter(is_deleted=False)
 
@@ -69,9 +69,13 @@ def shop_page(request):
         book.additional_offer_applied = applied_offer is not None
         book.save()
 
-    # Apply filters
     if search_query:
-        books = books.filter(Q(book_name__icontains=search_query) | Q(description__icontains=search_query))
+        books = books.filter(
+            Q(book_name__icontains=search_query) |
+            Q(author__name__icontains=search_query) |
+            Q(description__icontains=search_query)
+        ).distinct()
+
 
     if filter_category:
         books = books.filter(category__name__iexact=filter_category)
@@ -103,19 +107,22 @@ def shop_page(request):
     # Render the template with the filtered, sorted, and paginated books
     return render(request, 'shop_page.html', {
         'books': books,
-        'search_query': search_query,
         'sort_option': sort,
         'filter_category': filter_category,
         'filter_author': filter_author,
         'price_min': price_min,
         'price_max': price_max,
+        'search_query': search_query,
     })
 
 
 ##########################################################################################################
 
 def single_detail(request,pk):
+
+
     book = get_object_or_404(BookTable,id=pk)
+
     images = book.images.all()
 
     rating_data = ReviewTable.objects.filter(book=book).aggregate(
@@ -126,8 +133,9 @@ def single_detail(request,pk):
     average_rating = rating_data['average_rating'] or 0  # Default to 0 if no reviews
     review_count = rating_data['review_count'] or 0  
 
+    current_time = now()
+    local_current_time = localtime(current_time)
     active_offers = OfferTable.objects.filter(is_active=True, valid_from__lte=now(), valid_to__gte=now())
-
     # Calculate the offer price for the main book
     base_price = book.base_price
     product_offer_price = None
@@ -136,6 +144,7 @@ def single_detail(request,pk):
 
     # Check for product-specific offer
     product_offer = active_offers.filter(offer_type='product', product=book).first()
+
     if product_offer:
         if product_offer.discount_type == 'percentage':
             product_offer_price = base_price - (base_price * product_offer.discount_value / 100)
@@ -144,6 +153,7 @@ def single_detail(request,pk):
 
     # Check for category-specific offer
     category_offer = active_offers.filter(offer_type='category', category=book.category).first()
+    
     if category_offer:
         if category_offer.discount_type == 'percentage':
             category_offer_price = base_price - (base_price * category_offer.discount_value / 100)
@@ -160,7 +170,7 @@ def single_detail(request,pk):
         applied_offer = category_offer
 
     # Update the book's offer price and applied offer
-    book.offer_price = effective_price
+    book.offer_price = round(effective_price,2)
     book.applied_offer = applied_offer
     book.additional_offer_applied = applied_offer is not None
     book.save()
@@ -173,7 +183,6 @@ def single_detail(request,pk):
     ).exclude(id=pk)[:6]
 
     related_books_data = []
-
     for related_book in related_books:
         related_rating_data = ReviewTable.objects.filter(book=related_book).aggregate(
             average_rating=Avg('rating'),
@@ -184,7 +193,6 @@ def single_detail(request,pk):
             'average_rating': related_rating_data['average_rating'] or 0,
             'review_count': related_rating_data['review_count'] or 0,
         })
-        
     return render(request,'single_detail.html',{'book':book,
                                                 'images':images,
                                                 'related_books':related_books_data,
@@ -323,69 +331,66 @@ def cart_page(request):
 
 ###########################################################################################################
 
-
 def add_to_cart(request, book_id):
-
+    if not request.user.is_authenticated:
+        return JsonResponse({
+            'status': 'login_required',
+            'message': 'Please login to add items to your cart', 
+            'redirect_url': reverse('user_login')
+        })
+    
     book = get_object_or_404(BookTable, id=book_id)
     item_price = book.offer_price if book.offer_price else book.base_price
 
     try:
-        if request.user.is_authenticated:
-            cart_item, created = CartTable.objects.get_or_create(
-                user=request.user,
-                book=book,
-                defaults={
-                    'quantity': 1,
-                    'item_price': item_price,
-                    'total_price': item_price,
-                }
-            )
-        else:
-            session_id = request.session.session_key or request.session.create()
-            cart_item, created = CartTable.objects.get_or_create(
-                session_id=session_id,
-                book=book,
-                defaults={
-                    'quantity': 1,
-                    'item_price': item_price,
-                    'total_price': item_price,
-                }
-            )
+        cart_item = CartTable.objects.filter(user=request.user, book=book).first()
+        
+        if cart_item:
+            if cart_item.quantity >= 5:
+                return JsonResponse({
+                    'status': 'error',
+                    'message': f"You cannot add more than 5 copies of '{book.book_name}' to your cart.",
+                })
 
-        if created:
+            cart_item.quantity += 1
+            cart_item.total_price = cart_item.item_price * cart_item.quantity
+            cart_item.save()
+            return JsonResponse({
+                'status': 'success',
+                'message': f"Added another copy of '{book.book_name}' to your cart.",
+                'redirect_url': reverse('cart_page')
+            })
+        else:
             if book.stock_quantity > 0:
+                cart_item = CartTable.objects.create(
+                    user=request.user,
+                    book=book,
+                    quantity=1,
+                    item_price=item_price,
+                    total_price=item_price,
+                )
+
                 book.stock_quantity -= 1
                 if book.stock_quantity <= 0:
                     book.is_available = False
                 book.save()
+                
                 return JsonResponse({
                     'status': 'success',
-                    'message': f"{book.book_name} added to your cart.",
+                    'message': f"'{book.book_name}' has been added to your cart.",
                     'redirect_url': reverse('cart_page')
                 })
             else:
                 return JsonResponse({
                     'status': 'error',
-                    'message': f"{book.book_name} is out of stock."
+                    'message': f"Sorry, '{book.book_name}' is currently out of stock."
                 })
-
-        if not created:
-            cart_item.quantity += 1
-            cart_item.save()
-
-        return JsonResponse({
-            'status': 'success',
-            'message': f"{book.book_name} added to your cart.",
-            'redirect_url': reverse('cart_page')
-        })
 
     except Exception as e:
         return JsonResponse({
             'status': 'error',
-            'message': 'An error occurred while adding to cart.',
+            'message': 'An error occurred while processing your request. Please try again.',
         })
-
-
 
 ###########################################################################################################
 def delete_cart_item(request, item_id):
@@ -435,9 +440,9 @@ def update_cart_quantity(request, item_id):
                     'item_total': float(cart_item.total_price),
                 }, status=400)
             
-            max_allowed = min(10, book.stock_quantity)
+            max_allowed = min(5, book.stock_quantity)
             if new_quantity > max_allowed:
-                error_message = 'Maximum quantity allowed is 10.' if max_allowed == 10 else f'Only {max_allowed} items available in stock.'
+                error_message = 'Maximum quantity allowed is 5.' if max_allowed == 5 else f'Only {max_allowed} items available in stock.'
                 return JsonResponse({
                     'error': error_message,
                     'current_quantity': cart_item.quantity,
@@ -497,40 +502,46 @@ def whishlist_page(request):
 ###########################################################################################################
 
 def add_to_whishlist(request, book_id):
+    # Require authentication
+    if not request.user.is_authenticated:
+        return JsonResponse({
+            'status': 'login_required',
+            'message': 'Please login to add items to your wishlist',
+            'redirect_url': reverse('user_login')
+        })
+    
     book = get_object_or_404(BookTable, id=book_id)
-
+    
     try:
-        if request.user.is_authenticated:
-            whishlist_item, created = WhishlistTable.objects.get_or_create(
-                user=request.user,
-                book=book
-            )
-        else:
-            session_id = request.session.session_key or request.session.create()
-            whishlist_item, created = WhishlistTable.objects.get_or_create(
-                session_id=session_id,
-                book=book,
-            )
-
-        if created:
-            return JsonResponse({
-                'status': 'success',
-                'message': 'Book added to wishlist successfully!',
-                'redirect_url': reverse('whishlist_page')  # Ensure this URL name exists
-            })
-        else:
+        whishlist_item = WhishlistTable.objects.filter(
+            user=request.user,
+            book=book
+        ).first()
+        
+        if whishlist_item:
             return JsonResponse({
                 'status': 'info',
-                'message': 'This book is already in your wishlist.',
+                'message': f"'{book.book_name}' is already in your wishlist.",
                 'redirect_url': reverse('whishlist_page')
             })
+        
+        # Add new item to wishlist
+        whishlist_item = WhishlistTable.objects.create(
+            user=request.user,
+            book=book
+        )
+    
+        return JsonResponse({
+            'status': 'success',
+            'message': f"'{book.book_name}' has been added to your wishlist.",
+            'redirect_url': reverse('whishlist_page')
+        })
 
     except Exception as e:
         return JsonResponse({
             'status': 'error',
             'message': 'An error occurred while adding to the wishlist.'
         })
-
 #################################################################################################################
 
 def del_whishlist_item(request,book_id):
@@ -661,7 +672,6 @@ def checkout_add_address(request):
             })
 
         except Exception as e:
-            print(f"Error saving address: {str(e)}")  # Add logging
             return JsonResponse({
                 'status': 'error',
                 'message': 'An error occurred while saving the address.'

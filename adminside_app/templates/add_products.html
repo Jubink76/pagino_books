@@ -79,14 +79,13 @@
                     <div class="grid md:grid-cols-3 gap-4">
                         <div>
                             <label class="block mb-2">Category</label>
-                            <input list="categories" name="category" 
-                                   class="w-full px-3 py-2 bg-gray-600 border border-gray-500 rounded focus:outline-none focus:ring-2 focus:ring-blue-500" 
-                                   placeholder="Select or type category">
-                            <datalist id="categories">
+                            <select name="category" 
+                                    class="w-full px-3 py-2 bg-gray-600 border border-gray-500 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="" selected disabled>Select a category</option>
                                 {% for category in categories %}
-                                    <option value="{{ category.category_name }}">
+                                    <option value="{{ category.category_name }}">{{ category.category_name }}</option>
                                 {% endfor %}
-                            </datalist>
+                            </select>
                         </div>
                         <div>
                             <label class="block mb-2">Author Name</label>
@@ -184,6 +183,7 @@
         </div>
     </div>
 </div>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
     document.addEventListener('DOMContentLoaded', () => {
         // Form elements
@@ -208,20 +208,24 @@
     
         // Validation rules
         const validationRules = {
-            bookName: {
-                pattern: /^[A-Za-z0-9\s\-_&(),.]+$/,
-                message: 'Book name should contain only letters, numbers, spaces, and basic punctuation.'
+            book_name: {
+                pattern: /^[A-Za-z0-9\s]+$/,
+                message: 'Book name should contain only letters, numbers, and spaces.'
             },
             category: {
-                pattern: /^[A-Za-z\s\-&]+$/,
-                message: 'Category should contain only letters, spaces, and hyphens.'
+                validate: (value) => {
+                    if (!value || value === "") {
+                        return 'Please select a category.';
+                    } 
+                    return null;
+                }
             },
-            authorName: {
-                pattern: /^[A-Za-z\s\-.']+$/,
-                message: 'Author name should contain only letters, spaces, and basic punctuation.'
+            author_name: {  // Changed from authorName
+                pattern: /^[A-Za-z\s]+$/,
+                message: 'Author name should contain only letters and spaces.'
             },
             language: {
-                pattern: /^[A-Za-z\s\-]+$/,
+                pattern: /^[A-Za-z\s]+$/,
                 message: 'Language should contain only letters and spaces.'
             }
         };
@@ -256,14 +260,24 @@
             clearError(field);
     
             // Skip validation if field is empty and not required
-            if (!value && !field.hasAttribute('required')) {
-                return true;
+            if (field.hasAttribute('required') && !value) {
+                displayError(field, `${field.name.replace('_', ' ')} is required.`);
+                return false;
             }
     
             // Apply specific validation rules
-            if (validationRules[field.name]) {
-                if (!validationRules[field.name].pattern.test(value)) {
-                    displayError(field, validationRules[field.name].message);
+            const rule = validationRules[field.name];
+            if (rule) {
+                if (rule.validate) {
+                    // Custom validation function
+                    const error = rule.validate(value);
+                    if (error) {
+                        displayError(field, error);
+                        return false;
+                    }
+                } else if (rule.pattern && !rule.pattern.test(value)) {
+                    // Pattern validation
+                    displayError(field, rule.message);
                     return false;
                 }
             }
@@ -279,7 +293,7 @@
                     break;
     
                 case 'stock_quantity':
-                    if (!/^\d+$/.test(value) || parseInt(value) < 0) {
+                    if (!/^\d+$/.test(value) || parseInt(value) <= 0) {
                         displayError(field, 'Stock quantity must be a positive whole number.');
                         return false;
                     }
@@ -294,8 +308,8 @@
     
                 case 'discount_percentage':
                     const discount = parseFloat(value);
-                    if (value && (isNaN(discount) || discount < 0 || discount > 100)) {
-                        displayError(field, 'Discount percentage must be between 0 and 100.');
+                    if (value && (isNaN(discount) || discount < 0 || discount > 95)) {
+                        displayError(field, 'Discount percentage must be between 0 and 95.');
                         return false;
                     }
                     break;
@@ -379,8 +393,27 @@
             // Set up field validation
             Object.values(fields).forEach(field => {
                 if (field) {
-                    field.addEventListener('input', () => validateField(field));
-                    field.addEventListener('blur', () => validateField(field));
+                    // Validate on focus (when entering the field)
+                    field.addEventListener('focus', () => {
+                        validateField(field, true);
+                    });
+    
+                    // Validate while typing
+                    field.addEventListener('input', () => {
+                        validateField(field, true);
+                    });
+    
+                    // Validate when leaving the field
+                    field.addEventListener('blur', () => {
+                        validateField(field, true);
+                    });
+    
+                    // Special handling for category
+                    if (field.name === 'category') {
+                        field.addEventListener('change', () => {
+                            validateField(field, true);
+                        });
+                    }
                 }
             });
     
@@ -413,25 +446,70 @@
                         
                         // Add uploaded images
                         uploadedImages.forEach((imageData, inputIndex) => {
-                            // Use the actual input index to maintain correct field names
-                            formData.append(`book_image_${inputIndex}`, imageData.file);
+                            formData.append(`book_image_${inputIndex + 1}`, imageData.file);
                         });
-    
+        
+                        // Show loading state
+                        Swal.fire({
+                            title: 'Processing...',
+                            html: 'Please wait while we add the product.',
+                            allowOutsideClick: false,
+                            didOpen: () => {
+                                Swal.showLoading();
+                            }
+                        });
+        
                         const response = await fetch(form.action, {
                             method: 'POST',
                             body: formData
                         });
-    
+        
+                        const data = await response.json();
+        
                         if (response.ok) {
-                            window.location.href = '/admin_products/';
+                            // Success message
+                            await Swal.fire({
+                                icon: 'success',
+                                title: 'Success!',
+                                text: data.message || 'Product added successfully',
+                                confirmButtonColor: '#3085d6'
+                            });
+                            
+                            // Redirect after success
+                            if (data.redirect_url) {
+                                window.location.href = data.redirect_url;
+                            }
                         } else {
-                            const errorData = await response.json();
-                            showGlobalError(errorData.message || 'Error submitting form. Please try again.');
+                            // Error handling
+                            let errorMessage = data.message || 'Error submitting form.';
+                            if (data.errors && data.errors.length > 0) {
+                                errorMessage += '\n• ' + data.errors.join('\n• ');
+                            }
+                            
+                            await Swal.fire({
+                                icon: 'error',
+                                title: 'Error!',
+                                html: errorMessage.replace(/\n/g, '<br>'),
+                                confirmButtonColor: '#d33'
+                            });
                         }
                     } catch (error) {
-                        showGlobalError('Network error. Please try again.');
                         console.error('Form submission error:', error);
+                        await Swal.fire({
+                            icon: 'error',
+                            title: 'Network Error',
+                            text: 'Please check your connection and try again.',
+                            confirmButtonColor: '#d33'
+                        });
                     }
+                } else {
+                    // Show validation errors
+                    await Swal.fire({
+                        icon: 'warning',
+                        title: 'Validation Error',
+                        text: 'Please check the form for errors and try again.',
+                        confirmButtonColor: '#f39c12'
+                    });
                 }
             });
         };

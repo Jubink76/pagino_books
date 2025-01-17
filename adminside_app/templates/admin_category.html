@@ -126,7 +126,7 @@
                                     <!-- Delete Offer Button -->
                                     <button 
                                         class="delete-offer-btn px-3 py-1 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors"
-                                        data-url="{% url 'delete_category_offer' category.id %}">
+                                        data-url="{% url 'delete_category_offer' category.active_offer_id %}">
                                         Delete Offer
                                     </button>
                                 {% else %}
@@ -165,15 +165,6 @@
 
         <!-- Pagination -->
         <div class="bg-gradient-to-br from-gray-700 to-gray-800 px-6 py-4 flex items-center justify-between border-t border-gray-600 rounded-b-xl shadow-sm">
-            {% comment %} <div class="flex items-center space-x-3">
-                <span class="text-sm font-medium">Show</span>
-                <select id="categories-table-body" class="form-select bg-gray-800 border-2 border-blue-500 text-gray-300 rounded-md px-3 py-1.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-300 ease-in-out hover:border-blue-400 hover:shadow-md">
-                    <option value="5" {% if categories.paginator.per_page == 5 %}selected{% endif %}>5</option>
-                    <option value="10" {% if categories.paginator.per_page == 10 %}selected{% endif %}>10</option>
-                    <option value="15" {% if categories.paginator.per_page == 15 %}selected{% endif %}>15</option>
-                </select>
-                <span class="text-sm font-medium">per page</span>
-            </div> {% endcomment %}
             <div class="text-sm bg-gray-800/70 px-4 py-2 rounded-md shadow-sm">
                 Showing <span class="font-semibold text-blue-500">{{ categories.start_index }}</span> to <span class="font-semibold text-blue-500">{{ categories.end_index }}</span> of <span class="font-semibold text-blue-500">{{ categories.paginator.count }}</span> records
             </div>

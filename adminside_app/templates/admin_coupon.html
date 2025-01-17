@@ -188,10 +188,13 @@
             const formData = new FormData(form);
             const couponId = form.getAttribute('data-edit');
             
-            // Determine URL based on whether we're editing or creating
-            const submitUrl = couponId 
-                ? `/admin_coupon/${couponId}/`  // Edit URL
-                : '/admin_coupon/';             // Create URL
+            // Add coupon_id to formData if editing
+            if (couponId) {
+                formData.append('coupon_id', couponId);
+            }
+            
+            // Use a single URL endpoint
+            const submitUrl = '/admin_coupon/';
         
             fetch(submitUrl, {
                 method: "POST",
@@ -200,12 +203,7 @@
                     "X-CSRFToken": form.querySelector("[name=csrfmiddlewaretoken]").value
                 },
             })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-                return response.json();
-            })
+            .then(response => response.json())
             .then(data => {
                 if (data.status === "success") {
                     Swal.fire({
@@ -226,7 +224,7 @@
                 }
             })
             .catch(error => {
-                console.error("Error:", error);  // For debugging
+                console.error("Error:", error);
                 Swal.fire({
                     title: "Error!",
                     text: "Something went wrong. Please try again later.",
@@ -235,6 +233,7 @@
                 });
             });
         });
+        
         // Add delete coupon functionality
         document.querySelectorAll('.delete-coupon-btn').forEach(button => {
             button.addEventListener('click', function(e) {

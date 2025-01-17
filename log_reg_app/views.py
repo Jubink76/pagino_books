@@ -23,6 +23,9 @@ from allauth.socialaccount.models import SocialApp
 from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
 from allauth.socialaccount.helpers import complete_social_login
 from allauth.socialaccount.models import SocialLogin
+from order_detail_app.models import OfferTable
+from user_side_app.models import CartTable,WhishlistTable
+from django.db.models import F
 
 class CustomGoogleCallbackView(View):
     def get(self, request, *args, **kwargs):
@@ -51,14 +54,15 @@ class CustomGoogleCallbackView(View):
             return redirect('user_login')  # Redirect to login if login data is not found
 
         except Exception as e:
-            print(f"Error in callback: {str(e)}")
             return redirect('user_login')  # Adjust this URL to the correct login page
 
 
 
 ###############################################################################################################
+@never_cache
 def homepage_before_login(request):
-    return render(request,'homepage_before_login.html')
+    active_offers = OfferTable.objects.filter(is_active=True)
+    return render(request,'homepage_before_login.html',{'active_offers':active_offers})
 
 ######################################################################################################################
 
@@ -145,13 +149,10 @@ def user_signup(request):
             user.save()
 
             otp = random.randint(100000, 999999)  # Generate a 6-digit OTP
-            print(f"Generated OTP: {otp}")
             # Store OTP and email in session
             request.session['otp'] = otp
             request.session['otp_timestamp'] = timezone.now().isoformat()
             request.session['email'] = email  # Store email in session
-            print(f"Stored OTP: {request.session['otp']}")
-            print(f"Stored Email: {request.session['email']}")
 
             # Send OTP via email
             try:
@@ -162,11 +163,9 @@ def user_signup(request):
                     [email], 
                     fail_silently=False,
                 )
-                print("Email sent successfully")
                 messages.success(request, 'OTP has been sent to your email. Please check and verify.')
                 return redirect('verify_otp')
             except Exception as e:
-                print(f"Error sending email: {str(e)}")
                 messages.error(request, f'Error sending OTP: {str(e)}')
                 return render(request, 'user_signup.html')
         
@@ -179,7 +178,6 @@ def user_signup(request):
 ############################################################################################
 
 def user_login(request):
-
 
     if request.method == "POST":
         username = request.POST.get('username')
@@ -203,7 +201,7 @@ def user_login(request):
             return redirect('homepage_after_login')
     return render(request,'user_login.html')
 
-###################################################       #####################################################
+########################################################################################################
 
 def user_logout(request):
     logout(request)
@@ -244,7 +242,7 @@ def admin_logout(request):
     return redirect('admin_login')
 
 ##############################################################################################################
-
+@never_cache
 @login_required(login_url='user_login')
 def homepage_after_login(request):
     return render(request,'homepage_after_login.html')
@@ -274,7 +272,6 @@ def forgot_password(request):
                     fail_silently=False,
                 )
                 messages.success(request,'OTP has been sent to your registered email id , Please check and verify')
-                print("otp sent successfully")
             except Exception as e:
                 messages.error(request, 'There was an error sending the email:{}'.format(e))
             return redirect('verify_otp')

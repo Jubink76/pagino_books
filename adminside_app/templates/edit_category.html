@@ -25,7 +25,6 @@
                 </ol>
             </nav>
         </div>
-        
 
         <form method="POST" action="{% url 'edit_category' category.id %}" id="categoryForm">
             {% csrf_token %}
@@ -34,12 +33,14 @@
                 <input type="text" name="category_name" id="category_name" 
                        class="bg-gray-700 text-gray-300 rounded-md px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500" 
                        value="{{ category.category_name }}">
+                <p id="category-name-error" class="text-red-500 text-sm mt-1 hidden">Category name cannot be empty</p>
             </div>
         
             <div class="mb-6">
                 <label class="block text-gray-300 font-medium mb-2" for="description">Description</label>
                 <textarea name="description" id="description" rows="4" 
                           class="bg-gray-700 text-gray-300 rounded-md px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500">{{ category.description }}</textarea>
+                <p id="description-error" class="text-red-500 text-sm mt-1 hidden">Description cannot be empty</p>
             </div>
         
             <div class="flex justify-end space-x-4">
@@ -49,12 +50,13 @@
                         Delete Category
                     </button>
                 {% else %}
-                    <button type="submit" name="readd_category" 
+                    <button type="submit" name="readd_category" id="readdCategoryButton"
                             class="bg-green-500 hover:bg-green-600 text-white font-medium py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500">
                         Add to List Again
                     </button>
                 {% endif %}
-                <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <button type="submit" id="update-category" 
+                        class="bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
                     Update Category
                 </button>
             </div>
@@ -66,94 +68,179 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-    const deleteCategoryButton = document.getElementById('deleteCategoryButton');
-    const categoryForm = document.getElementById('categoryForm');
-
-    if (deleteCategoryButton) {
-        deleteCategoryButton.addEventListener('click', (event) => {
-            event.preventDefault(); // Prevent form submission immediately
-
-            // SweetAlert2 confirmation
-            Swal.fire({
-                title: 'Are you sure?',
-                text: "This action will mark the category as deleted!",
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#d33',
-                cancelButtonColor: '#3085d6',
-                confirmButtonText: 'Yes, delete it!',
-                cancelButtonText: 'Cancel'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    // If confirmed, add the hidden 'delete_category' input and submit the form
-                    const deleteInput = document.createElement('input');
-                    deleteInput.type = 'hidden';
-                    deleteInput.name = 'delete_category';
-                    categoryForm.appendChild(deleteInput);
-                    categoryForm.submit(); // Submit the form to trigger the deletion
-                }
-            });
-        });
-    }
-</script>
-<script>
     document.addEventListener('DOMContentLoaded', () => {
-        const form = document.querySelector('form');
-        const categoryNameField = document.getElementById('category_name');
-        const descriptionField = document.getElementById('description');
+        const form = document.getElementById('categoryForm');
+        const categoryNameInput = document.getElementById('category_name');
+        const descriptionInput = document.getElementById('description');
         const categoryNameError = document.getElementById('category-name-error');
         const descriptionError = document.getElementById('description-error');
         const updateButton = document.getElementById('update-category');
-
-        const clearError = (field, errorElement) => {
-            field.classList.remove('border-red-500');
-            errorElement.classList.add('hidden');
-        };
-
-        const displayError = (field, errorElement, message) => {
-            field.classList.add('border-red-500');
-            errorElement.textContent = message;
-            errorElement.classList.remove('hidden');
-        };
-
+        const deleteCategoryButton = document.getElementById('deleteCategoryButton');
+    
+        // Function to validate category name (only alphabets and spaces allowed)
         const validateCategoryName = () => {
-            const value = categoryNameField.value.trim();
-            clearError(categoryNameField, categoryNameError);
-
+            const categoryNameRegex = /^[a-zA-Z\s]+$/;
+            const value = categoryNameInput.value.trim();
+            
             if (!value) {
-                displayError(categoryNameField, categoryNameError, 'Category name cannot be empty.');
+                categoryNameError.textContent = 'Category name cannot be empty.';
+                categoryNameError.classList.remove('hidden');
                 return false;
+            } else if (!categoryNameRegex.test(value)) {
+                categoryNameError.textContent = 'Category name can only contain alphabets and spaces.';
+                categoryNameError.classList.remove('hidden');
+                return false;
+            } else {
+                categoryNameError.classList.add('hidden');
+                return true;
             }
-
-            return true;
         };
-
+    
         const validateDescription = () => {
-            const value = descriptionField.value.trim();
-            clearError(descriptionField, descriptionError);
-
+            const value = descriptionInput.value.trim();
             if (!value) {
-                displayError(descriptionField, descriptionError, 'Description cannot be empty.');
+                descriptionError.textContent = 'Description cannot be empty.';
+                descriptionError.classList.remove('hidden');
                 return false;
+            } else {
+                descriptionError.classList.add('hidden');
+                return true;
             }
-
-            return true;
         };
-
-        const validateForm = () => {
+    
+        // Update button state based on form validity
+        const toggleButtonState = () => {
             const isCategoryNameValid = validateCategoryName();
             const isDescriptionValid = validateDescription();
-            return isCategoryNameValid && isDescriptionValid;
+            updateButton.disabled = !(isCategoryNameValid && isDescriptionValid);
         };
-
-        categoryNameField.addEventListener('input', validateCategoryName);
-        descriptionField.addEventListener('input', validateDescription);
-
-        form.addEventListener('submit', (event) => {
-            if (!validateForm()) {
-                event.preventDefault();
+    
+        // Real-time validation
+        categoryNameInput.addEventListener('input', () => {
+            validateCategoryName();
+            toggleButtonState();
+        });
+    
+        descriptionInput.addEventListener('input', () => {
+            validateDescription();
+            toggleButtonState();
+        });
+    
+        // Handle form submission
+        form.addEventListener('submit', async (event) => {
+            if (event.submitter && event.submitter.id === 'deleteCategoryButton') {
+                // Handle delete button click separately
+                return;
+            }
+    
+            event.preventDefault();
+    
+            const isCategoryNameValid = validateCategoryName();
+            const isDescriptionValid = validateDescription();
+    
+            if (!isCategoryNameValid || !isDescriptionValid) {
+                return;
+            }
+    
+            try {
+                const formData = new FormData(form);
+                const response = await fetch(form.action, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                    }
+                });
+    
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    await Swal.fire({
+                        title: 'Success!',
+                        text: data.message,
+                        icon: 'success',
+                        confirmButtonColor: '#3B82F6'
+                    });
+                    window.location.href = "{% url 'admin_category' %}";
+                } else {
+                    await Swal.fire({
+                        title: 'Error!',
+                        text: data.message,
+                        icon: 'error',
+                        confirmButtonColor: '#3B82F6'
+                    });
+                }
+            } catch (error) {
+                await Swal.fire({
+                    title: 'Error!',
+                    text: 'An error occurred while processing your request.',
+                    icon: 'error',
+                    confirmButtonColor: '#3B82F6'
+                });
             }
         });
+    
+        // Handle delete button click
+        if (deleteCategoryButton) {
+            deleteCategoryButton.addEventListener('click', (event) => {
+                event.preventDefault();
+    
+                Swal.fire({
+                    title: 'Are you sure?',
+                    text: "This action will mark the category as deleted!",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#3085d6',
+                    confirmButtonText: 'Yes, delete it!',
+                    cancelButtonText: 'Cancel'
+                }).then(async (result) => {
+                    if (result.isConfirmed) {
+                        try {
+                            const formData = new FormData(form);
+                            formData.append('delete_category', '');
+                            
+                            const response = await fetch(form.action, {
+                                method: 'POST',
+                                body: formData,
+                                headers: {
+                                    'X-Requested-With': 'XMLHttpRequest',
+                                }
+                            });
+    
+                            const data = await response.json();
+                            
+                            if (data.status === 'success') {
+                                await Swal.fire({
+                                    title: 'Deleted!',
+                                    text: data.message,
+                                    icon: 'success',
+                                    confirmButtonColor: '#3B82F6'
+                                });
+                                window.location.href = "{% url 'admin_category' %}";
+                            } else {
+                                await Swal.fire({
+                                    title: 'Error!',
+                                    text: data.message,
+                                    icon: 'error',
+                                    confirmButtonColor: '#3B82F6'
+                                });
+                            }
+                        } catch (error) {
+                            await Swal.fire({
+                                title: 'Error!',
+                                text: 'An error occurred while processing your request.',
+                                icon: 'error',
+                                confirmButtonColor: '#3B82F6'
+                            });
+                        }
+                    }
+                });
+            });
+        }
+    
+        // Initial state check
+        toggleButtonState();
     });
 </script>
 {% endblock %}

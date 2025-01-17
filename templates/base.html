@@ -55,14 +55,14 @@
         {% endif %}
         
         <!-- Search Bar -->
-        <form method="get" action="{% url 'shop_page' %}" class="flex-1 max-w-2xl mx-8 flex items-center">
+        <form method="GET" action="{% url 'shop_page' %}" class="flex-1 max-w-2xl mx-8 flex items-center">
             <div class="flex rounded-lg overflow-hidden bg-white border border-gray-200 w-full">
 
                 <!-- Search Input -->
                 <input 
                     type="text" 
                     name="search"
-                    value="{{ request.GET.search }}"
+                    value="{{ request.GET.search }}"  
                     placeholder="Search here..." 
                     class="flex-1 px-4 py-3 text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300"
                 />
@@ -141,8 +141,9 @@
                         <span>Shop</span>
                         <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-yellow-300 group-hover:w-full transition-all duration-300"></span>
                     </a>
+                    
                     <a href="{% url 'cart_page' %}" class="hover:text-yellow-300 transition-colors duration-300 relative group">
-                        <span>Cart_page</span>
+                        <span>Cart page</span>
                         <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-yellow-300 group-hover:w-full transition-all duration-300"></span>
                     </a>
                     <a href="{% url 'whishlist_page' %}" class="hover:text-yellow-300 transition-colors duration-300 relative group">

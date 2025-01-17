@@ -37,12 +37,14 @@ def create_order(request):
         address_id = request.POST.get("savedAddress")
         payment_method = request.POST.get("payment")
         coupon_code = request.session.get('coupon_code', None)
-        print(coupon_code)
+        
+        
         if not address_id:
             return JsonResponse({'status': 'error', 'message': 'Please select a delivery address'})
             
         if not payment_method:
             return JsonResponse({'status': 'error', 'message': 'Please select a payment method'})
+        
         
         # Validate payment method
         valid_payment_methods = ['COD', 'ONLINE', 'WALLET']
@@ -65,10 +67,28 @@ def create_order(request):
                     item.quantity * item.book.offer_price 
                     for item in cart_items
                 )
+
+                # Restrict COD for orders >= ₹1000
+                if payment_method == 'COD' and grand_total >= 1000:
+                    return JsonResponse({
+                        'status': 'error',
+                        'message': 'Cash on Delivery is not available for orders above ₹1000. Please choose Online Payment or Wallet.'
+                    })
                 
                  # Initialize discount details
                 discount_amount = 0
                 applied_coupon = None
+                has_offer = False
+                applied_offer = None
+
+
+                # Check for applied offers in cart items
+                for cart_item in cart_items:
+                    if cart_item.book.applied_offer:
+                        has_offer = True
+                        applied_offer = cart_item.book.applied_offer
+                        break
+
 
                 # Apply coupon if provided
                 if coupon_code:
@@ -76,6 +96,7 @@ def create_order(request):
                         user=request.user,
                         coupon__code=coupon_code
                     ).last()
+                    
 
                     if coupon_usage and coupon_usage.coupon.is_active:
                         coupon = coupon_usage.coupon
@@ -102,7 +123,11 @@ def create_order(request):
                     address=address,
                     payment_method=payment_method,
                     total_amount=grand_total,
-                    order_status='Ordered'
+                    order_status='Ordered' if payment_method != 'COD' else 'Pending',
+                    coupon_applied=bool(applied_coupon),
+                    coupon=applied_coupon,
+                    offer_applied=has_offer,
+                    offer=applied_offer
                 )
 
                 # Create order items
@@ -591,7 +616,7 @@ def apply_coupon(request):
             coupon_code = data.get('coupon_code')
 
             coupon = CouponTable.objects.filter(code=coupon_code, is_active=True).first()
-
+            
             if not coupon:
                 return JsonResponse({'status': 'error', 'message': 'Invalid or expired coupon.'})
 
@@ -599,6 +624,8 @@ def apply_coupon(request):
             cart_items = CartTable.objects.filter(user=request.user)
             total_amount = sum(item.quantity * item.book.offer_price for item in cart_items)
 
+            if total_amount < coupon.min_purchase_amount:
+                return JsonResponse({'status': 'error', 'message': f'Minimum purchase amount is ₹{coupon.min_purchase_amount}.'})
             if coupon.coupon_type == 'PERCENTAGE':
                 discount_amount = total_amount * (coupon.discount_value / 100)
                 new_total = total_amount - discount_amount
@@ -674,7 +701,8 @@ def generate_invoice(request, order_id):
 
         # Calculate the remaining amount after refund
         remaining_amount = total_product_amount - refunded_amount
-
+        if order.coupon_applied:
+            amount_after_offers_coupon = total_product_amount-order.coupon.discount_value
         # Create PDF
         buffer = BytesIO()
         p = canvas.Canvas(buffer, pagesize=letter)
@@ -740,6 +768,13 @@ def generate_invoice(request, order_id):
         p.drawString(100, y, "Total Amount for All Products:")
         p.setFont("Helvetica", 12)
         p.drawString(300, y, f"₹{total_product_amount}")
+        y -= 20
+
+        #paid amount
+        p.setFont("Helvetica-Bold", 12)
+        p.drawString(100, y, "Amount paid:")
+        p.setFont("Helvetica", 12)
+        p.drawString(300, y, f"{amount_after_offers_coupon}")
         y -= 20
 
         # Show refunded details if any item is canceled
@@ -886,38 +921,3 @@ def submit_review(request, order_id):
 
 ###################################################################################################################
 
-# @login_required
-# def return_single_item(request, order_id, item_id):
-#     order = get_object_or_404(OrderDetails, order_id=order_id, user=request.user)
-#     order_item = get_object_or_404(OrderItem, id=item_id, order=order)
-
-#     if request.method == 'POST':
-#         reason = request.POST.get('reason', '').strip()
-
-#         # Validation
-#         if not reason:
-#             return JsonResponse({'status': 'error', 'message': "Reason for return is required."}, status=400)
-
-#         # Create ReturnRequest and ReturnItem
-#         with transaction.atomic():
-#             return_request, created = ReturnRequest.objects.get_or_create(
-#                 order=order,
-#                 user=request.user,
-#                 return_entire_order=False,
-#                 defaults={'reason': reason}
-#             )
-
-#             # Create ReturnItem for the specific order item
-#             ReturnItem.objects.create(
-#                 return_request=return_request,
-#                 order_item=order_item,
-#                 reason=reason
-#             )
-
-#         return JsonResponse({
-#             'status': 'success',
-#             'message': "Your return request for this item has been submitted successfully.",
-#             'redirect_url': reverse('user_orders')
-#         })
-
-#     return JsonResponse({'status': 'error', 'message': "Invalid request method."}, status=405)

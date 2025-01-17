@@ -250,49 +250,16 @@
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-    // Select the delete button and form
-    const deleteButton = document.getElementById('deleteBookBtn');
-    const form = document.getElementById('editProductForm');
-    
-    if (deleteButton) {
-        deleteButton.addEventListener('click', (event) => {
-            event.preventDefault(); // Prevent the form from submitting immediately
-            
-            // Show SweetAlert2 confirmation
-            Swal.fire({
-                title: 'Are you sure?',
-                text: "This action will mark the book as deleted!",
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#d33',
-                cancelButtonColor: '#3085d6',
-                confirmButtonText: 'Yes, delete it!',
-                cancelButtonText: 'Cancel'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    // If confirmed, submit the form with 'delete_book' action
-                    const deleteInput = document.createElement('input');
-                    deleteInput.type = 'hidden';
-                    deleteInput.name = 'delete_book';
-                    form.appendChild(deleteInput);
-                    
-                    form.submit();  // Submit the form
-                }
-            });
-        });
-    }
-</script>
-<script>
     document.addEventListener('DOMContentLoaded', () => {
         // Form elements
         const form = document.querySelector('form');
         const fields = {
-            bookName: form.querySelector('[name="book_name"]'),
+            book_name: form.querySelector('[name="book_name"]'),
             description: form.querySelector('[name="description"]'),
-            stockQuantity: form.querySelector('[name="stock_quantity"]'),
-            basePrice: form.querySelector('[name="price"]'),
-            discountPercentage: form.querySelector('[name="discount_percentage"]'),
-            authorName: form.querySelector('[name="author_name"]'),
+            stock_quantity: form.querySelector('[name="stock_quantity"]'),
+            base_price: form.querySelector('[name="price"]'),
+            discount_percentage: form.querySelector('[name="discount_percentage"]'),
+            author_name: form.querySelector('[name="author_name"]'),
             bio: form.querySelector('[name="bio"]'),
             language: form.querySelector('[name="language"]'),
             category: form.querySelector('[name="category"]')
@@ -307,7 +274,7 @@
     
         // Validation rules
         const validationRules = {
-            bookName: {
+            book_name: {
                 pattern: /^[A-Za-z0-9\s\-_&(),.]+$/,
                 message: 'Book name should contain only letters, numbers, spaces, and basic punctuation.'
             },
@@ -315,7 +282,7 @@
                 pattern: /^[A-Za-z\s\-&]+$/,
                 message: 'Category should contain only letters, spaces, and hyphens.'
             },
-            authorName: {
+            author_name: {
                 pattern: /^[A-Za-z\s\-.']+$/,
                 message: 'Author name should contain only letters, spaces, and basic punctuation.'
             },
@@ -325,234 +292,287 @@
             }
         };
     
-        // Error handling functions
-        const displayError = (field, message) => {
-            clearError(field);
-            const errorElement = document.createElement('p');
-            errorElement.classList.add('text-red-500', 'text-sm', 'mt-1');
-            errorElement.textContent = message;
-            field.parentNode.appendChild(errorElement);
-            errorMessages[field.name] = errorElement;
-        };
-    
-        const clearError = (field) => {
-            if (errorMessages[field.name]) {
-                errorMessages[field.name].remove();
-                delete errorMessages[field.name];
-            }
-        };
-    
-        const showGlobalError = (message) => {
-            const errorDiv = document.getElementById('error-message');
-            errorDiv.textContent = message;
-            errorDiv.classList.remove('hidden');
-            setTimeout(() => errorDiv.classList.add('hidden'), 5000);
-        };
-    
-        // Field validation function
+        // Validation functions
         const validateField = (field) => {
             const value = field.value.trim();
-            clearError(field);
+            const fieldName = field.name.replace('_', ' ');
     
+            // Required field validation
             if (!value) {
-                displayError(field, `${field.name.replace('_', ' ')} is required.`);
-                return false;
+                return `${fieldName} is required.`;
             }
     
-            // Apply specific validation rules
-            if (validationRules[field.name]) {
-                if (!validationRules[field.name].pattern.test(value)) {
-                    displayError(field, validationRules[field.name].message);
-                    return false;
-                }
+            // Pattern validation
+            const rule = validationRules[field.name];
+            if (rule?.pattern && !rule.pattern.test(value)) {
+                return rule.message;
             }
     
-            // Additional field-specific validations
+            // Field-specific validations
             switch (field.name) {
                 case 'description':
                 case 'bio':
                     if (value.length < 10) {
-                        displayError(field, `${field.name} must be at least 10 characters long.`);
-                        return false;
+                        return `${fieldName} must be at least 10 characters long.`;
                     }
                     break;
     
                 case 'stock_quantity':
                     if (!/^\d+$/.test(value) || parseInt(value) < 0) {
-                        displayError(field, 'Stock quantity must be a positive whole number.');
-                        return false;
+                        return 'Stock quantity must be a positive whole number.';
                     }
                     break;
     
                 case 'price':
                     if (!/^\d+(\.\d{1,2})?$/.test(value) || parseFloat(value) <= 0) {
-                        displayError(field, 'Base price must be a positive number with up to two decimal places.');
-                        return false;
+                        return 'Price must be a positive number with up to two decimal places.';
                     }
                     break;
     
                 case 'discount_percentage':
                     const discount = parseFloat(value);
-                    if (isNaN(discount) || discount < 0 || discount > 100) {
-                        displayError(field, 'Discount percentage must be between 0 and 100.');
-                        return false;
+                    if (isNaN(discount) || discount < 0 || discount > 95) {
+                        return 'Discount percentage must be between 0 and 95.';
                     }
                     break;
             }
     
-            return true;
+            return null; // No validation error
         };
     
         // Image handling functions
-        window.updatePreview = (event, imageNumber) => {
+        window.updatePreview = async (event, imageNumber) => {
             const file = event.target.files[0];
             if (!file) return;
     
             // Validate file
             if (!ALLOWED_FILE_TYPES.includes(file.type)) {
-                showGlobalError('Please upload JPG or PNG images only.');
+                await Swal.fire({
+                    icon: 'error',
+                    title: 'Invalid File Type',
+                    text: 'Please upload JPG or PNG images only.',
+                    confirmButtonColor: '#d33'
+                });
                 return;
             }
     
             if (file.size > MAX_FILE_SIZE) {
-                showGlobalError('File size should not exceed 5MB.');
+                await Swal.fire({
+                    icon: 'error',
+                    title: 'File Too Large',
+                    text: 'Image size should not exceed 5MB.',
+                    confirmButtonColor: '#d33'
+                });
                 return;
             }
     
             const reader = new FileReader();
             reader.onload = (e) => {
                 const previewImage = document.getElementById(`preview-image-${imageNumber}`);
-                if (previewImage) {
-                    // Update existing preview image
-                    previewImage.src = e.target.result;
-                    previewImage.style.display = 'block'; // Make sure it's visible
-                } else {
-                    // Create new preview image if it doesn't exist
-                    const label = event.target.closest('label');
-                    label.innerHTML = `
-                        <input type="file" name="updated_image_${imageNumber}" 
-                               id="image-upload-${imageNumber}" 
-                               class="hidden" 
-                               accept="image/jpeg,image/png" 
-                               onchange="updatePreview(event, ${imageNumber})">
-                        <img id="preview-image-${imageNumber}" 
-                             src="${e.target.result}" 
-                             class="w-full h-full object-cover" 
-                             alt="Preview ${imageNumber}">
-                        <button type="button" 
-                                onclick="removeImage(${imageNumber})" 
-                                class="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1">
-                            ×
-                        </button>`;
-                }
+                const label = event.target.closest('label');
+                
+                label.innerHTML = `
+                    <input type="file" name="updated_image_${imageNumber}" 
+                           id="image-upload-${imageNumber}" 
+                           class="hidden" 
+                           accept="image/jpeg,image/png" 
+                           onchange="updatePreview(event, ${imageNumber})">
+                    <img id="preview-image-${imageNumber}" 
+                         src="${e.target.result}" 
+                         class="w-full h-full object-cover" 
+                         alt="Preview ${imageNumber}">
+                    <button type="button" 
+                            onclick="removeImage(${imageNumber})" 
+                            class="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600">
+                        ×
+                    </button>`;
+                
                 updatedImages.set(imageNumber, file);
             };
             reader.readAsDataURL(file);
         };
     
-        // Modified image removal function
-        window.removeImage = (imageNumber) => {
-            const label = document.querySelector(`label[for="image-upload-${imageNumber}"]`) ||
-                         document.getElementById(`image-upload-${imageNumber}`).closest('label');
-            
-            // Reset to upload placeholder
-            label.innerHTML = `
-                <input type="file" name="updated_image_${imageNumber}" 
-                       id="image-upload-${imageNumber}" 
-                       class="hidden" 
-                       accept="image/jpeg,image/png" 
-                       onchange="updatePreview(event, ${imageNumber})">
-                <div class="flex flex-col items-center justify-center h-full">
-                    <span class="text-gray-400 text-3xl mb-2">+</span>
-                    <span class="text-gray-400 text-sm">Cover Image ${imageNumber}</span>
-                </div>`;
-    
-            removedImages.add(imageNumber);
-            
-            // Clean up the file input and updatedImages map
-            updatedImages.delete(imageNumber);
-        };
-    
-        // Delete product handler
-        const deleteButton = document.getElementById('deleteBookBtn');
-        if (deleteButton) {
-            deleteButton.addEventListener('click', async () => {
-                if (confirm('Are you sure you want to delete this product?')) {
-                    try {
-                        const response = await fetch(form.action, {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/x-www-form-urlencoded',
-                                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
-                            },
-                            body: 'delete_book=true'
-                        });
-    
-                        if (response.ok) {
-                            window.location.href = '/admin_products/';
-                        } else {
-                            showGlobalError('Error deleting product. Please try again.');
-                        }
-                    } catch (error) {
-                        showGlobalError('Network error. Please try again.');
-                        console.error('Delete error:', error);
-                    }
-                }
+        window.removeImage = async (imageNumber) => {
+            const result = await Swal.fire({
+                title: 'Remove Image?',
+                text: 'Are you sure you want to remove this image?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Yes, remove it!'
             });
-        }
+    
+            if (result.isConfirmed) {
+                const label = document.querySelector(`label[for="image-upload-${imageNumber}"]`) ||
+                             document.getElementById(`image-upload-${imageNumber}`).closest('label');
+                
+                label.innerHTML = `
+                    <input type="file" name="updated_image_${imageNumber}" 
+                           id="image-upload-${imageNumber}" 
+                           class="hidden" 
+                           accept="image/jpeg,image/png" 
+                           onchange="updatePreview(event, ${imageNumber})">
+                    <div class="flex flex-col items-center justify-center h-full">
+                        <span class="text-gray-400 text-3xl mb-2">+</span>
+                        <span class="text-gray-400 text-sm">Cover Image ${imageNumber}</span>
+                    </div>`;
+    
+                removedImages.add(imageNumber);
+                updatedImages.delete(imageNumber);
+    
+                await Swal.fire({
+                    icon: 'success',
+                    title: 'Image Removed',
+                    showConfirmButton: false,
+                    timer: 1500
+                });
+            }
+        };
     
         // Form submission handler
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
-            let isValid = true;
-    
-            // Validate all fields
+            
+            // Collect validation errors
+            const errors = [];
             Object.values(fields).forEach(field => {
-                if (field && !validateField(field)) {
-                    isValid = false;
+                if (field) {
+                    const error = validateField(field);
+                    if (error) errors.push(error);
                 }
             });
     
-            if (isValid) {
-                try {
-                    const formData = new FormData(form);
-                    
-                    // Add updated images
-                    updatedImages.forEach((file, imageNumber) => {
-                        formData.append(`updated_image_${imageNumber}`, file);
-                    });
+            if (errors.length > 0) {
+                await Swal.fire({
+                    icon: 'error',
+                    title: 'Validation Error',
+                    html: errors.join('<br>'),
+                    confirmButtonColor: '#d33'
+                });
+                return;
+            }
     
-                    // Add removed images information
-                    formData.append('removed_images', JSON.stringify(Array.from(removedImages)));
-    
-                    // Add update flag
-                    formData.append('update_product', 'true');
-    
-                    const response = await fetch(form.action, {
-                        method: 'POST',
-                        body: formData
-                    });
-    
-                    if (response.ok) {
-                        window.location.href = '/admin_products/';
-                    } else {
-                        const errorData = await response.json();
-                        showGlobalError(errorData.message || 'Error updating product. Please try again.');
+            try {
+                // Show loading state
+                Swal.fire({
+                    title: 'Updating Product...',
+                    html: 'Please wait while we save your changes.',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
                     }
-                } catch (error) {
-                    showGlobalError('Network error. Please try again.');
-                    console.error('Form submission error:', error);
+                });
+    
+                const formData = new FormData(form);
+                
+                // Add updated images
+                updatedImages.forEach((file, imageNumber) => {
+                    formData.append(`updated_image_${imageNumber}`, file);
+                });
+    
+                // Add removed images information
+                formData.append('removed_images', JSON.stringify(Array.from(removedImages)));
+                formData.append('update_product', 'true');
+    
+                const response = await fetch(form.action, {
+                    method: 'POST',
+                    body: formData
+                });
+    
+                const data = await response.json();
+    
+                if (response.ok) {
+                    await Swal.fire({
+                        icon: 'success',
+                        title: 'Success!',
+                        text: data.message || 'Product updated successfully',
+                        confirmButtonColor: '#3085d6'
+                    });
+                    
+                    if (data.redirect_url) {
+                        window.location.href = data.redirect_url;
+                    }
+                } else {
+                    await Swal.fire({
+                        icon: 'error',
+                        title: 'Error!',
+                        text: data.message || 'Error updating product. Please try again.',
+                        confirmButtonColor: '#d33'
+                    });
                 }
+            } catch (error) {
+                console.error('Form submission error:', error);
+                await Swal.fire({
+                    icon: 'error',
+                    title: 'Network Error',
+                    text: 'Please check your connection and try again.',
+                    confirmButtonColor: '#d33'
+                });
             }
         });
     
-        // Initialize validation event listeners
-        Object.values(fields).forEach(field => {
-            if (field) {
-                field.addEventListener('input', () => validateField(field));
-                field.addEventListener('blur', () => validateField(field));
-            }
-        });
+        // Delete product handler
+        const deleteButton = document.getElementById('deleteBookBtn');
+        if (deleteButton) {
+            deleteButton.addEventListener('click', async (e) => {
+                e.preventDefault();
+                
+                const result = await Swal.fire({
+                    title: 'Are you sure?',
+                    text: "This action will mark the book as deleted!",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#3085d6',
+                    confirmButtonText: 'Yes, delete it!',
+                    cancelButtonText: 'Cancel'
+                });
+    
+                if (result.isConfirmed) {
+                    try {
+                        // Show loading state
+                        Swal.fire({
+                            title: 'Deleting...',
+                            html: 'Please wait while we process your request.',
+                            allowOutsideClick: false,
+                            didOpen: () => {
+                                Swal.showLoading();
+                            }
+                        });
+    
+                        const formData = new FormData();
+                        formData.append('delete_book', 'true');
+                        formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+    
+                        const response = await fetch(form.action, {
+                            method: 'POST',
+                            body: formData
+                        });
+    
+                        if (response.ok) {
+                            await Swal.fire({
+                                icon: 'success',
+                                title: 'Deleted!',
+                                text: 'The book has been deleted.',
+                                confirmButtonColor: '#3085d6'
+                            });
+                            window.location.href = '/admin_products/';
+                        } else {
+                            throw new Error('Delete failed');
+                        }
+                    } catch (error) {
+                        console.error('Delete error:', error);
+                        await Swal.fire({
+                            icon: 'error',
+                            title: 'Error!',
+                            text: 'Failed to delete the book. Please try again.',
+                            confirmButtonColor: '#d33'
+                        });
+                    }
+                }
+            });
+        }
     });
 </script>
 {% endblock %}

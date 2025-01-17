@@ -24,21 +24,6 @@ class Language(models.Model):
 
     def __str__(self):
         return self.name
-    
-
-def calculate_offer_price(base_price, discount_type, discount_value):
-    """
-    Utility function to calculate the price after applying an offer.
-    """
-    base_price = Decimal(str(base_price))
-    discount_value = Decimal(str(discount_value))
-    
-    if discount_type == 'percentage':
-        discount_amount = (base_price * discount_value) / Decimal('100')
-        return base_price - discount_amount
-    elif discount_type == 'fixed':
-        return max(base_price - discount_value, Decimal('0'))
-    return base_price 
 
 
 class BookTable(models.Model):
@@ -59,14 +44,72 @@ class BookTable(models.Model):
                                     on_delete=models.SET_NULL, related_name='applied_books')
     additional_offer_applied = models.BooleanField(default=False)
 
+    def calculate_regular_price(self):
+        """Calculate the regular discounted price without any offers"""
+        regular_discount = (self.base_price * self.discount_percentage) / Decimal('100')
+        return self.base_price - regular_discount
+
+    def calculate_offer_price(self, base_price, offer):
+        """Calculate price with a specific offer"""
+        if not offer:
+            return base_price
+            
+        if offer.discount_type == 'percentage':
+            discount_amount = (base_price * Decimal(str(offer.discount_value))) / Decimal('100')
+            return base_price - discount_amount
+        elif offer.discount_type == 'fixed':
+            return max(base_price - Decimal(str(offer.discount_value)), Decimal('0'))
+        return base_price
+
+    def update_price_with_offer(self, offer=None, skip_save=False):
+        """
+        Update the book's price with a specific offer or remove offer if None
+        Returns True if price was updated, False otherwise
+        """
+        regular_price = self.calculate_regular_price()
+        
+        if offer:
+            new_price = self.calculate_offer_price(regular_price, offer)
+            if new_price < (self.offer_price or regular_price):
+                self.previous_offer_price = self.offer_price or regular_price
+                self.offer_price = new_price
+                self.additional_offer_applied = True
+                self.applied_offer = offer
+                if not skip_save:
+                    self.save(update_fields=[
+                        'previous_offer_price',
+                        'offer_price',
+                        'additional_offer_applied',
+                        'applied_offer'
+                    ])
+                return True
+        else:
+            # Removing offer
+            self.offer_price = regular_price
+            self.previous_offer_price = None
+            self.additional_offer_applied = False
+            self.applied_offer = None
+            if not skip_save:
+                self.save(update_fields=[
+                    'offer_price',
+                    'previous_offer_price',
+                    'additional_offer_applied',
+                    'applied_offer'
+                ])
+            return True
+        return False
+
     def save(self, *args, **kwargs):
-        self.base_price = Decimal(self.base_price)
-        self.discount_percentage = Decimal(self.discount_percentage or 0)
+        # Handle basic fields
+        self.base_price = Decimal(str(self.base_price))
+        self.discount_percentage = Decimal(str(self.discount_percentage or 0))
         self.is_available = self.stock_quantity > 0
 
-        # Calculate regular offer price based on discount percentage
-        regular_discount = (self.base_price * self.discount_percentage) / Decimal(100)
-        self.offer_price = self.base_price - regular_discount
+        # Only recalculate prices if no offer is applied or if this is a new instance
+        if not self.pk or (not self.additional_offer_applied and not self.applied_offer):
+            self.offer_price = self.calculate_regular_price()
+        elif self.applied_offer and self.applied_offer.is_active:
+            self.update_price_with_offer(self.applied_offer, skip_save=True)
 
         super().save(*args, **kwargs)
 

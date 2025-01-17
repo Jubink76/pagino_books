@@ -72,16 +72,22 @@
                 <!-- Valid From -->
                 <div>
                     <label class="block text-gray-300 font-medium mb-2">Valid From</label>
-                    <input type="datetime-local" class="bg-gray-700 text-gray-300 rounded-md px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                    <input type="datetime-local" 
+                           id="valid-from"
+                           class="bg-gray-700 text-gray-300 rounded-md px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500" 
                            name="valid_from"
+                           min="{{ min_date|date:'Y-m-d' }}T00:00"
                            value="">
                 </div>
         
                 <!-- Valid Until -->
                 <div>
                     <label class="block text-gray-300 font-medium mb-2">Valid Until</label>
-                    <input type="datetime-local" class="bg-gray-700 text-gray-300 rounded-md px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                    <input type="datetime-local" 
+                           id="valid-to"
+                           class="bg-gray-700 text-gray-300 rounded-md px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500" 
                            name="valid_to"
+                           min="{{ min_date|date:'Y-m-d' }}T00:00"
                            value="">
                 </div>
         
@@ -92,13 +98,20 @@
                               placeholder="Enter offer description" 
                               name="description"></textarea>
                 </div>
-        
-                <!-- Is Active -->
-                <div class="flex items-center space-x-3">
-                    <input type="checkbox" class="bg-gray-700 text-blue-500 rounded focus:ring-blue-500 h-5 w-5" 
-                           name="is_active">
-                    <label class="text-gray-300 font-medium">Is Active</label>
+
+                <div class="flex items-center space-x-2">
+                    <input 
+                        type="checkbox" 
+                        name="is_active" 
+                        id="active-status"
+                        class="w-4 h-4 text-blue-500 border-gray-300 rounded focus:ring-blue-500"
+                        checked
+                    >
+                    <label for="active-status" class="text-gray-300 font-medium">
+                        Active Status
+                    </label>
                 </div>
+
             </div>
         
             <!-- Form Buttons -->
@@ -114,6 +127,73 @@
 {% endblock %}
 {% block script %}
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    // Get the datetime inputs
+const validFromInput = document.getElementById('valid-from');
+const validToInput = document.getElementById('valid-to');
+
+// Function to get current date in YYYY-MM-DDThh:mm format
+function getCurrentDateTime() {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+}
+
+// Function to update min attribute and clear invalid values
+function updateDateTimeInputs() {
+    const currentDateTime = getCurrentDateTime();
+    
+    // Set minimum datetime for both inputs
+    validFromInput.min = currentDateTime;
+    validToInput.min = currentDateTime;
+
+    // Clear values if they're before the minimum datetime
+    if (validFromInput.value && validFromInput.value < currentDateTime) {
+        validFromInput.value = '';
+    }
+}
+
+// Function to set end of day time (23:59) for valid_to
+function setEndOfDay() {
+    if (validToInput.value) {
+        const date = validToInput.value.split('T')[0];
+        validToInput.value = `${date}T23:59`;
+    }
+}
+
+// Update on page load
+updateDateTimeInputs();
+
+// Add event listeners to validate on input
+validFromInput.addEventListener('input', function() {
+    updateDateTimeInputs();
+    // Update valid-to min value to be after valid-from
+    if (this.value) {
+        const fromDate = this.value.split('T')[0];
+        validToInput.min = `${fromDate}T00:00`;
+    }
+});
+
+validToInput.addEventListener('input', function() {
+    if (validFromInput.value) {
+        const fromDate = validFromInput.value.split('T')[0];
+        const toDate = this.value.split('T')[0];
+        
+        if (toDate < fromDate) {
+            this.value = validFromInput.value;
+        }
+    }
+    // Set time to end of day (23:59)
+    setEndOfDay();
+});
+
+// Update every minute to keep the minimum time current
+setInterval(updateDateTimeInputs, 60000);
+</script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         document.getElementById("offer-form").addEventListener("submit", function (e) {
