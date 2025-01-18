@@ -238,15 +238,15 @@
                                             <span id="canceledTag-{{ item.id }}" class="px-4 py-2 bg-gray-500 text-white rounded">Canceled</span>
                                         {% else %}
                                             <!-- Display cancel button if the item is not canceled -->
-                                            <form method="POST" action="{% url 'user_single_item_cancel' order_id=selected_order.order_id order_item_id=item.id %}" id="cancelItemForm-{{ item.id }}">
-                                                {% csrf_token %}
-                                                <button type="button" 
-                                                        id="cancelButton-{{ item.id }}"
-                                                        class="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600" 
-                                                        onclick="confirmCancelItem('{{ item.id }}')">
-                                                    Cancel Item
-                                                </button>
-                                            </form>
+                                            <button type="button" 
+                                                id="cancelButton-{{ item.id }}"
+                                                class="action-btn px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600" 
+                                                data-url="{% url 'user_single_item_cancel' order_id=selected_order.order_id order_item_id=item.id %}"
+                                                data-title="Cancel Item"
+                                                data-text="Are you sure you want to cancel this item?"
+                                                data-success-message="Item has been successfully canceled">
+                                            Cancel Item
+                                        </button>
                                         {% endif %}
                                     {% elif selected_order.item_count == 1 and selected_order.order_status == 'Pending' %}
                                         <form method="POST" action="{% url 'cancel_order' selected_order.order_id %}" class="mr-4">
