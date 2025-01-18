@@ -750,20 +750,20 @@ def generate_invoice(request, order_id):
             if item.is_canceled:
                 refunded_amount += item.total_price
 
-        # Calculate discounts and final amount
+        # Initialize discounts to 0
         coupon_discount = 0
         offer_discount = 0
 
-        # Apply coupon discount if exists
-        if order.coupon_applied and order.coupon:
+        # Only apply coupon discount if coupon exists and is applied
+        if order.coupon_applied and order.coupon is not None:
             if order.coupon.coupon_type == 'percentage':
                 coupon_discount = (total_product_amount * order.coupon.discount_value) / 100
             else:  # fixed amount
                 coupon_discount = order.coupon.discount_value
             final_amount -= coupon_discount
 
-        # Apply offer discount if exists
-        if order.offer_applied and order.offer:
+        # Only apply offer discount if offer exists and is applied
+        if order.offer_applied and order.offer is not None:
             offer_discount = order.offer.discount_value
             final_amount -= offer_discount
 
@@ -854,11 +854,11 @@ def generate_invoice(request, order_id):
         # Amount Details
         draw_info_line("Total Amount:", f"₹{total_product_amount:,.2f}")
 
-        # Show discounts if applied
-        if coupon_discount > 0:
+        # Only show discounts if they are actually applied
+        if coupon_discount > 0 and order.coupon_applied and order.coupon:
             draw_info_line("Coupon Discount:", f"₹{coupon_discount:,.2f}")
             
-        if offer_discount > 0:
+        if offer_discount > 0 and order.offer_applied and order.offer:
             draw_info_line("Offer Discount:", f"₹{offer_discount:,.2f}")
 
         # Show final amount if different from total
@@ -872,7 +872,7 @@ def generate_invoice(request, order_id):
 
         y_pos -= 10
 
-        # Discount Information
+        # Only show coupon information if actually applied
         if order.coupon_applied and order.coupon:
             discount_type = "%" if order.coupon.coupon_type == 'percentage' else "₹"
             draw_info_line("Coupon Applied:", 
@@ -880,6 +880,7 @@ def generate_invoice(request, order_id):
         else:
             draw_info_line("Coupon Status:", "No Coupon Applied")
 
+        # Only show offer information if actually applied
         if order.offer_applied and order.offer:
             draw_info_line("Offer Applied:", 
                           f"Offer: {order.offer.offer_name} - ₹{order.offer.discount_value}")
