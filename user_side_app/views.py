@@ -347,10 +347,11 @@ def add_to_cart(request, book_id):
         cart_item = CartTable.objects.filter(user=request.user, book=book).first()
         
         if cart_item:
-            if cart_item.quantity >= 5:
+
+            if cart_item.quantity >=1:
                 return JsonResponse({
-                    'status': 'error',
-                    'message': f"You cannot add more than 5 copies of '{book.book_name}' to your cart.",
+                    'status': 'info',
+                    'message': f"Already'{book.book_name}'in your cart.",
                 })
 
             cart_item.quantity += 1
@@ -569,7 +570,7 @@ def checkout_page(request):
         valid_from__lte=current_time,
         valid_to__gte=current_time
     )
-    
+
     # Get user's used coupons
     used_coupon_ids = CouponUsage.objects.filter(
         user=user,
@@ -589,7 +590,6 @@ def checkout_page(request):
         Q(max_uses__isnull=True) | Q(total_uses__lt=F('max_uses')),
         user_uses__lt=F('max_uses_per_user')
     )
-
     # Fetch addresses and cart items
     addresses = AddressTable.objects.filter(user=user)
     cart_items = CartTable.objects.filter(user=user)

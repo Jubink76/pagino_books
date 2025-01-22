@@ -3,6 +3,7 @@
 
 {% block css_link %}
 <script src="{% static 'user/js/confirm_alert.js' %}"></script>
+<script src="{% static 'user/js/sweetAlert.js' %}"></script>
 {% endblock %}
 
 {% block content %}
@@ -83,10 +84,15 @@
                         <!-- Add to Cart Button -->
                         <div class="ml-6">
                             {% if item.book and item.book.id %}
-                                <a href="{% url 'add_to_cart' item.book.id %}" 
-                                   class="inline-block px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                            <form class="ajax-form m-0">
+                                {% csrf_token %}
+                                <button type="submit"
+                                    class="inline-block px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                                    data-url="{% url 'add_to_cart' item.book.id %}"
+                                    data-success-redirect="{% url 'cart_page' %}">
                                     Add to cart
-                                </a>
+                                </button>
+                            </form>
                             {% else %}
                                 <p class="text-gray-500">Book is unavailable.</p>
                             {% endif %}

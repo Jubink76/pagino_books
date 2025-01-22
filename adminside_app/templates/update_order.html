@@ -190,6 +190,7 @@
                                 <td class="inline-block {% if item.order_status == 'Canceled' %}bg-red-900 text-red-400{% else %}bg-green-900 text-green-400{% endif %} px-3 py-2 rounded-full text-sm font-medium mt-10">
                                     {{ item.order_status }}
                                 </td>
+
                                 <td class="px-6 py-4 text-sm">
                                     <form method="POST" action="{% url 'admin_single_item_cancel' order_detail.order_id item.id %}" id="cancelItemForm-{{ item.id }}">
                                         {% csrf_token %}
@@ -220,7 +221,6 @@
                 </div>
             
                 <!-- Shipping Address -->
-                <!-- Shipping Address -->
                 <div class="bg-gray-800 rounded-xl p-6">
                     <h2 class="text-xl font-semibold mb-4">Shipping Address</h2>
                     <div class="space-y-2">
@@ -231,7 +231,7 @@
                         <p class="text-gray-300">{{ order_detail.delivery_address.address_phone }}</p>
                         <p class="text-gray-300">{{ order_detail.delivery_address.pincode }}, {{ order_detail.delivery_address.state }}</p>
                     </div>
-                </div>
+                  </div>
             </div>
         </div>
     </div>

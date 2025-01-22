@@ -16,106 +16,161 @@ document.addEventListener('DOMContentLoaded', function () {
             confirmButtonColor: type === 'success' ? '#10B981' : '#EF4444',
         });
     }
+    function showLoadingAlert(message = 'Processing your order...') {
+        return Swal.fire({
+            title: message,
+            allowOutsideClick: false,
+            showConfirmButton: false,
+            willOpen: () => {
+                Swal.showLoading();
+            }
+        });
+    }
+
+    function resetOrderButton() {
+        if (placeOrderButton) {
+            placeOrderButton.disabled = false;
+            placeOrderButton.innerHTML = 'Place Order <i class="fas fa-arrow-right ml-2"></i>';
+        }
+    }
+
 
     // Function to check if all requirements are met
     function checkOrderEligibility() {
         const paymentMethodSelected = document.querySelector('input[name="payment"]:checked');
         const addressSelected = currentDeliveryAddress?.getAttribute('data-address-id');
+        
+        if (placeOrderButton) {
+            placeOrderButton.disabled = !paymentMethodSelected || !addressSelected;
 
-        // Enable or disable the place order button
-        placeOrderButton.disabled = !paymentMethodSelected || !addressSelected;
-
-        if (!placeOrderButton.disabled) {
-            placeOrderButton.classList.remove('bg-gray-400');
-            placeOrderButton.classList.add('bg-yellow-500', 'hover:bg-yellow-600');
-        } else {
-            placeOrderButton.classList.add('bg-gray-400');
-            placeOrderButton.classList.remove('bg-yellow-500', 'hover:bg-yellow-600');
-        }
-    }
-
-    // Function to handle Razorpay payment verification
-    async function verifyRazorpayPayment(response, redirectUrl) {
-        try {
-            const verificationData = new FormData();
-            verificationData.append('razorpay_payment_id', response.razorpay_payment_id);
-            verificationData.append('razorpay_order_id', response.razorpay_order_id);
-            verificationData.append('razorpay_signature', response.razorpay_signature);
-            verificationData.append('csrfmiddlewaretoken', csrfToken);
-
-            const verificationResponse = await fetch('/verify-payment/', {
-                method: 'POST',
-                body: verificationData,
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'X-CSRFToken': csrfToken
-                },
-                credentials: 'same-origin'
-            });
-
-            const verificationResult = await verificationResponse.json();
-
-            if (verificationResult.status === 'success') {
-                await Swal.fire({
-                    icon: 'success',
-                    title: 'Payment Successful!',
-                    text: 'Your order has been placed successfully.',
-                    showConfirmButton: false,
-                    timer: 2000,
-                    timerProgressBar: true
-                });
-                window.location.href = redirectUrl || verificationResult.redirect_url;
+            if (!placeOrderButton.disabled) {
+                placeOrderButton.classList.remove('bg-gray-400');
+                placeOrderButton.classList.add('bg-yellow-500', 'hover:bg-yellow-600');
             } else {
-                throw new Error(verificationResult.message || 'Payment verification failed');
+                placeOrderButton.classList.add('bg-gray-400');
+                placeOrderButton.classList.remove('bg-yellow-500', 'hover:bg-yellow-600');
             }
-        } catch (error) {
-            showAlert('error', error.message || 'Payment verification failed');
-            resetOrderButton();
         }
     }
 
-    // Function to initialize Razorpay
-    function initializeRazorpay(data) {
+    // Payment Processing Functions
+    async function processRazorpayPayment(orderData, addressId) {
+        console.log('Initializing Razorpay payment:', orderData);
+        
         const options = {
-            key: data.razorpay_key,
-            amount: data.amount,
-            currency: data.currency,
-            name: data.store_name || "Your Store Name",
+            key: orderData.razorpay_key,
+            amount: orderData.amount,
+            currency: orderData.currency,
+            name: orderData.store_name || "BookStore",
             description: "Order Payment",
-            order_id: data.razorpay_order_id,
-            handler: async function (response) {
-                await verifyRazorpayPayment(response, data.redirect_url);
-            },
+            order_id: orderData.razorpay_order_id,
             prefill: {
-                name: data.customer_name,
-                email: data.email,
-                contact: data.phone
+                name: orderData.customer_name,
+                email: orderData.email,
+                contact: orderData.phone
             },
             theme: {
                 color: "#3399cc"
             },
-            method:{
-                upi:true,
-                card:true,
-                netbanking:true,
-                wallet:true,
-                emi:false
+            handler: async function(response) {
+                try {
+                    await showLoadingAlert('Verifying payment...');
+                    const formData = new FormData();
+                    formData.append('savedAddress', addressId);
+                    formData.append('payment', 'ONLINE');
+                    formData.append('razorpay_payment_id', response.razorpay_payment_id);
+                    formData.append('razorpay_order_id', response.razorpay_order_id);
+                    formData.append('razorpay_signature', response.razorpay_signature);
+            
+                    const verificationResponse = await fetch(orderForm.getAttribute('data-url'), {
+                        method: 'POST',
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'X-CSRFToken': csrfToken
+                        },
+                        body: formData
+                    });
+            
+                    const result = await verificationResponse.json();
+                    console.log('Verification response:', result); // Add logging
+            
+                    if (result.status === 'success') {
+                        await showAlert('success', 'Payment successful! Redirecting...');
+                        window.location.href = result.redirect_url;
+                    } else {
+                        throw new Error(result.message || 'Payment verification failed');
+                    }
+                } catch (error) {
+                    console.error('Verification error:', error);
+                    await showAlert('error', error.message || 'Payment verification failed');
+                    resetOrderButton();
+                }
+            },
+            modal: {
+                ondismiss: function() {
+                    console.log('Razorpay modal dismissed');
+                    resetOrderButton();
+                }
             }
         };
 
-        const rzp = new Razorpay(options);
-        rzp.open();
+        try {
+            const rzp = new Razorpay(options);
+            rzp.on('payment.failed', function(response) {
+                console.error('Razorpay payment failed:', response.error);
+                showAlert('error', response.error.description || 'Payment failed');
+                resetOrderButton();
+            });
+            rzp.open();
+        } catch (error) {
+            console.error('Razorpay initialization error:', error);
+            showAlert('error', 'Failed to initialize payment');
+            resetOrderButton();
+        }
     }
 
-    // Function to handle order submission
+    async function processCODOrWalletPayment(addressId, paymentMethod) {
+        console.log(`Processing ${paymentMethod} payment`);
+        await showLoadingAlert();
+
+        const formData = new FormData();
+        formData.append('savedAddress', addressId);
+        formData.append('payment', paymentMethod);
+
+        try {
+            const response = await fetch(orderForm.getAttribute('data-url'), {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': csrfToken
+                },
+                body: formData
+            });
+
+            const result = await response.json();
+            console.log(`${paymentMethod} payment result:`, result);
+
+            if (result.status === 'success') {
+                await showAlert('success', result.message || 'Order placed successfully!');
+                window.location.href = result.redirect_url;
+            } else {
+                throw new Error(result.message || `${paymentMethod} payment failed`);
+            }
+        } catch (error) {
+            console.error(`${paymentMethod} payment error:`, error);
+            showAlert('error', error.message || 'Failed to process payment');
+            resetOrderButton();
+        }
+    }
+
+    // Event Handlers
     async function handleOrderSubmission(e) {
         e.preventDefault();
+        console.log('Order submission started');
 
-        // Get the payment method and address
         const selectedPayment = document.querySelector('input[name="payment"]:checked');
         const addressId = currentDeliveryAddress?.getAttribute('data-address-id');
 
-        // Validate selections
         if (!addressId) {
             showAlert('error', 'Please select a delivery address');
             return;
@@ -126,78 +181,51 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
 
-        // Show loading state
         placeOrderButton.disabled = true;
         placeOrderButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Processing...';
 
         try {
-            const formData = new FormData();
-            formData.append('savedAddress', addressId);
-            formData.append('payment', selectedPayment.value);
-            formData.append('csrfmiddlewaretoken', csrfToken);
+            if (selectedPayment.value === 'ONLINE') {
+                await showLoadingAlert('Initializing payment...');
+                
+                const formData = new FormData();
+                formData.append('savedAddress', addressId);
+                formData.append('payment', selectedPayment.value);
 
-            const url = orderForm.getAttribute('data-url') || orderForm.action;
-            const response = await fetch(url, {
-                method: 'POST',
-                body: formData,
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'X-CSRFToken': csrfToken
-                },
-                credentials: 'same-origin'
-            });
+                const response = await fetch(orderForm.getAttribute('data-url'), {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRFToken': csrfToken
+                    },
+                    body: formData
+                });
 
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
+                const data = await response.json();
+                console.log('Initial payment setup response:', data);
 
-            const contentType = response.headers.get("content-type");
-            if (!contentType || !contentType.includes("application/json")) {
-                throw new TypeError("Response was not JSON");
-            }
-
-            const data = await response.json();
-
-            if (data.status === 'success') {
-                if (data.payment_method === 'ONLINE') {
-                    // Handle Razorpay payment
-                    initializeRazorpay(data);
+                if (data.status === 'success') {
+                    await processRazorpayPayment(data, addressId);
                 } else {
-                    // Handle COD or other payment methods
-                    await Swal.fire({
-                        icon: 'success',
-                        title: 'Order Placed Successfully!',
-                        text: 'You will be redirected to the order confirmation page.',
-                        showConfirmButton: false,
-                        timer: 2000,
-                        timerProgressBar: true,
-                    });
-                    window.location.href = data.redirect_url;
+                    throw new Error(data.message || 'Failed to initialize payment');
                 }
             } else {
-                showAlert('error', data.message || 'An error occurred while placing your order');
-                resetOrderButton();
+                await processCODOrWalletPayment(addressId, selectedPayment.value);
             }
         } catch (error) {
-            console.error('Error:', error);
-            showAlert('error', 'An unexpected error occurred. Please try again.');
+            console.error('Order submission error:', error);
+            showAlert('error', error.message || 'An unexpected error occurred');
             resetOrderButton();
         }
     }
 
-    // Function to reset order button state
-    function resetOrderButton() {
-        placeOrderButton.disabled = false;
-        placeOrderButton.innerHTML = 'Place Order <i class="fas fa-arrow-right ml-2"></i>';
-    }
-
-    // Add event listeners
-    paymentMethodInputs.forEach((input) => {
+    // Event Listeners
+    paymentMethodInputs.forEach(input => {
         input.addEventListener('change', checkOrderEligibility);
     });
 
-    document.querySelectorAll('.payment-option').forEach((container) => {
-        container.addEventListener('click', function () {
+    document.querySelectorAll('.payment-option').forEach(container => {
+        container.addEventListener('click', function() {
             const radio = this.querySelector('input[type="radio"]');
             if (radio) {
                 radio.checked = true;
@@ -207,7 +235,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     if (changeAddressLink) {
-        changeAddressLink.addEventListener('click', function (e) {
+        changeAddressLink.addEventListener('click', function(e) {
             e.preventDefault();
             document.querySelector('#savedAddressesSection').scrollIntoView({ behavior: 'smooth' });
         });
@@ -217,6 +245,6 @@ document.addEventListener('DOMContentLoaded', function () {
         orderForm.addEventListener('submit', handleOrderSubmission);
     }
 
-    // Initial check
+    // Initialize
     checkOrderEligibility();
 });

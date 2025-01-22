@@ -35,29 +35,105 @@ def create_order(request):
         return JsonResponse({'status': 'error', 'message': 'Invalid request method'})
     
     try:
+        # Payment verification callback handling
+        razorpay_payment_id = request.POST.get('razorpay_payment_id')
+        razorpay_order_id = request.POST.get('razorpay_order_id')
+        razorpay_signature = request.POST.get('razorpay_signature')
+        
+        if razorpay_payment_id and razorpay_order_id and razorpay_signature:
+            try:
+                params_dict = {
+                    'razorpay_payment_id': razorpay_payment_id,
+                    'razorpay_order_id': razorpay_order_id,
+                    'razorpay_signature': razorpay_signature
+                }
+                
+                try:
+                    razorpay_client.utility.verify_payment_signature(params_dict)
+                except Exception as e:
+                    try:
+                        order = OrderDetails.objects.get(razorpay_order_id=razorpay_order_id)
+                        if order.coupon:
+                            # Delete the coupon usage record if payment failed
+                            CouponUsage.objects.filter(
+                                user=request.user,
+                                coupon=order.coupon,
+                                is_used=False
+                            ).delete()
+                            # Restore coupon to session
+                            request.session['temp_coupon'] = {
+                                'coupon_id': order.coupon.id,
+                                'code': order.coupon.code,
+                                'discount_amount': order.coupon_discount_amount
+                            }
+                            request.session.modified = True
+                        order.delete()
+                    except OrderDetails.DoesNotExist:
+                        pass
+                    
+                    return JsonResponse({
+                        'status': 'error',
+                        'message': 'Payment verification failed. Please try again.'
+                    })
+                
+                try:
+                    order = OrderDetails.objects.get(razorpay_order_id=razorpay_order_id)
+                    
+                    # Update coupon usage to mark as used after successful payment
+                    if order.coupon:
+                        coupon_usage = CouponUsage.objects.get(
+                            user=request.user,
+                            coupon=order.coupon,
+                            is_used=False  # Get the pending usage record
+                        )
+                        coupon_usage.is_used = True
+                        coupon_usage.save()
+                        
+                        if 'temp_coupon' in request.session:
+                            del request.session['temp_coupon']
+                            request.session.modified = True
+                    
+                    order.razorpay_payment_id = razorpay_payment_id
+                    order.order_status = 'Ordered'
+                    order.save()
+                    
+                    CartTable.objects.filter(user=request.user).delete()
+                    
+                    return JsonResponse({
+                        'status': 'success',
+                        'message': 'Payment successful and order created!',
+                        'redirect_url': request.build_absolute_uri(
+                            reverse('order_success', kwargs={'order_id': order.order_id})
+                        )
+                    })
+                except OrderDetails.DoesNotExist:
+                    return JsonResponse({
+                        'status': 'error',
+                        'message': 'Order not found'
+                    })
+                    
+            except Exception as e:
+                return JsonResponse({
+                    'status': 'error',
+                    'message': f'Payment verification failed: {str(e)}'
+                })
+        
+        # Initial order creation
         address_id = request.POST.get("savedAddress")
         payment_method = request.POST.get("payment")
-        coupon_code = request.session.get('coupon_code', None)
-        
+        temp_coupon = request.session.get('temp_coupon')
         
         if not address_id:
             return JsonResponse({'status': 'error', 'message': 'Please select a delivery address'})
-            
         if not payment_method:
             return JsonResponse({'status': 'error', 'message': 'Please select a payment method'})
-        
-        
-        # Validate payment method
-        valid_payment_methods = ['COD', 'ONLINE', 'WALLET']
-        if payment_method not in valid_payment_methods:
+        if payment_method not in ['COD', 'ONLINE', 'WALLET']:
             return JsonResponse({'status': 'error', 'message': 'Invalid payment method selected.'})
             
         try:
             with transaction.atomic():
-                # Get the original address
+                # Get address and create order address
                 original_address = AddressTable.objects.get(id=address_id)
-                
-                # Create a permanent copy of the address with all fields
                 order_address = OrderAddress.objects.create(
                     address_name=original_address.address_name,
                     street_name=original_address.street_name,
@@ -71,110 +147,66 @@ def create_order(request):
                 )
                 
                 cart_items = CartTable.objects.filter(user=request.user)
-                
                 if not cart_items.exists():
                     return JsonResponse({'status': 'error', 'message': 'Your cart is empty.'})
                 
-                # Generate single order ID
-                single_order_id = generate_order_id()
-                
                 # Calculate total amount
-                grand_total = sum(
-                    item.quantity * item.book.offer_price 
-                    for item in cart_items
-                )
+                grand_total = sum(item.quantity * item.book.offer_price for item in cart_items)
 
-                # Restrict COD for orders >= ₹1000
-                if payment_method == 'COD' and grand_total >= 1000:
-                    return JsonResponse({
-                        'status': 'error',
-                        'message': 'Cash on Delivery is not available for orders above ₹1000. Please choose Online Payment or Wallet.'
-                    })
-                
-                 # Initialize discount details
-                discount_amount = 0
+                # Apply coupon if available in session
                 applied_coupon = None
-                has_offer = False
-                applied_offer = None
-
-
-                # Check for applied offers in cart items
-                for cart_item in cart_items:
-                    if cart_item.book.applied_offer:
-                        has_offer = True
-                        applied_offer = cart_item.book.applied_offer
-                        break
-
-
-                # Apply coupon if provided
-                if coupon_code:
+                coupon_discount_amount = 0
+                if temp_coupon:
                     try:
-                        coupon = CouponTable.objects.get(code=coupon_code, is_active=True)
+                        coupon = CouponTable.objects.get(id=temp_coupon['coupon_id'], is_active=True)
                         
-                        # Check if user has already used this coupon maximum times
+                        # Check if coupon has already been used by this user
                         usage_count = CouponUsage.objects.filter(
                             user=request.user,
                             coupon=coupon,
-                            is_used=True  # Add this field to CouponUsage model
+                            is_used=True
                         ).count()
                         
-                        if usage_count >= coupon.max_uses_per_user:  # Add this field to Coupon model
-                            return JsonResponse({
-                                'status': 'error', 
-                                'message': 'You have already used this coupon the maximum number of times.'
-                            })
-                        
-                        # Calculate discount
-                        if coupon.coupon_type == 'PERCENTAGE':
-                            discount_amount = grand_total * (coupon.discount_value / 100)
-                        elif coupon.coupon_type == 'FIXED':
-                            discount_amount = coupon.discount_value
-                        else:
-                            return JsonResponse({'status': 'error', 'message': 'Invalid coupon type.'})
-
-                        # Check if coupon has minimum order amount requirement
-                        if grand_total < coupon.minimum_order_amount:  # Add this field to Coupon model
+                        if usage_count >= coupon.max_uses_per_user:
+                            # Remove coupon from session if already used
+                            if 'temp_coupon' in request.session:
+                                del request.session['temp_coupon']
+                                request.session.modified = True
                             return JsonResponse({
                                 'status': 'error',
-                                'message': f'Minimum order amount of ₹{coupon.minimum_order_amount} required for this coupon.'
+                                'message': 'This coupon has already been used.'
                             })
-
-                        applied_coupon = coupon
-                        grand_total -= discount_amount
-
-                        if grand_total < 0:
-                            grand_total = 0
-
-                        # Create new coupon usage record
-                        CouponUsage.objects.create(
-                            user=request.user,
-                            coupon=coupon,
-                            is_used=True,
-                            used_at=timezone.now()
-                        )
-
-                    except coupon.DoesNotExist:
-                        return JsonResponse({'status': 'error', 'message': 'Invalid or expired coupon.'})
-
-                    
-                # Create main order
+                        
+                        if grand_total >= coupon.min_purchase_amount:
+                            if coupon.coupon_type == 'percentage':
+                                coupon_discount_amount = grand_total * (coupon.discount_value / 100)
+                            else:  # FIXED
+                                coupon_discount_amount = coupon.discount_value
+                                
+                            grand_total -= coupon_discount_amount
+                            applied_coupon = coupon
+                            
+                    except CouponTable.DoesNotExist:
+                        if 'temp_coupon' in request.session:
+                            del request.session['temp_coupon']
+                            request.session.modified = True
+                
+                # Create order
                 order = OrderDetails.objects.create(
-                    order_id=single_order_id,
+                    order_id=generate_order_id(),
                     user=request.user,
                     address=original_address,
                     delivery_address=order_address,
                     payment_method=payment_method,
                     total_amount=grand_total,
-                    order_status='Ordered' if payment_method != 'COD' else 'Pending',
-                    coupon_applied=bool(applied_coupon),
+                    order_status='Ordered',
                     coupon=applied_coupon,
-                    offer_applied=has_offer,
-                    offer=applied_offer
+                    coupon_applied=bool(applied_coupon),
+                    coupon_discount=coupon_discount_amount
                 )
-
+                
                 # Create order items
                 for cart_item in cart_items:
-
                     OrderItem.objects.create(
                         order=order,
                         book=cart_item.book,
@@ -182,117 +214,134 @@ def create_order(request):
                         price_per_item=cart_item.book.offer_price,
                         total_price=cart_item.quantity * cart_item.book.offer_price
                     )
-                    
-                    # Update stock after order is created
-                    if cart_item.book.stock_quantity >= cart_item.quantity:
-                        cart_item.book.stock_quantity -= cart_item.quantity
-                        cart_item.book.save()
-                    elif cart_item.book.stock_quantity == 0:
-                        cart_item.book.stock_quantity = 0
-                    else:
-                        raise ValueError(f"Not enough stock for {cart_item.book.book_name}")
-
-
+                
+                # Create coupon usage record (initially not marked as used)
+                if applied_coupon:
+                    coupon_usage = CouponUsage.objects.create(
+                        user=request.user,
+                        coupon=applied_coupon,
+                        discount_value=coupon_discount_amount,
+                        is_used=False  # Will be marked True after successful payment
+                    )
+                
                 # Handle different payment methods
                 if payment_method == 'ONLINE':
                     try:
-                        # Create Razorpay order
                         razorpay_order = razorpay_client.order.create({
-                            'amount': int(float(grand_total) * 100),  # Convert to paise
+                            'amount': int(grand_total * 100),
                             'currency': 'INR',
                             'payment_capture': '1'
                         })
                         
-                        # Update order with Razorpay order ID
                         order.razorpay_order_id = razorpay_order['id']
                         order.save()
                         
-                        # Don't clear cart yet for online payment
                         return JsonResponse({
                             'status': 'success',
                             'payment_method': 'ONLINE',
                             'razorpay_key': settings.RAZORPAY_KEY_ID,
                             'razorpay_order_id': razorpay_order['id'],
-                            'amount': int(float(grand_total) * 100),
+                            'amount': int(grand_total * 100),
                             'currency': 'INR',
-                            'order_id': order.order_id,
                             'customer_name': request.user.username,
                             'email': request.user.email,
                             'phone': request.user.phone if hasattr(request.user, 'phone') else ''
                         })
                     except Exception as e:
-                        # If Razorpay order creation fails, delete the order and raise error
+                        # Clean up coupon usage if payment creation fails
+                        if applied_coupon:
+                            CouponUsage.objects.filter(
+                                user=request.user,
+                                coupon=applied_coupon,
+                                is_used=False
+                            ).delete()
                         order.delete()
                         raise ValueError(f"Failed to create payment: {str(e)}")
-                    
-                    # For WALLET payments
+                
                 elif payment_method == 'WALLET':
-                    # Check if the user has enough balance in their wallet
                     wallet = request.user.wallet
                     if wallet.available_balance < grand_total:
-                        return JsonResponse({'status': 'error', 'message': 'Insufficient amount in your wallet. Try another payment method.'})
-
-                    # Deduct the amount from the user's wallet
+                        # Clean up coupon usage if wallet payment fails
+                        if applied_coupon:
+                            CouponUsage.objects.filter(
+                                user=request.user,
+                                coupon=applied_coupon,
+                                is_used=False
+                            ).delete()
+                        order.delete()
+                        return JsonResponse({
+                            'status': 'error',
+                            'message': 'Insufficient wallet balance'
+                        })
+                    
                     wallet.available_balance -= grand_total
                     wallet.save()
-
-                    # Create a wallet transaction
-                    WalletTransaction.objects.create(
-                        wallet=wallet,
-                        transaction_type='deduct',
-                        transaction_amount=grand_total,
-                        description=f"Order {order.order_id} payment deduction",
-                        transaction_time=timezone.now()
-                    )
-
-                    # Clear cart immediately after successful wallet payment
-                    cart_items.delete()
-
-                    # Update order status
+                    
+                    # Mark coupon as used for wallet payment
+                    if applied_coupon:
+                        coupon_usage = CouponUsage.objects.get(
+                            user=request.user,
+                            coupon=applied_coupon,
+                            is_used=False
+                        )
+                        coupon_usage.is_used = True
+                        coupon_usage.save()
+                        
+                        if 'temp_coupon' in request.session:
+                            del request.session['temp_coupon']
+                            request.session.modified = True
+                    
                     order.order_status = 'Ordered'
                     order.save()
-
-                    redirect_url = request.build_absolute_uri(
-                        reverse('order_success', kwargs={'order_id': order.order_id})
-                    )
+                    
+                    cart_items.delete()
+                    
                     return JsonResponse({
                         'status': 'success',
                         'payment_method': 'WALLET',
                         'message': 'Order placed successfully using wallet!',
-                        'redirect_url': redirect_url
-                    })
-
-                    # FOR COD PAYEMENTS
-                else:
-                    # Clear cart immediately
-                    cart_items.delete()
-                    
-                    if payment_method == 'COD':
-                        order.order_status = 'Ordered'  # COD starts as Pending
-                        order.save()
-
-                        redirect_url = request.build_absolute_uri(
+                        'redirect_url': request.build_absolute_uri(
                             reverse('order_success', kwargs={'order_id': order.order_id})
                         )
-                        return JsonResponse({
-                            'status': 'success',
-                            'payment_method': 'COD',
-                            'message': 'Order placed successfully with Cash on Delivery!',
-                            'redirect_url': redirect_url
-                        })
+                    })
+                
+                else:  # COD
+                    # Mark coupon as used for COD
+                    if applied_coupon:
+                        coupon_usage = CouponUsage.objects.get(
+                            user=request.user,
+                            coupon=applied_coupon,
+                            is_used=False
+                        )
+                        coupon_usage.is_used = True
+                        coupon_usage.save()
+                        
+                        if 'temp_coupon' in request.session:
+                            del request.session['temp_coupon']
+                            request.session.modified = True
                     
-        except AddressTable.DoesNotExist:
-            return JsonResponse({'status': 'error', 'message': 'Selected address not found.'})
-        except ValueError as e:
-            return JsonResponse({'status': 'error', 'message': str(e)})
+                    order.order_status = 'Ordered'
+                    order.save()
+                    
+                    cart_items.delete()
+                    
+                    return JsonResponse({
+                        'status': 'success',
+                        'payment_method': 'COD',
+                        'message': 'Order placed successfully with Cash on Delivery!',
+                        'redirect_url': request.build_absolute_uri(
+                            reverse('order_success', kwargs={'order_id': order.order_id})
+                        )
+                    })
+                    
         except Exception as e:
-            return JsonResponse({'status': 'error', 'message': f"An error occurred: {str(e)}"})
+            return JsonResponse({'status': 'error', 'message': str(e)})
+            
     except Exception as e:
         return JsonResponse({
             'status': 'error',
             'message': 'An unexpected error occurred while processing your order'
         })
-
 #################################################################################################################################
 @login_required
 def cancel_order(request, order_id):
@@ -311,7 +360,6 @@ def cancel_order(request, order_id):
                 order_status='Canceled',
                 is_canceled=True
             )
-
             # Handle refund if payment method is ONLINE
             if order.payment_method in ['ONLINE', 'WALLET']:
                 # Get or create the user's wallet
@@ -667,36 +715,49 @@ def apply_coupon(request):
             if not coupon:
                 return JsonResponse({'status': 'error', 'message': 'Invalid or expired coupon.'})
 
+            # Check if user has already used this coupon maximum times
+            usage_count = CouponUsage.objects.filter(
+                user=request.user,
+                coupon=coupon,
+                is_used=True
+            ).count()
+            
+            if usage_count >= coupon.max_uses_per_user:
+                return JsonResponse({
+                    'status': 'error', 
+                    'message': 'You have already used this coupon the maximum number of times.'
+                })
 
             cart_items = CartTable.objects.filter(user=request.user)
-            total_amount = sum(item.quantity * item.book.offer_price for item in cart_items)
+            # Convert Decimal to float
+            total_amount = float(sum(item.quantity * item.book.offer_price for item in cart_items))
 
-            if total_amount < coupon.min_purchase_amount:
+            if total_amount < float(coupon.min_purchase_amount):
                 return JsonResponse({'status': 'error', 'message': f'Minimum purchase amount is ₹{coupon.min_purchase_amount}.'})
-            if coupon.coupon_type == 'PERCENTAGE':
-                discount_amount = total_amount * (coupon.discount_value / 100)
+
+            if coupon.coupon_type == 'percentage':
+                discount_amount = total_amount * (float(coupon.discount_value) / 100)
                 new_total = total_amount - discount_amount
             elif coupon.coupon_type == 'fixed':
-                discount_amount = coupon.discount_value
+                discount_amount = float(coupon.discount_value)
                 new_total = total_amount - discount_amount
             else:
                 return JsonResponse({'status': 'error', 'message': 'Invalid coupon type.'})
 
-            CouponUsage.objects.create(
-                user=request.user,
-                coupon=coupon,
-                discount_value=round(discount_amount, 2),
-                used_at=now()
-            )
-
-            # Store the applied coupon code in the session
-            request.session['coupon_code'] = coupon_code
-
+            # Store converted float values in session
+            request.session['temp_coupon'] = {
+                'code': coupon_code,
+                'discount_amount': round(float(discount_amount), 2),
+                'original_total': float(total_amount),
+                'new_total': round(float(new_total), 2),
+                'coupon_id': coupon.id
+            }
+            request.session.modified = True
 
             return JsonResponse({
                 'status': 'success',
-                'new_total': round(new_total, 2),
-                'discount_amount': round(discount_amount, 2)
+                'new_total': round(float(new_total), 2),
+                'discount_amount': round(float(discount_amount), 2)
             })
 
         except Exception as e:
@@ -708,22 +769,19 @@ def apply_coupon(request):
 def remove_coupon(request):
     if request.method == 'POST':
         try:
-            coupon_usage = CouponUsage.objects.filter(user=request.user).last()
-
-            if not coupon_usage:
+            if 'temp_coupon' not in request.session:
                 return JsonResponse({'status': 'error', 'message': 'No coupon applied.'})
 
-            cart_items = CartTable.objects.filter(user=request.user)
-            original_total_amount = sum(item.quantity * item.book.offer_price for item in cart_items)
-
-            coupon_usage.delete()
-
-            if 'coupon_code' in request.session:
-                del request.session['coupon_code']
+            # Get the original total from the session
+            original_total = request.session['temp_coupon']['original_total']
+            
+            # Clear coupon data from session
+            del request.session['temp_coupon']
+            request.session.modified = True
 
             return JsonResponse({
                 'status': 'success',
-                'original_total': round(original_total_amount, 2),
+                'original_total': round(original_total, 2),
                 'discount_amount': 0
             })
 
@@ -733,110 +791,201 @@ def remove_coupon(request):
     return JsonResponse({'status': 'error', 'message': 'Invalid request method.'})
 
 #################################################################################################################################
-
 def generate_invoice(request, order_id):
     try:
-        # Fetch the order details
-        order = OrderDetails.objects.get(order_id=order_id)
+        # Fetch the order details with related data
+        order = OrderDetails.objects.select_related(
+            'user', 'delivery_address', 'coupon', 'offer'
+        ).prefetch_related(
+            'orderitem_set__book',
+            'orderitem_set__book__product_offer',  # Add prefetch for product offers
+            'orderitem_set__book__category__category_offers',  # Add prefetch for category offers
+            'returnrequest_set'
+        ).get(order_id=order_id)
+        
         order_items = OrderItem.objects.filter(order=order)
-        
-        # Calculate totals
         total_product_amount = sum(item.total_price for item in order_items)
-        final_amount = total_product_amount
-        refunded_amount = 0
         
-        # Calculate refunds for canceled items
-        for item in order_items:
-            if item.is_canceled:
-                refunded_amount += item.total_price
+        # Calculate refunds (both cancellations and returns)
+        refunded_amount = 0
+        return_request = order.returnrequest_set.filter(status='Approved').first()
+        
+        if return_request:
+            if return_request.return_entire_order:
+                refunded_amount = total_product_amount
+            else:
+                returned_items = return_request.items.all()
+                refunded_amount = sum(item.order_item.total_price for item in returned_items)
+        else:
+            # Handle regular cancellations
+            for item in order_items:
+                if item.is_canceled:
+                    refunded_amount += item.total_price
 
-        # Initialize discounts to 0
-        coupon_discount = 0
-        offer_discount = 0
+        # Calculate remaining amount and apply discounts
+        remaining_amount = total_product_amount - refunded_amount
+        amount_after_offers_coupon = remaining_amount
 
-        # Only apply coupon discount if coupon exists and is applied
-        if order.coupon_applied and order.coupon is not None:
-            if order.coupon.coupon_type == 'percentage':
-                coupon_discount = (total_product_amount * order.coupon.discount_value) / 100
-            else:  # fixed amount
-                coupon_discount = order.coupon.discount_value
-            final_amount -= coupon_discount
-
-        # Only apply offer discount if offer exists and is applied
-        if order.offer_applied and order.offer is not None:
-            offer_discount = order.offer.discount_value
-            final_amount -= offer_discount
-
-        # Calculate remaining amount after refund
-        remaining_amount = final_amount - refunded_amount
+        if order.coupon_applied and order.coupon:
+            coupon = order.coupon
+            if coupon.coupon_type == 'percentage':
+                discount_amount = (remaining_amount * coupon.discount_value) / 100
+            else:
+                discount_amount = min(coupon.discount_value, remaining_amount)
+            amount_after_offers_coupon = remaining_amount - discount_amount
 
         # Create PDF
         buffer = BytesIO()
         p = canvas.Canvas(buffer, pagesize=letter)
         width, height = letter
 
-        # Title and Header (Centered)
+        # Title and Header
         p.setFont("Helvetica-Bold", 24)
         p.drawCentredString(width / 2, height - 30, "Pagino Books")
         p.setFont("Helvetica-Bold", 14)
         p.drawCentredString(width / 2, height - 60, f"Invoice for Order-{order_id}")
 
-        # Customer and Address Info
+        # Format address
+        address_components = [
+            order.delivery_address.street_name,
+            order.delivery_address.building_no,
+            f"Near {order.delivery_address.landmark}" if order.delivery_address.landmark else None,
+            order.delivery_address.city,
+            order.delivery_address.state,
+            order.delivery_address.pincode
+        ]
+        formatted_address = ", ".join(filter(None, address_components))
+
+        # Customer Info
         p.setFont("Helvetica", 12)
         y_pos = height - 80
         p.drawCentredString(width / 2, y_pos, f"Customer: {order.user.username} ({order.user.phone_number})")
         y_pos -= 25
 
-        # Format and display delivery address
-        if order.delivery_address:
-            address_components = [
-                order.delivery_address.street_name,
-                order.delivery_address.building_no,
-                f"Near {order.delivery_address.landmark}" if order.delivery_address.landmark else None,
-                order.delivery_address.city,
-                order.delivery_address.state,
-                order.delivery_address.pincode
-            ]
-            formatted_address = "Shipping Address: " + ", ".join(filter(None, address_components))
-            
-            # Handle long addresses
-            if len(formatted_address) > 60:
-                chunks = [formatted_address[i:i+60] for i in range(0, len(formatted_address), 60)]
-                for chunk in chunks:
-                    p.drawCentredString(width / 2, y_pos, chunk)
-                    y_pos -= 20
-            else:
-                p.drawCentredString(width / 2, y_pos, formatted_address)
-                y_pos -= 20
+        # Handle long addresses
+        formatted_address = f"Shipping Address: {formatted_address}"
+        for chunk in [formatted_address[i:i+60] for i in range(0, len(formatted_address), 60)]:
+            p.drawCentredString(width / 2, y_pos, chunk)
+            y_pos -= 20
 
         y_pos -= 20
 
-        # Draw a Line Separator
+        # Line Separator
         p.setLineWidth(1)
         p.line(50, y_pos, width - 50, y_pos)
         y_pos -= 30
 
-        # Order Items
+        # Order Summary Header
         p.setFont("Helvetica-Bold", 12)
         p.drawString(100, y_pos, "Item Description")
         p.drawString(350, y_pos, "Quantity")
         p.drawString(450, y_pos, "Price")
         y_pos -= 20
 
+        # List items
         p.setFont("Helvetica", 10)
         for item in order_items:
-            p.drawString(100, y_pos, f"{item.book.book_name}")
-            p.drawRightString(360, y_pos, str(item.quantity))
-            p.drawRightString(500, y_pos, f"₹{item.price_per_item:,.2f}")
-            y_pos -= 20
+            # Skip returned items if partial return
+            if return_request and not return_request.return_entire_order:
+                if return_request.items.filter(order_item=item).exists():
+                    continue
+            # Calculate original and offer prices
+            book = item.book
+            original_price = book.base_price
+            final_price = item.price_per_item
+            
+            product_offer = book.product_offer.filter(
+                is_active=True,
+                valid_from__lte=order.order_date,
+                valid_to__gte=order.order_date
+            ).first()
+            
+            category_offer = book.category.category_offers.filter(
+                is_active=True,
+                valid_from__lte=order.order_date,
+                valid_to__gte=order.order_date
+            ).first()
+
+            # Draw item details
+            # Book name (with word wrap if needed)
+            book_name = book.book_name
+            if len(book_name) > 30:
+                book_name = book_name[:27] + "..."
+            p.drawString(50, y_pos, book_name)
+            
+            # Original price
+            p.drawRightString(340, y_pos, f"₹{original_price:,.2f}")
+            
+            p.setFont("Helvetica", 10)
+            
+            if product_offer or category_offer:
+                offers_found = True
+                # Book name with word wrap
+                book_name = book.book_name
+                if len(book_name) > 30:
+                    book_name = book_name[:27] + "..."
+                p.drawString(120, y_pos, f"Book: {book_name}")
+                y_pos -= 20
+
+                # Show product offer if exists
+                if product_offer:
+                    discount_info = ""
+                    if product_offer.discount_type == 'percentage':
+                        discount_info = f"{product_offer.discount_value}% off"
+                    elif product_offer.discount_type == 'fixed':
+                        discount_info = f"₹{product_offer.discount_value} off"
+                    
+                    p.drawString(140, y_pos, f"Product Offer: {product_offer.offer_name} - {discount_info}")
+                    y_pos -= 20
+
+                # Show category offer if exists
+                if category_offer:
+                    discount_info = ""
+                    if category_offer.discount_type == 'percentage':
+                        discount_info = f"{category_offer.discount_value}% off"
+                    elif category_offer.discount_type == 'fixed':
+                        discount_info = f"₹{category_offer.discount_value} off"
+                    
+                    p.drawString(140, y_pos, f"Category Offer: {category_offer.offer_name} - {discount_info}")
+                    y_pos -= 20
+
+                # Show savings for this item
+                original_price = book.base_price
+                final_price = item.price_per_item
+                if original_price != final_price:
+                    savings = (original_price - final_price) * item.quantity
+                    p.drawString(140, y_pos, f"You saved: ₹{savings:,.2f} on this item")
+                    y_pos -= 25
+
+            else:
+                p.drawString(120, y_pos, "No offers")
+                y_pos -= 25
+
+            # Final price and quantity
+            p.drawRightString(530, y_pos, f"₹{final_price:,.2f}")
+            p.drawRightString(380, y_pos, str(item.quantity))
+            
+            # Show savings
+            if original_price != final_price:
+                y_pos -= 15
+                savings = (original_price - final_price) * item.quantity
+                p.setFont("Helvetica", 9)
+                p.drawString(70, y_pos, f"You saved: ₹{savings:,.2f}")
+                if product_offer or category_offer:
+                    applied_offer = product_offer or category_offer
+                    p.drawString(200, y_pos, f"({applied_offer.offer_name})")
+                p.setFont("Helvetica", 10)
+            
+            y_pos -= 25
 
         y_pos -= 10
 
-        # Draw a Line Separator
+        # Line Separator
+        p.setLineWidth(1)
         p.line(50, y_pos, width - 50, y_pos)
         y_pos -= 30
 
-        # Helper function for drawing payment info
+        # Helper function for drawing info lines
         def draw_info_line(label, value, bold_value=False):
             nonlocal y_pos
             p.setFont("Helvetica-Bold", 12)
@@ -847,62 +996,51 @@ def generate_invoice(request, order_id):
 
         # Payment Details
         draw_info_line("Payment Method:", str(order.payment_method))
-        payment_status = "Completed" if order.payment_method in ['ONLINE', 'WALLET'] else \
-                        "Paid" if order.order_status == "Delivered" else "Pending"
+        payment_status = "Completed" if order.payment_method in ['ONLINE', 'WALLET'] \
+                        else "Paid" if order.order_status == "Delivered" \
+                        else "Pending"
         draw_info_line("Payment Status:", payment_status)
+        
+         # Amount Details
+        draw_info_line("Total Original Amount:", f"₹{sum(item.quantity * item.book.base_price for item in order_items):,.2f}")
+        if order.offer_applied and order.offer:
+            draw_info_line("Offer Discount:", f"₹{total_product_amount - sum(item.quantity * item.book.base_price for item in order_items):,.2f}")
+        
+        draw_info_line("Subtotal After Offers:", f"₹{total_product_amount:,.2f}")
 
-        # Amount Details
-        draw_info_line("Total Amount:", f"₹{total_product_amount:,.2f}")
-
-        # Only show discounts if they are actually applied
-        if coupon_discount > 0 and order.coupon_applied and order.coupon:
-            draw_info_line("Coupon Discount:", f"₹{coupon_discount:,.2f}")
-            
-        if offer_discount > 0 and order.offer_applied and order.offer:
-            draw_info_line("Offer Discount:", f"₹{offer_discount:,.2f}")
-
-        # Show final amount if different from total
-        if final_amount != total_product_amount:
-            draw_info_line("Final Amount:", f"₹{final_amount:,.2f}", True)
-
-        # Show refund information if applicable
-        if refunded_amount > 0:
+        # Return/Refund Details
+        if return_request:
+            draw_info_line("Return Status:", return_request.status)
+            draw_info_line("Refunded Amount:", f"₹{refunded_amount:,.2f}")
+            draw_info_line("Final Amount:", f"₹{amount_after_offers_coupon:,.2f}", True)
+            if return_request.admin_note:
+                draw_info_line("Return Note:", return_request.admin_note)
+        elif refunded_amount > 0:
             draw_info_line("Refunded Amount:", f"₹{refunded_amount:,.2f}")
             draw_info_line("Remaining Amount:", f"₹{remaining_amount:,.2f}", True)
 
         y_pos -= 10
 
-        # Only show coupon information if actually applied
+        # Discount Section - Fixed to handle None values
         if order.coupon_applied and order.coupon:
-            discount_type = "%" if order.coupon.coupon_type == 'percentage' else "₹"
-            draw_info_line("Coupon Applied:", 
-                          f"Code: {order.coupon.code} - {order.coupon.discount_value}{discount_type}")
+            coupon_info = f"Code: {order.coupon.code} - {order.coupon.discount_value} {order.coupon.coupon_type}"
+            draw_info_line("Coupon Applied:", coupon_info)
         else:
             draw_info_line("Coupon Status:", "No Coupon Applied")
 
-        # Only show offer information if actually applied
-        if order.offer_applied and order.offer:
-            draw_info_line("Offer Applied:", 
-                          f"Offer: {order.offer.offer_name} - ₹{order.offer.discount_value}")
-        else:
-            draw_info_line("Offer Status:", "No Offer Applied")
-
-        # Cancellation Details if order is canceled
+        # Cancellation Details
         if order.is_canceled:
             y_pos -= 10
             p.setFont("Helvetica-Bold", 12)
             p.drawString(100, y_pos, "Order Canceled")
             y_pos -= 20
             p.setFont("Helvetica", 12)
-            if order.cancel_description:
-                p.drawString(100, y_pos, f"Reason: {order.cancel_description}")
-                y_pos -= 20
-            if order.cancel_date:
-                p.drawString(100, y_pos, f"Cancel Date: {order.cancel_date.strftime('%Y-%m-%d %H:%M:%S')}")
-                y_pos -= 20
-            if order.is_refund and order.refund_date:
-                p.drawString(100, y_pos, f"Refund Date: {order.refund_date.strftime('%Y-%m-%d %H:%M:%S')}")
-                y_pos -= 30
+            p.drawString(100, y_pos, f"Refunded Amount: ₹{order.total_amount:,.2f}")
+            y_pos -= 20
+            p.drawString(100, y_pos, f"Reason: {order.cancel_description}")
+            y_pos -= 20
+            p.drawString(100, y_pos, f"Refund Date: {order.refund_date}")
+            y_pos -= 30
 
         # Footer
         p.setFont("Helvetica", 10)

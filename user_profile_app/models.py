@@ -4,6 +4,7 @@ from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 from django.utils.timezone import now
 from django.utils import timezone
+from decimal import Decimal
 
 # Create your models here.
 class AddressTable(models.Model):
@@ -57,6 +58,11 @@ class WalletTable(models.Model):
     available_balance = models.DecimalField(max_digits=10,decimal_places=2,default=0.00)
     def __str__(self):
         return f"Wallet of {self.user.phone_number}"
+    
+@receiver(post_save, sender='log_reg_app.UserTable')
+def create_user_wallet(sender, instance, created, **kwargs):
+    if created:
+        WalletTable.objects.create(user=instance, available_balance=Decimal('0.00'))
 
 class WalletTransaction(models.Model):
     TRANSACTION_TYPE_CHOICES = [
@@ -67,7 +73,7 @@ class WalletTransaction(models.Model):
 
     wallet = models.ForeignKey(WalletTable, on_delete=models.CASCADE, related_name='transactions')
     transaction_type = models.CharField(max_length=10, choices=TRANSACTION_TYPE_CHOICES)
-    transaction_amount = models.DecimalField(max_digits=10, decimal_places=2,default=0.00)
+    transaction_amount = models.DecimalField(max_digits=10, decimal_places=2,default=0)
     description = models.TextField(blank=True, null=True)
     transaction_time = models.DateTimeField(default=now)
 

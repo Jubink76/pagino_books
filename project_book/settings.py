@@ -75,6 +75,7 @@ MIDDLEWARE = [
     'log_reg_app.custom_middleware.AccessControlMiddleware',
     'user_side_app.custom_middleware.UserAccessControlMiddleware',
     'user_side_app.custom_middleware.SessionExpiryMiddleware',
+    'user_profile_app.wallet_middleware.WalletMiddleware',
     # Add the account middleware:
     "allauth.account.middleware.AccountMiddleware",
 ]

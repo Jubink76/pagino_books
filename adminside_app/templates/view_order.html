@@ -17,7 +17,9 @@
         <p class="text-gray-500">Order #{{ order_detail.order_id }}</p>
       </div>
       <div class="flex gap-4">
-        <button class="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors">
+        <a href="" 
+          onclick="return handleInvoiceDownload(event, '{{ order.order_id }}')"
+          data-redirect-url="{% url 'user_orders' %}"class="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors">
           <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v8H6v-8z"></path>
           </svg>
@@ -160,5 +162,78 @@
   document.addEventListener('DOMContentLoaded', function() {
     lucide.createIcons();
   });
+</script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    // Function for downloading the invoice
+    async function handleInvoiceDownload(event, orderId) {
+        event.preventDefault();
+        
+        // Get the redirect URL from the data attribute
+        const redirectUrl = event.target.closest('a').dataset.redirectUrl;
+        
+        try {
+            const willGenerate = await Swal.fire({
+                title: "Generate Invoice?",
+                text: "Are you sure you want to generate the invoice?",
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonText: "Yes, generate it!",
+                cancelButtonText: "Cancel",
+                reverseButtons: true
+            });
+    
+            if (willGenerate.isConfirmed) {
+                // Get the original href from the link
+                const downloadUrl = event.target.closest('a').href;
+                
+                try {
+                    const response = await fetch(downloadUrl);
+                    const data = await response.json();
+    
+                    if (data.status === 'success') {
+                        await Swal.fire({
+                            title: "Success!",
+                            text: "Invoice generated successfully!",
+                            icon: "success",
+                            timer: 2000,
+                            showConfirmButton: false
+                        });
+    
+                        // Open the file in a new tab
+                        window.open(data.file_url, '_blank');
+                        
+                        // Redirect main window after a short delay
+                        setTimeout(() => {
+                            window.location.href = redirectUrl;
+                        }, 1000);
+                    } else {
+                        await Swal.fire({
+                            title: "Error!",
+                            text: data.message || "Failed to generate invoice",
+                            icon: "error"
+                        });
+                    }
+                } catch (error) {
+                    await Swal.fire({
+                        title: "Error!",
+                        text: "Something went wrong while generating the invoice.",
+                        icon: "error"
+                    });
+                }
+            } else {
+                await Swal.fire({
+                    title: "Cancelled",
+                    text: "The invoice generation was cancelled.",
+                    icon: "info"
+                });
+            }
+        } catch (error) {
+            console.error("Error:", error);
+        }
+        
+        return false;
+    }
+    
 </script>
 {% endblock %}

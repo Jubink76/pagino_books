@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>404 - Page Not Found</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Preload font for better performance -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="font-[Inter]">
+    <div class="min-h-screen flex items-center justify-center bg-gray-900">
+        <div class="text-center px-4">
+            <!-- Animated Emoji Section -->
+            <div class="text-7xl mb-4 animate-bounce">
+                <span class="inline-block transform hover:scale-110 transition-transform duration-200">👻</span>
+                <span class="inline-block ml-2 transform hover:scale-110 transition-transform duration-200">🌙</span>
+            </div>
+
+            <!-- Animated Oops Text -->
+            <div class="text-3xl font-bold mb-4 bg-gradient-to-r from-purple-400 to-blue-500 text-transparent bg-clip-text transform hover:scale-105 transition-all duration-300 animate-pulse">
+                Oops!
+            </div>
+
+            <!-- 404 Text -->
+            <h1 class="text-purple-500 font-bold text-9xl mb-4 select-none">404</h1>
+            
+            <!-- Error Message -->
+            <p class="text-gray-300 text-xl mb-8">We are sorry, but this admin page is not available.</p>
+            
+            <!-- Search Section -->
+            <div class="flex justify-center items-center gap-2 max-w-md mx-auto">
+                <input type="text" 
+                       placeholder="Search pages..." 
+                       class="w-full px-4 py-2 bg-gray-800 border border-gray-700 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 placeholder-gray-500 transition duration-200">
+                <button class="px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition duration-200 flex-shrink-0">
+                    Search
+                </button>
+            </div>
+
+            <!-- Navigation Links -->
+            <div class="mt-8 space-y-4">
+                {% if request.user.is_authenticated %}
+                    {% if request.user.is_superuser %}
+                    <a href="{% url 'admin_dashboard' %}" 
+                    class="block text-purple-400 hover:text-purple-300 transition duration-200">
+                        Return to Admin Dashboard
+                    </a>
+                    {% endif %}
+                {% else %}
+                <a href="{% url 'admin_login' %}" 
+                   class="block text-purple-400 hover:text-purple-300 transition duration-200">
+                    Go to Login page
+                </a>
+                {% endif %}
+            </div>
+
+            <!-- Additional Help Text -->
+            <p class="mt-8 text-gray-500 text-sm">
+                If you believe this is an error, please contact the system administrator.
+            </p>
+        </div>
+    </div>
+
+    <!-- Background Animation (Optional) -->
+    <div class="fixed inset-0 -z-10 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-gray-900 via-gray-900 to-black"></div>
+</body>
+</html>

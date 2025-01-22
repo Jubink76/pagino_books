@@ -27,7 +27,7 @@
                     </select>
                 </div>
                 <div class="flex space-x-4">
-                      {% if user.is_authenticated %}
+                      {% if request.user.is_authenticated %}
                         <a href="{% url 'user_profile' %}" class="hover:text-yellow-300 transition-all duration-300">Profile</a>
                         <a href="{% url 'user_logout' %}" class="hover:text-yellow-300 transition-all duration-300">Logout</a>
                       {% else %}
@@ -141,7 +141,6 @@
                         <span>Shop</span>
                         <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-yellow-300 group-hover:w-full transition-all duration-300"></span>
                     </a>
-                    
                     <a href="{% url 'cart_page' %}" class="hover:text-yellow-300 transition-colors duration-300 relative group">
                         <span>Cart page</span>
                         <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-yellow-300 group-hover:w-full transition-all duration-300"></span>

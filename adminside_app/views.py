@@ -1149,7 +1149,7 @@ def status_update(request,order_id):
     return redirect('update_order', order_id=order_id)
 
 #########################################################################################################################################
-
+@login_required(login_url='admin_login')
 @require_http_methods(["GET", "POST"])
 def admin_coupon(request, coupon_id=None):
     try:
@@ -1301,14 +1301,14 @@ def admin_coupon(request, coupon_id=None):
 
 
 #########################################################################################################################################
-
+@login_required(login_url='admin_login')
 def admin_offer(request):
     # Fetch all offers without any filtering
     all_offers = OfferTable.objects.all().order_by('-created_at') 
     
     return render(request, 'admin_offer.html', {'all_offers': all_offers})
 #########################################################################################################################################
-
+@login_required(login_url='admin_login')
 #function to apply the discount to the product's price
 def apply_discount(base_price, discount_type, discount_value):
     if discount_type == 'percentage':
@@ -1356,7 +1356,7 @@ def handle_expired_offers():
         offer.is_active = False
         offer.save(update_fields=['is_active'])
 #########################################################################################################################################
-
+@login_required(login_url='admin_login')
 @require_http_methods(["GET", "POST"])
 def add_category_offer(request, category_id):
     category = get_object_or_404(CategoryTable, id=category_id)
@@ -1475,7 +1475,7 @@ def add_category_offer(request, category_id):
     return render(request, 'add_category_offer.html', context)
 
 #################################################################################################################
-
+@login_required(login_url='admin_login')
 @require_http_methods(["GET", "POST"])
 def edit_category_offer(request, category_id):
     # Get the specific category
@@ -1616,6 +1616,7 @@ def edit_category_offer(request, category_id):
     return render(request, 'edit_category_offer.html', context)
 
 ################################################################################################################
+@login_required(login_url='admin_login')
 @require_http_methods(["POST"])
 def delete_category_offer(request, id):
     try:
@@ -1643,7 +1644,7 @@ def delete_category_offer(request, id):
         }, status=500)
 
 ##############################################################################################
-
+@login_required(login_url='admin_login')
 @require_http_methods(["GET", "POST"])
 def add_product_offer(request, product_id):
     product = get_object_or_404(BookTable, id=product_id)
@@ -1757,7 +1758,7 @@ def add_product_offer(request, product_id):
     }
     return render(request, 'add_product_offer.html', context)
 ##############################################################################################
-
+@login_required(login_url='admin_login')
 @require_http_methods(["GET", "POST"])
 def edit_product_offer(request, product_id):
     # Get the specific product
@@ -1915,6 +1916,7 @@ def edit_product_offer(request, product_id):
     return render(request, 'edit_product_offer.html', context)
 
 ##############################################################################################
+@login_required(login_url='admin_login')
 @require_http_methods(["POST"])
 def delete_product_offer(request, id):
     try:
@@ -1949,7 +1951,7 @@ def delete_product_offer(request, id):
         }, status=500)
     
 ####################################################################################################
-
+@login_required(login_url='admin_login')
 @require_http_methods(["GET"])
 def get_coupon_details(request, coupon_id):
     try:
@@ -1969,7 +1971,7 @@ def get_coupon_details(request, coupon_id):
         return JsonResponse({'error': 'Coupon not found'}, status=404)
     
 ####################################################################################################################
-    
+@login_required(login_url='admin_login')   
 def delete_coupon(request, coupon_id):
     coupon = get_object_or_404(CouponTable, id=coupon_id)
     
@@ -1993,7 +1995,7 @@ def delete_coupon(request, coupon_id):
     }, status=400)
 
 ###########################################################################################################################
-
+@login_required(login_url='admin_login')
 def generate_detailed_sales_report_pdf(request):
     try:
         # Fetch orders categorized by their statuses
@@ -2080,7 +2082,7 @@ def generate_detailed_sales_report_pdf(request):
         return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
     
 #######################################################################################################################################
-
+@login_required(login_url='admin_login')
 def generate_detailed_sales_report_excel(request):
     try:
         # Fetch orders categorized by their statuses
@@ -2146,7 +2148,7 @@ def generate_detailed_sales_report_excel(request):
         return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
     
 ############################################################################################################################################
-
+@login_required(login_url='admin_login')
 def return_requests(request):
     return_requests = ReturnRequest.objects.filter(status='Pending').order_by('-created_at')
     return render(request, 'return_request.html', {'return_requests': return_requests})

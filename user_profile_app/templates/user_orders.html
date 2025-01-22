@@ -213,25 +213,27 @@
                                 </div>
                                 <div>
                                     {% if selected_order.order_status == 'Delivered' %}
-                                        <form method="POST" action="{% url 'user_orders' %}">
-                                            {% csrf_token %}
-                                            <input type="hidden" name="order_id" value="{{ selected_order.order_id }}">
-                                            <input type="hidden" name="review_order" value="true">
-                                            <input type="hidden" name="book_id" value="{{ item.id }}">
-                                            <button 
-                                                type="submit" 
-                                                class="bg-yellow-500 text-black px-4 py-2 rounded hover:bg-yellow-600 transition">
-                                                Write a Review
-                                            </button>
-                                        </form>
-                                        {% comment %} <form method="POST" action="{% url 'user_single_item_return' selected_order.order_id item.id %}" id="returnItemForm-{{ item.id }}">
-                                            {% csrf_token %}
-                                            <button type="button" 
-                                                    class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600" 
-                                                    onclick="confirmReturnItem('{{ item.id }}')">
-                                                Return Item
-                                            </button>
-                                        </form>                                      {% endcomment %}
+                                        {% if item.is_reviewed %}
+                                            <div class="text-green-600 font-medium flex items-center">
+                                                <span class="mr-2">Thanks for your review!</span>
+                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                                </svg>
+                                            </div>
+                                        {% else %}
+                                            <form method="POST" action="{% url 'user_orders' %}" name="review-form">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="order_id" value="{{ selected_order.order_id }}">
+                                                <input type="hidden" name="review_order" value="true">
+                                                <input type="hidden" name="book_id" value="{{ item.id }}">
+                                                <button 
+                                                    type="submit" 
+                                                    class="bg-yellow-500 text-black px-4 py-2 rounded hover:bg-yellow-600 transition">
+                                                    Write a Review
+                                                </button>
+                                            </form>
+                                        {% endif %}
+                                  {% endcomment %}
                                     {% elif selected_order.item_count > 1 and selected_order.order_status != 'Delivered' and selected_order.order_status != 'Canceled' %}
                                         {% if item.is_canceled %}
                                             <!-- Display canceled tag if the item is canceled -->
@@ -418,43 +420,56 @@
                     
                                 <!-- Cancel Button and Price -->
                                 <div class="flex flex-col items-center gap-2">
-                                    {% if order.order_status == 'Delivered' %}
+                                    {% if order.order_status == 'Delivered' or order.order_status == 'Returned' %}
                                         {% if order.returnrequest_set.exists %}
                                             {% with return_request=order.returnrequest_set.last %}
                                                 <div class="relative group">
-                                                    {% if return_request.status == 'Pending' %}
-                                                        <div class="bg-yellow-100 text-yellow-800 px-4 py-2 rounded cursor-help">
-                                                            Return Request Pending
-                                                        </div>
-                                                        <div class="hidden group-hover:block absolute z-10 w-48 p-2 mt-2 text-sm bg-gray-900 text-white rounded shadow-lg">
-                                                            Request submitted on {{ return_request.created_at|date:"M d, Y" }}
-                                                        </div>
-                                                    {% elif return_request.status == 'Approved' %}
-                                                        <div class="bg-green-100 text-green-800 px-4 py-2 rounded cursor-help">
-                                                            Return Request Approved
-                                                        </div>
-                                                        <div class="hidden group-hover:block absolute z-10 w-48 p-2 mt-2 text-sm bg-gray-900 text-white rounded shadow-lg">
-                                                            Approved on {{ return_request.updated_at|date:"M d, Y" }}
-                                                            {% if return_request.admin_note %}
-                                                                <br>Note: {{ return_request.admin_note }}
-                                                            {% endif %}
-                                                        </div>
-                                                    {% elif return_request.status == 'Rejected' %}
-                                                        <div class="bg-red-100 text-red-800 px-4 py-2 rounded cursor-help">
-                                                            Return Request Rejected
-                                                        </div>
-                                                        <div class="hidden group-hover:block absolute z-10 w-48 p-2 mt-2 text-sm bg-gray-900 text-white rounded shadow-lg">
-                                                            {% if return_request.admin_note %}
-                                                                Reason: {{ return_request.admin_note }}
-                                                            {% endif %}
-                                                        </div>
-                                                    {% elif return_request.status == 'Processed' %}
-                                                        <div class="bg-blue-100 text-blue-800 px-4 py-2 rounded cursor-help">
-                                                            Return Request Processed
-                                                        </div>
-                                                        <div class="hidden group-hover:block absolute z-10 w-48 p-2 mt-2 text-sm bg-gray-900 text-white rounded shadow-lg">
-                                                            Processed on {{ return_request.updated_at|date:"M d, Y" }}
-                                                        </div>
+                                                    {% if return_request %}
+                                                        {% if return_request.status == 'Pending' %}
+                                                            <div class="bg-yellow-100 text-yellow-800 px-4 py-2 rounded cursor-help">
+                                                                Return Request Pending
+                                                                {% if return_request.return_entire_order %}
+                                                                    (Entire Order)
+                                                                {% else %}
+                                                                    (Partial Order)
+                                                                {% endif %}
+                                                            </div>
+                                                            <div class="hidden group-hover:block absolute z-10 w-48 p-2 mt-2 text-sm bg-gray-900 text-white rounded shadow-lg">
+                                                                Request submitted on {{ return_request.created_at|date:"M d, Y" }}
+                                                                {% if not return_request.return_entire_order %}
+                                                                    <br>Items:
+                                                                    {% for return_item in return_request.items.all %}
+                                                                        <br>- {{ return_item.order_item.book.book_name }}
+                                                                    {% endfor %}
+                                                                {% endif %}
+                                                            </div>
+                                                        {% elif return_request.status == 'Approved' %}
+                                                                <div class="bg-green-100 text-green-800 px-4 py-2 rounded cursor-help">
+                                                                    Return Request Approved
+                                                                </div>
+                                                            <div class="hidden group-hover:block absolute z-10 w-48 p-2 mt-2 text-sm bg-gray-900 text-white rounded shadow-lg">
+                                                                Approved on {{ return_request.updated_at|date:"M d, Y" }}
+                                                                {% if return_request.admin_note %}
+                                                                    <br>Note: {{ return_request.admin_note }}
+                                                                {% endif %}
+                                                            </div>
+                                                        {% elif return_request.status == 'Rejected' %}
+                                                            <div class="bg-red-100 text-red-800 px-4 py-2 rounded cursor-help">
+                                                                Return Request Rejected
+                                                            </div>
+                                                            <div class="hidden group-hover:block absolute z-10 w-48 p-2 mt-2 text-sm bg-gray-900 text-white rounded shadow-lg">
+                                                                {% if return_request.admin_note %}
+                                                                    Reason: {{ return_request.admin_note }}
+                                                                {% endif %}
+                                                            </div>
+                                                        {% elif return_request.status == 'Processed' %}
+                                                            <div class="bg-blue-100 text-blue-800 px-4 py-2 rounded cursor-help">
+                                                                Return Request Processed
+                                                            </div>
+                                                            <div class="hidden group-hover:block absolute z-10 w-48 p-2 mt-2 text-sm bg-gray-900 text-white rounded shadow-lg">
+                                                                Processed on {{ return_request.updated_at|date:"M d, Y" }}
+                                                            </div>
+                                                        {% endif %}
                                                     {% endif %}
                                                 </div>
                                             {% endwith %}
@@ -819,85 +834,5 @@
             }
         });
     }
-</script>
-<script>
-    @login_required
-def user_single_item_cancel(request, order_id, order_item_id):
-    if request.method == "POST":
-        try:
-            # Get the order and item details
-            order_detail = get_object_or_404(OrderDetails, order_id=order_id, user=request.user)
-            order_item = get_object_or_404(OrderItem, order=order_detail, id=order_item_id)
-
-            # Prevent cancellation if the item or order is in an unchangeable state
-            if order_item.order_status in ['Shipped', 'Delivered']:
-                return JsonResponse({
-                    'status': 'error',
-                    'message': "You cannot cancel items that are already shipped or delivered."
-                }, status=400)
-
-            # Calculate refund amount
-            refund_amount = Decimal(order_item.total_price)
-            coupon_applied = order_detail.coupon if hasattr(order_detail, 'coupon') else None
-
-            with transaction.atomic():
-                # Cancel the specific item
-                order_item.is_canceled = True
-                order_item.order_status = 'Canceled'
-                order_item.save()
-
-                # Check for remaining active items in the order
-                remaining_items = OrderItem.objects.filter(order=order_detail, is_canceled=False)
-
-                # Adjust total amount and handle coupon usage if necessary
-                total_remaining_amount = sum(item.total_price for item in remaining_items)
-                if coupon_applied and total_remaining_amount < coupon_applied.min_purchase_amount:
-                    discount_lost = coupon_applied.discount_value
-                    refund_amount -= discount_lost
-                    coupon_usage = CouponUsage.objects.filter(user=request.user, coupon=coupon_applied).first()
-                    if coupon_usage:
-                        coupon_usage.delete()
-
-                # If no active items remain, cancel the entire order
-                if not remaining_items.exists():
-                    order_detail.order_status = 'Canceled'
-                    order_detail.is_canceled = True
-                    order_detail.cancel_date = now()
-                    order_detail.cancel_description = f"Order {order_id} canceled as all items were canceled."
-                else:
-                    # Adjust the order's total amount
-                    order_detail.total_amount -= refund_amount
-                    order_detail.cancel_description = f"Item {order_item_id} canceled by user."
-
-                order_detail.save()
-
-                # Handle refund for ONLINE payments
-                if order_detail.payment_method == 'ONLINE':
-                    wallet, _ = WalletTable.objects.get_or_create(user=request.user)
-                    wallet.available_balance += refund_amount
-                    wallet.save()
-                    WalletTransaction.objects.create(
-                        wallet=wallet,
-                        transaction_type='refund',
-                        transaction_amount=refund_amount,
-                        description=f"Refund for canceled item in Order {order_id}",
-                        transaction_time=now()
-                    )
-
-            return JsonResponse({
-                'status': 'success',
-                'message': f"Item {order_item_id} has been successfully canceled.",
-                'item_id': order_item_id,  # For frontend updates
-            })
-        except Exception as e:
-            return JsonResponse({
-                'status': 'error',
-                'message': "Something went wrong. Please try again later."
-            }, status=500)
-
-    return JsonResponse({
-        'status': 'error',
-        'message': "Invalid request method."
-    }, status=405)
 </script>
 {% endblock %}

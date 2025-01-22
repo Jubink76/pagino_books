@@ -81,7 +81,6 @@ class OfferTable(models.Model):
     
 
 
-
 class OrderDetails(models.Model):
     order_id = models.CharField(max_length =10, primary_key=True)
     user = models.ForeignKey(UserTable,on_delete=models.CASCADE,null=True,blank=True)
@@ -104,6 +103,7 @@ class OrderDetails(models.Model):
     order_date = models.DateTimeField(auto_now_add=True)
     coupon_applied = models.BooleanField(default = False)
     coupon = models.ForeignKey(CouponTable, on_delete=models.SET_NULL, null=True, blank=True)
+    coupon_discount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     offer_applied = models.BooleanField(default = False)
     offer = models.ForeignKey(OfferTable, on_delete=models.SET_NULL, null=True, blank=True)
     is_canceled = models.BooleanField(default=False)
@@ -153,6 +153,13 @@ class OrderItem(models.Model):
                                              ('Canceled','Canceled'),
                                              ('Returned','Returned')], 
                                              default='Pending')
+    
+    def has_user_review(self,user,order):
+        return ReviewTable.objects.filter(
+            user = user,
+            book = self.book if hasattr(self,'book') else self,
+            order = order
+        ).exists
     def __str__(self):
         return f"{self.quantity} x {self.product.name} in Order {self.order.order_id}"
     

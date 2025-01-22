@@ -40,6 +40,9 @@ class CustomGoogleCallbackView(View):
             login_data = complete_social_login(request, adapter)
 
             if login_data:
+                if login_data.user.is_superuser:
+                    messages.error(request, "Superusers are not allowed to log in using Google authentication.")
+                    return redirect('user_login')
                 # If it's an existing user, log them in and redirect to the homepage
                 if login_data.is_existing:
                     login(request, login_data.user)
@@ -379,3 +382,5 @@ def resend_otp(request):
             return JsonResponse({'success': False, 'message': 'No email in session'})
 
     return JsonResponse({'success': False, 'message': 'Invalid request'})
+
+#############################################################################################################################
