@@ -1,5 +1,7 @@
-ocument.addEventListener('DOMContentLoaded', function () {
+document.addEventListener('DOMContentLoaded', function () {
+    const savedAddressItems = document.querySelectorAll('.saved-address-item');
     const currentDeliveryAddress = document.getElementById('currentDeliveryAddress');
+    const changeAddressLink = document.getElementById('changeAddressLink');
     const paymentMethodInputs = document.querySelectorAll('input[name="payment"]');
     const placeOrderButton = document.getElementById('place-order-button');
     const orderForm = document.getElementById('orderForm');
@@ -21,19 +23,50 @@ ocument.addEventListener('DOMContentLoaded', function () {
         });
     }
 
+    function resetOrderButton() {
+        if (placeOrderButton) {
+            placeOrderButton.disabled = false;
+            placeOrderButton.innerHTML = 'Place Order <i class="fas fa-arrow-right ml-2"></i>';
+        }
+    }
+
     function checkOrderEligibility() {
         const paymentMethodSelected = document.querySelector('input[name="payment"]:checked');
         const addressSelected = currentDeliveryAddress?.getAttribute('data-address-id');
+        
+        if (placeOrderButton) {
+            placeOrderButton.disabled = !paymentMethodSelected || !addressSelected;
 
-        placeOrderButton.disabled = !paymentMethodSelected || !addressSelected;
-
-        if (!placeOrderButton.disabled) {
-            placeOrderButton.classList.remove('bg-gray-400');
-            placeOrderButton.classList.add('bg-yellow-500', 'hover:bg-yellow-600');
-        } else {
-            placeOrderButton.classList.add('bg-gray-400');
-            placeOrderButton.classList.remove('bg-yellow-500', 'hover:bg-yellow-600');
+            if (!placeOrderButton.disabled) {
+                placeOrderButton.classList.remove('bg-gray-400');
+                placeOrderButton.classList.add('bg-yellow-500', 'hover:bg-yellow-600');
+            } else {
+                placeOrderButton.classList.add('bg-gray-400');
+                placeOrderButton.classList.remove('bg-yellow-500', 'hover:bg-yellow-600');
+            }
         }
+    }
+
+    // Add address selection logic
+    if (savedAddressItems) {
+        savedAddressItems.forEach(item => {
+            item.addEventListener('click', function() {
+                // Remove selected class from all address items
+                savedAddressItems.forEach(el => el.classList.remove('border-yellow-500', 'bg-yellow-50'));
+                
+                // Add selected class to clicked item
+                this.classList.add('border-yellow-500', 'bg-yellow-50');
+                
+                // Set the current delivery address
+                if (currentDeliveryAddress) {
+                    currentDeliveryAddress.textContent = this.querySelector('.address-details').textContent;
+                    currentDeliveryAddress.setAttribute('data-address-id', this.getAttribute('data-address-id'));
+                }
+                
+                // Recheck order eligibility
+                checkOrderEligibility();
+            });
+        });
     }
 
     async function handleOrderSubmission(e) {
@@ -61,7 +94,7 @@ ocument.addEventListener('DOMContentLoaded', function () {
             formData.append('payment', selectedPayment.value);
             formData.append('csrfmiddlewaretoken', csrfToken);
 
-            const response = await fetch('/create-order/', {
+            const response = await fetch(orderForm.getAttribute('data-url') || '/create-order/', {
                 method: 'POST',
                 body: formData,
                 headers: {
@@ -80,17 +113,19 @@ ocument.addEventListener('DOMContentLoaded', function () {
                             key: data.razorpay_key,
                             amount: data.amount,
                             currency: data.currency,
-                            name: "Your Store Name",
+                            name: data.store_name || "Your Store Name",
                             description: "Order Payment",
                             order_id: data.razorpay_order_id,
                             handler: function (response) {
                                 const verificationData = new FormData();
+                                verificationData.append('savedAddress', addressId);
+                                verificationData.append('payment', 'ONLINE');
                                 verificationData.append('razorpay_payment_id', response.razorpay_payment_id);
                                 verificationData.append('razorpay_order_id', response.razorpay_order_id);
                                 verificationData.append('razorpay_signature', response.razorpay_signature);
                                 verificationData.append('csrfmiddlewaretoken', csrfToken);
 
-                                fetch('/create-order/', {
+                                fetch(orderForm.getAttribute('data-url') || '/create-order/', {
                                     method: 'POST',
                                     body: verificationData,
                                     headers: {
@@ -111,11 +146,13 @@ ocument.addEventListener('DOMContentLoaded', function () {
                                         });
                                     } else {
                                         showAlert('error', result.message || 'Payment verification failed');
+                                        resetOrderButton();
                                     }
                                 })
                                 .catch(error => {
                                     console.error('Verification error:', error);
                                     showAlert('error', 'An error occurred during payment verification');
+                                    resetOrderButton();
                                 });
                             },
                             prefill: {
@@ -123,9 +160,19 @@ ocument.addEventListener('DOMContentLoaded', function () {
                                 email: data.email,
                                 contact: data.phone
                             },
-                            theme: { color: "#3399cc" }
+                            theme: { color: "#3399cc" },
+                            modal: {
+                                ondismiss: function() {
+                                    resetOrderButton();
+                                }
+                            }
                         };
                         const rzp = new Razorpay(options);
+                        rzp.on('payment.failed', function(response) {
+                            console.error('Razorpay payment failed:', response.error);
+                            showAlert('error', response.error.description || 'Payment failed');
+                            resetOrderButton();
+                        });
                         rzp.open();
                     });
                 } else {
@@ -141,17 +188,16 @@ ocument.addEventListener('DOMContentLoaded', function () {
                 }
             } else {
                 showAlert('error', data.message || 'An error occurred while placing your order');
-                placeOrderButton.disabled = false;
-                placeOrderButton.innerHTML = 'Place Order <i class="fas fa-arrow-right ml-2"></i>';
+                resetOrderButton();
             }
         } catch (error) {
             console.error('Order submission error:', error);
             showAlert('error', 'An unexpected error occurred. Please try again.');
-            placeOrderButton.disabled = false;
-            placeOrderButton.innerHTML = 'Place Order <i class="fas fa-arrow-right ml-2"></i>';
+            resetOrderButton();
         }
     }
 
+    // Existing event listeners
     paymentMethodInputs.forEach((input) => {
         input.addEventListener('change', checkOrderEligibility);
     });
@@ -165,6 +211,14 @@ ocument.addEventListener('DOMContentLoaded', function () {
             }
         });
     });
+
+    // Change address link scroll functionality
+    if (changeAddressLink) {
+        changeAddressLink.addEventListener('click', function(e) {
+            e.preventDefault();
+            document.querySelector('#savedAddressesSection').scrollIntoView({ behavior: 'smooth' });
+        });
+    }
 
     if (orderForm) {
         orderForm.addEventListener('submit', handleOrderSubmission);
