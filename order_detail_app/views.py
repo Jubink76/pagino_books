@@ -306,6 +306,20 @@ def create_order(request):
                 
                 else:  # COD
                     # Mark coupon as used for COD
+                    if payment_method == 'COD' and grand_total > 1000:
+                        # Clean up coupon usage if COD is not allowed
+                        if applied_coupon:
+                            CouponUsage.objects.filter(
+                                user=request.user,
+                                coupon=applied_coupon,
+                                is_used=False
+                            ).delete()
+                        order.delete()
+                        return JsonResponse({
+                            'status': 'error',
+                            'message': 'Cash on Delivery not available for orders above ₹1000. Please choose another payment method.',
+                            'payment_methods': ['WALLET', 'ONLINE']
+                        })
                     if applied_coupon:
                         coupon_usage = CouponUsage.objects.get(
                             user=request.user,
