@@ -364,6 +364,31 @@ def cancel_order(request, order_id):
 
         # Check if the order is already canceled
         if order.order_status != 'Canceled':
+            # Calculate the refund amount
+            refund_amount = order.total_amount
+
+            # Adjust refund amount if coupon or offer was applied
+            if order.coupon_applied:
+                refund_amount -= order.coupon_discount
+
+            # Handle refund if payment method is ONLINE
+            if order.payment_method in ['ONLINE', 'WALLET']:
+                # Get or create the user's wallet
+                wallet, created = WalletTable.objects.get_or_create(user=request.user)
+
+                # Update wallet balance with the calculated refund amount
+                wallet.available_balance += refund_amount
+                wallet.save()
+
+                # Log the transaction
+                WalletTransaction.objects.create(
+                    wallet=wallet,
+                    transaction_type='refund',
+                    transaction_amount=refund_amount,
+                    description=f"Refund for canceled order {order.order_id}",
+                    transaction_time=timezone.now()
+                )
+
             # Update order status
             order.order_status = 'Canceled'
             order.is_canceled = True
@@ -373,35 +398,12 @@ def cancel_order(request, order_id):
                 order_status='Canceled',
                 is_canceled=True
             )
-            # Handle refund if payment method is ONLINE
-            if order.payment_method in ['ONLINE', 'WALLET']:
-                # Get or create the user's wallet
-                wallet, created = WalletTable.objects.get_or_create(user=request.user)
 
-                # Update wallet balance
-                wallet.available_balance += order.total_amount
-                wallet.save()
-
-                # Log the transaction
-                WalletTransaction.objects.create(
-                    wallet=wallet,
-                    transaction_type='refund',
-                    transaction_amount=order.total_amount,
-                    description=f"Refund for canceled order {order.order_id}",
-                    transaction_time=timezone.now()
-                )
-
-                return JsonResponse({
-                    'status': 'success',
-                    'message': f"Order {order.order_id} has been canceled and refunded to your wallet.",
-                    'redirect_url': reverse('user_orders')
-                })
-            else:
-                return JsonResponse({
-                    'status': 'success',
-                    'message': f"Order {order.order_id} has been canceled (COD).",
-                    'redirect_url': reverse('user_orders')
-                })
+            return JsonResponse({
+                'status': 'success',
+                'message': f"Order {order.order_id} has been canceled and refunded. Refund amount: {refund_amount}",
+                'redirect_url': reverse('user_orders')
+            })
 
         else:
             return JsonResponse({
@@ -417,20 +419,53 @@ def cancel_order(request, order_id):
 def user_single_item_cancel(request, order_id, order_item_id):
     if request.method == "POST":
         try:
-            # Get the order and item details
+            # Retrieve order and item details
             order_detail = get_object_or_404(OrderDetails, order_id=order_id, user=request.user)
             order_item = get_object_or_404(OrderItem, order=order_detail, id=order_item_id)
 
-            # Prevent cancellation if the item or order is in an unchangeable state
+            # Prevent cancellation if item is shipped or delivered
             if order_item.order_status in ['Shipped', 'Delivered']:
                 return JsonResponse({
                     'status': 'error',
-                    'message': "You cannot cancel items that are already shipped or delivered."
+                    'message': "Cannot cancel shipped or delivered items."
                 }, status=400)
 
-            # Calculate refund amount
+            # Get all order items
+            all_order_items = OrderItem.objects.filter(order=order_detail)
+            total_order_amount = sum(item.total_price for item in all_order_items)
+
+            # Initialize refund amount
             refund_amount = Decimal(order_item.total_price)
-            coupon_applied = order_detail.coupon if hasattr(order_detail, 'coupon') else None
+
+            # Handle coupon calculation
+            if order_detail.coupon_applied and order_detail.coupon:
+                coupon = order_detail.coupon
+                
+                # Calculate coupon discount distribution
+                if coupon.discount_type == 'percentage':
+                    # Percentage-based coupon
+                    coupon_discount = total_order_amount * (coupon.discount_value / Decimal(100))
+                    item_proportion = order_item.total_price / total_order_amount
+                    item_coupon_discount = coupon_discount * item_proportion
+                    refund_amount -= item_coupon_discount
+                
+                elif coupon.discount_type == 'fixed':
+                    # Fixed amount coupon
+                    item_proportion = order_item.total_price / total_order_amount
+                    item_coupon_discount = coupon.discount_value * item_proportion
+                    refund_amount -= item_coupon_discount
+
+            # Handle offer calculation
+            offer = order_item.offer if hasattr(order_item, 'offer') else None
+            if offer and offer.is_active:
+                if offer.discount_type == 'percentage':
+                    original_price = order_item.total_price / (Decimal(1) - (offer.discount_value / Decimal(100)))
+                    offer_discount = original_price - order_item.total_price
+                    refund_amount = order_item.total_price
+                
+                elif offer.discount_type == 'fixed':
+                    # Adjust refund for fixed amount offer
+                    refund_amount = order_item.total_price
 
             with transaction.atomic():
                 # Cancel the specific item
@@ -438,36 +473,27 @@ def user_single_item_cancel(request, order_id, order_item_id):
                 order_item.order_status = 'Canceled'
                 order_item.save()
 
-                # Check for remaining active items in the order
-                remaining_items = OrderItem.objects.filter(order=order_detail, is_canceled=False)
-
-                # Adjust total amount and handle coupon usage if necessary
-                total_remaining_amount = sum(item.total_price for item in remaining_items)
-                if coupon_applied and total_remaining_amount < coupon_applied.min_purchase_amount:
-                    discount_lost = coupon_applied.discount_value
-                    refund_amount -= discount_lost
-                    coupon_usage = CouponUsage.objects.filter(user=request.user, coupon=coupon_applied).first()
-                    if coupon_usage:
-                        coupon_usage.delete()
-
-                # If no active items remain, cancel the entire order
+                # Recalculate order total and status
+                remaining_items = all_order_items.exclude(is_canceled=True)
+                
                 if not remaining_items.exists():
+                    # Entire order canceled
                     order_detail.order_status = 'Canceled'
                     order_detail.is_canceled = True
                     order_detail.cancel_date = now()
-                    order_detail.cancel_description = f"Order {order_id} canceled as all items were canceled."
                 else:
-                    # Adjust the order's total amount
-                    order_detail.total_amount -= refund_amount
-                    order_detail.cancel_description = f"Item {order_item_id} canceled by user."
+                    # Update order total
+                    new_total = sum(item.total_price for item in remaining_items)
+                    order_detail.total_amount = new_total
 
                 order_detail.save()
 
                 # Handle refund for ONLINE payments
-                if order_detail.payment_method == 'ONLINE':
+                if order_detail.payment_method in ['ONLINE', 'WALLET']:
                     wallet, _ = WalletTable.objects.get_or_create(user=request.user)
                     wallet.available_balance += refund_amount
                     wallet.save()
+
                     WalletTransaction.objects.create(
                         wallet=wallet,
                         transaction_type='refund',
@@ -478,13 +504,16 @@ def user_single_item_cancel(request, order_id, order_item_id):
 
             return JsonResponse({
                 'status': 'success',
-                'message': f"Item {order_item_id} has been successfully canceled.",
-                'item_id': order_item_id,  # For frontend updates
+                'message': f"Item {order_item_id} canceled successfully.",
+                'refund_amount': float(refund_amount),
+                'item_id': order_item_id
             })
+
         except Exception as e:
+            logger.error(f"Error in single item cancellation: {str(e)}")
             return JsonResponse({
                 'status': 'error',
-                'message': "Something went wrong. Please try again later."
+                'message': "An error occurred. Please try again."
             }, status=500)
 
     return JsonResponse({
@@ -630,7 +659,6 @@ def return_request(request, order_id):
     return JsonResponse({'status': 'error', 'message': "Invalid request method."}, status=405)
 
 #############################################################################################################################
-
 def approve_return_request(request, return_request_id):
     if request.method == "POST":
         return_request = get_object_or_404(ReturnRequest, id=return_request_id)
@@ -643,15 +671,59 @@ def approve_return_request(request, return_request_id):
             }, status=400)
 
         try:
-            # Process refund
             with transaction.atomic():
                 order = return_request.order
-                total_refund_amount = Decimal(order.total_amount if return_request.return_entire_order else 0)
+                
+                # Calculate refund amount
+                if return_request.return_entire_order:
+                    # Entire order return
+                    total_refund_amount = order.total_amount
+                    
+                    # Handle coupon discount for full order
+                    if order.coupon_applied and order.coupon:
+                        coupon = order.coupon
+                        if coupon.discount_type == 'percentage':
+                            coupon_discount = total_refund_amount * (coupon.discount_value / Decimal(100))
+                            total_refund_amount -= coupon_discount
+                        elif coupon.discount_type == 'fixed':
+                            total_refund_amount -= coupon.discount_value
 
-                # Calculate refund for selected items if not entire order
-                if not return_request.return_entire_order:
-                    items_to_return = return_request.items.all()
-                    total_refund_amount = sum(item.order_item.total_price for item in items_to_return)
+                else:
+                    # Partial order return
+                    return_items = return_request.items.all()
+                    
+                    # Calculate total returned items price
+                    total_returned_items_price = sum(item.order_item.total_price for item in return_items)
+                    total_order_amount = sum(item.total_price for item in order.orderitem_set.all())
+
+                    # Handle coupon discount for partial return
+                    if order.coupon_applied and order.coupon:
+                        coupon = order.coupon
+                        
+                        if coupon.discount_type == 'percentage':
+                            # Percentage-based coupon
+                            coupon_discount = total_order_amount * (coupon.discount_value / Decimal(100))
+                            item_proportion = total_returned_items_price / total_order_amount
+                            returned_items_coupon_discount = coupon_discount * item_proportion
+                            total_returned_items_price -= returned_items_coupon_discount
+                        
+                        elif coupon.discount_type == 'fixed':
+                            # Fixed amount coupon
+                            item_proportion = total_returned_items_price / total_order_amount
+                            returned_items_coupon_discount = coupon.discount_value * item_proportion
+                            total_returned_items_price -= returned_items_coupon_discount
+
+                    # Handle individual item offers for returned items
+                    for return_item in return_items:
+                        item = return_item.order_item
+                        offer = item.offer if hasattr(item, 'offer') else None
+                        
+                        if offer and offer.is_active:
+                            if offer.discount_type == 'percentage':
+                                original_price = item.total_price / (Decimal(1) - (offer.discount_value / Decimal(100)))
+                                total_returned_items_price = item.total_price
+
+                    total_refund_amount = total_returned_items_price
 
                 # Update wallet
                 wallet, created = WalletTable.objects.get_or_create(user=order.user)
@@ -667,7 +739,7 @@ def approve_return_request(request, return_request_id):
                     transaction_time=now()
                 )
 
-                # Update order and return request
+                # Update order and return request statuses
                 return_request.status = 'Approved'
                 return_request.processed_at = now()
                 return_request.save()
