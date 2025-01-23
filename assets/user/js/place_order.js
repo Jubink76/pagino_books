@@ -16,16 +16,16 @@ document.addEventListener('DOMContentLoaded', function () {
             confirmButtonColor: type === 'success' ? '#10B981' : '#EF4444',
         });
     }
-    // function showLoadingAlert(message = 'Processing your order...') {
-        // return Swal.fire({
-            // title: message,
-    //         allowOutsideClick: false,
-    //         showConfirmButton: false,
-    //         willOpen: () => {
-    //             Swal.showLoading();
-    //         }
-    //     });
-    // }
+    function showLoadingAlert(message = 'Processing your order...') {
+        return Swal.fire({
+            title: message,
+            allowOutsideClick: false,
+            showConfirmButton: false,
+            willOpen: () => {
+                Swal.showLoading();
+            }
+        });
+    }
 
     function resetOrderButton() {
         if (placeOrderButton) {
@@ -180,7 +180,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         try {
             if (selectedPayment.value === 'ONLINE') {
-                await showLoadingAlert('Initializing payment...');
+                /*await showLoadingAlert('Initializing payment...');*/
                 
                 const formData = new FormData();
                 formData.append('savedAddress', addressId);
