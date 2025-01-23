@@ -25,7 +25,8 @@ def shop_page(request):
     filter_author = request.GET.get('author', '')  
     price_min = request.GET.get('price_min', 0)  
     price_max = request.GET.get('price_max', 10000) 
-    search_query = request.GET.get('search', '') 
+    search_query = str(request.GET.get('search', '')).strip()
+    search_query = ' '.join(word for word in search_query.split() if word) 
 
     books = BookTable.objects.prefetch_related('images').filter(is_deleted=False)
 
@@ -70,12 +71,22 @@ def shop_page(request):
         book.save()
 
     if search_query:
-        books = books.filter(
-            Q(book_name__icontains=search_query) |
-            Q(author__name__icontains=search_query) |
-            Q(language__name__icontains=search_query)|
-            Q(description__icontains=search_query)
-        ).distinct()
+        # Split the search query into words and create Q objects for each word
+        search_words = search_query.split()
+        search_filter = Q()
+        
+        for word in search_words:
+            # Create a Q object for each search term
+            word_filter = (
+                Q(book_name__icontains=word) |
+                Q(author__name__icontains=word) |
+                Q(language__name__icontains=word) |
+                Q(description__icontains=word)
+            )
+            # Combine with AND operation
+            search_filter &= word_filter
+        
+        books = books.filter(search_filter).distinct()
 
 
     if filter_category:
@@ -570,7 +581,7 @@ def checkout_page(request):
         valid_from__lte=current_time,
         valid_to__gte=current_time
     )
-
+    print(f"thi is first available coupon,{available_coupons}")
     # Get user's used coupons
     used_coupon_ids = CouponUsage.objects.filter(
         user=user,
@@ -590,6 +601,7 @@ def checkout_page(request):
         Q(max_uses__isnull=True) | Q(total_uses__lt=F('max_uses')),
         user_uses__lt=F('max_uses_per_user')
     )
+    print(f"thi is seconnd available coupon,{available_coupons}")
     # Fetch addresses and cart items
     addresses = AddressTable.objects.filter(user=user)
     cart_items = CartTable.objects.filter(user=user)

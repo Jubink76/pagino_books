@@ -55,7 +55,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Payment Processing Functions
     async function processRazorpayPayment(orderData, addressId) {
-        console.log('Initializing Razorpay payment:', orderData);
         
         const options = {
             key: orderData.razorpay_key,
@@ -92,7 +91,6 @@ document.addEventListener('DOMContentLoaded', function () {
                     });
             
                     const result = await verificationResponse.json();
-                    console.log('Verification response:', result); // Add logging
             
                     if (result.status === 'success') {
                         await showAlert('success', 'Payment successful! Redirecting...');
@@ -108,7 +106,6 @@ document.addEventListener('DOMContentLoaded', function () {
             },
             modal: {
                 ondismiss: function() {
-                    console.log('Razorpay modal dismissed');
                     resetOrderButton();
                 }
             }
@@ -130,7 +127,6 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     async function processCODOrWalletPayment(addressId, paymentMethod) {
-        console.log(`Processing ${paymentMethod} payment`);
         await showLoadingAlert();
 
         const formData = new FormData();
@@ -148,7 +144,6 @@ document.addEventListener('DOMContentLoaded', function () {
             });
 
             const result = await response.json();
-            console.log(`${paymentMethod} payment result:`, result);
 
             if (result.status === 'success') {
                 await showAlert('success', result.message || 'Order placed successfully!');
@@ -166,7 +161,6 @@ document.addEventListener('DOMContentLoaded', function () {
     // Event Handlers
     async function handleOrderSubmission(e) {
         e.preventDefault();
-        console.log('Order submission started');
 
         const selectedPayment = document.querySelector('input[name="payment"]:checked');
         const addressId = currentDeliveryAddress?.getAttribute('data-address-id');
@@ -202,7 +196,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 });
 
                 const data = await response.json();
-                console.log('Initial payment setup response:', data);
 
                 if (data.status === 'success') {
                     await processRazorpayPayment(data, addressId);

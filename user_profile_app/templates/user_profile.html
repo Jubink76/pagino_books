@@ -127,28 +127,190 @@
 {% endblock %}
 
 {% block script %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
+    const validationRules = {
+        first_name: {
+            validate: (value) => {
+                if (!value.trim()) return "First name is required";
+                if (!/^[A-Za-z\s]+$/.test(value.trim())) return "Name should only contain letters and spaces";
+                return null;
+            }
+        },
+        last_name: {
+            validate: (value) => {
+                if (!value.trim()) return "Last name is required"; 
+                if (!/^[A-Za-z\s]+$/.test(value.trim())) return "Name should only contain letters and spaces";
+                return null;
+            }
+        },
+        username: {
+            validate: (value) => {
+                if (!value.trim()) return "Username is required";
+                if (!/^[a-zA-Z0-9_]+$/.test(value.trim())) return "Username should only contain letters, numbers and underscores";
+                return null;
+            }
+        },
+        email: {
+            validate: (value) => {
+                if (!value.trim()) return "Email is required";
+                if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim())) return "Please enter a valid email address";
+                return null;
+            }
+        },
+        phone_number: {
+            validate: (value) => {
+                if (value.trim() && !/^[6-9]\d{9}$/.test(value.trim())) return "Please enter a valid 10-digit phone number";
+                return null;
+            }
+        }
+    };
+    
+    let originalFormValues = {};
     document.addEventListener('DOMContentLoaded', function() {
         const form = document.getElementById('user-profile-form');
-        const saveChangesButton = document.getElementById('save-changes');
-        const originalValues = {};
-
-        // Store the original field values
-        form.querySelectorAll('input, select').forEach(function(field) {
-            originalValues[field.id] = field.value;
+        const saveButton = document.getElementById('save-changes');
+        
+        // Store original values
+        form.querySelectorAll('input, select').forEach(field => {
+            originalFormValues[field.id] = field.value;
         });
-
-        // Track form field changes
-        form.addEventListener('input', function() {
-            let isModified = false;
-            form.querySelectorAll('input, select').forEach(function(field) {
-                if (originalValues[field.id] !== field.value) {
-                    isModified = true;
-                    return;
+        
+        // Add validation to fields
+        Object.entries(validationRules).forEach(([fieldName, rule]) => {
+            const input = document.getElementById(fieldName);
+            if (!input) return;
+    
+            input.addEventListener('input', function() {
+                const error = rule.validate(this.value);
+                if (error) {
+                    showFieldError(this, error);
+                } else {
+                    removeFieldError(this);
+                }
+                checkFormChanges();
+            });
+    
+            input.addEventListener('blur', function() {
+                const error = rule.validate(this.value);
+                if (error) {
+                    showFieldError(this, error);
                 }
             });
-            saveChangesButton.disabled = !isModified;
+        });
+    
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            if (!validateForm()) return;
+        
+            const formData = new FormData(this);
+            fetch(this.action, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                },
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    Swal.fire({
+                        title: 'Success!',
+                        text: data.message,
+                        icon: 'success',
+                        confirmButtonText: 'OK'
+                    }).then(() => {
+                        if (data.redirect_url) {
+                            window.location.href = data.redirect_url;
+                        }
+                    });
+                } else {
+                    if (data.errors) {
+                        Object.entries(data.errors).forEach(([field, message]) => {
+                            const input = document.getElementById(field);
+                            if (input) showFieldError(input, message);
+                        });
+                        throw new Error('Please fix the validation errors');
+                    } else {
+                        throw new Error(data.message || 'Update failed');
+                    }
+                }
+            })
+            .catch(error => {
+                Swal.fire({
+                    title: 'Error',
+                    text: error.message || 'An error occurred while updating the profile',
+                    icon: 'error',
+                    confirmButtonText: 'OK'
+                });
+            });
         });
     });
+    
+    function showFieldError(input, message) {
+        removeFieldError(input);
+        
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'text-red-500 text-sm mt-1 validation-error';
+        errorDiv.textContent = message;
+        
+        input.classList.add('border-red-500', 'bg-red-50');
+        input.parentNode.appendChild(errorDiv);
+    }
+    
+    function removeFieldError(input) {
+        const existingError = input.parentNode.querySelector('.validation-error');
+        if (existingError) {
+            existingError.remove();
+        }
+        input.classList.remove('border-red-500', 'bg-red-50');
+    }
+    
+    function checkFormChanges() {
+        const form = document.getElementById('user-profile-form');
+        const saveButton = document.getElementById('save-changes');
+        let hasChanges = false;
+        
+        form.querySelectorAll('input, select').forEach(field => {
+            if (field.value !== originalFormValues[field.id]) {
+                hasChanges = true;
+            }
+        });
+        
+        saveButton.disabled = !hasChanges;
+        if (hasChanges) {
+            saveButton.classList.remove('opacity-50', 'cursor-not-allowed');
+        } else {
+            saveButton.classList.add('opacity-50', 'cursor-not-allowed');
+        }
+    }
+    
+    function validateForm() {
+        let isValid = true;
+        const errorMessages = [];
+        
+        Object.entries(validationRules).forEach(([fieldName, rule]) => {
+            const input = document.getElementById(fieldName);
+            if (!input) return;
+    
+            const error = rule.validate(input.value);
+            if (error) {
+                errorMessages.push(error);
+                showFieldError(input, error);
+                isValid = false;
+            }
+        });
+    
+        if (!isValid) {
+            Swal.fire({
+                title: 'Validation Error',
+                html: errorMessages.join('<br>'),
+                icon: 'error',
+                confirmButtonText: 'OK'
+            });
+        }
+    
+        return isValid;
+    }
 </script>
 {% endblock %}

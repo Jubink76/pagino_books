@@ -107,7 +107,30 @@ def user_signup(request):
             if UserTable.objects.filter(username=username).exists(): # user name is already exist or not
                 messages.error(request,"Username is already taken")
                 return render(request,'user_signup.html')
-        
+            if len(password) < 8:
+                messages.error(request, "Password must be at least 8 characters.")
+                return render(request, 'user_signup.html')
+            
+            if not any(c.isupper() for c in password):
+                messages.error(request, "Password must contain uppercase letters.")
+                return render(request, 'user_signup.html')
+                
+            if not any(c.islower() for c in password):
+                messages.error(request, "Password must contain lowercase letters.")
+                return render(request, 'user_signup.html')
+                
+            if not any(c.isdigit() for c in password):
+                messages.error(request, "Password must contain numbers.")
+                return render(request, 'user_signup.html')
+                
+            if not any(c in "!@#$%^&*" for c in password):
+                messages.error(request, "Password must contain special characters (!@#$%^&*).")
+                return render(request, 'user_signup.html')
+
+            if password != confirm_password:
+                messages.error(request, "Passwords do not match")
+                return render(request, 'user_signup.html')
+            
             # mail validation
             email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
             if not re.match(email_pattern, email):
@@ -131,13 +154,6 @@ def user_signup(request):
                 messages.error(request, "All fields are required")
                 return render(request,'user_signup.html')
 
-            if len(password) < 5:
-                messages.error(request, "Password must be at least 8 characters long.")
-                return render(request, 'user_signup.html')
-
-            if password != confirm_password: # rechecking the password correct or not
-                messages.error(request,"Invalid password")
-                return render(request,'user_signup.html')
             
 
             user = UserTable(

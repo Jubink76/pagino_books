@@ -7,251 +7,103 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login page</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.3/font/bootstrap-icons.css">
-    <link rel="stylesheet" href="{% static 'user/css/message.css' %}">
-    <style>
-        body {
-            min-height: 100vh;
-            background-color: #f8f9fa;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .login-container {
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
-            width: 100%;
-            max-width: 1000px;
-            margin: 2rem;
-            overflow: hidden;
-            position:relative
-        }
-
-        .row {
-            min-height: 600px;
-        }
-
-        .login-form-container {
-            padding: 3rem;
-        }
-
-        .back-link {
-            color: #6c757d;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            margin-bottom: 2rem;
-        }
-
-        .back-link:hover {
-            color: #000;
-        }
-
-        .login-title {
-            color: #ff6b6b;
-            font-size: 2.5rem;
-            margin-bottom: 0.5rem;
-        }
-
-        .welcome-text {
-            color: #495057;
-            margin-bottom: 2rem;
-        }
-
-        .form-control {
-            border-radius: 10px;
-            padding: 0.8rem;
-            border: 1px solid #dee2e6;
-        }
-
-        .form-control:focus {
-            box-shadow: 0 0 0 0.2rem rgba(255, 107, 107, 0.25);
-            border-color: #ff6b6b;
-        }
-
-        .login-options {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin: 1rem 0;
-        }
-
-        .btn-signin {
-            background: #ff6b6b;
-            border: none;
-            padding: 0.8rem;
-            border-radius: 10px;
-            color: white;
-            width: 100%;
-            margin: 1.5rem 0;
-            font-weight: 600;
-            transition: background 0.3s;
-        }
-
-        .btn-signin:hover {
-            background: #ff5252;
-        }
-
-        .btn-google {
-            background: white;
-            border: 1px solid #dee2e6;
-            color: #333;
-            padding: 0.8rem;
-            border-radius: 10px;
-            width: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
-            transition: background 0.3s;
-        }
-
-        .btn-google:hover {
-            background: #f8f9fa;
-        }
-
-        .login-image-container {
-            background: #fff5f5;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 2rem;
-        }
-
-        .login-image {
-            max-width: 100%;
-            height: auto;
-        }
-        #message-container {
-            position: fixed; /* Changed to fixed for consistent positioning */
-            top: 20px;
-            right: 20px;
-            z-index: 9999;
-            width: 300px;
-        }
-        
-        .alert {
-            padding: 15px;
-            margin-bottom: 10px;
-            border: none;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            opacity: 1;
-            transition: all 0.3s ease;
-        }
-        
-        .alert-success {
-            background-color: #d4edda !important;
-            color: #155724 !important;
-            border-left: 4px solid #28a745;
-        }
-        
-        .alert-error, .alert-danger {
-            background-color: #f8d7da !important;
-            color: #721c24 !important;
-            border-left: 4px solid #dc3545;
-        }
-        
-        .alert.fade {
-            opacity: 0;
-            transform: translateX(100%);
-        }
-        
-        .alert.show {
-            opacity: 1;
-            transform: translateX(0);
-        }
-        
-        .btn-close {
-            position: absolute;
-            right: 10px;
-            top: 50%;
-            transform: translateY(-50%);
-            padding: 0.5rem;
-            background: none;
-            border: none;
-            opacity: 0.5;
-            cursor: pointer;
-        }
-        
-        .btn-close:hover {
-            opacity: 1;
-        }
-
-    </style>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.3/font/bootstrap-icons.css" rel="stylesheet">
 </head>
-<body>
-    <div class="login-container">
-        <div class="row g-0">
-            <div class="col-md-6">
-                <div class="login-form-container">
-                    <a href="{% url 'homepage_before_login' %}" class="back-link">
-                        <i class="bi bi-arrow-left me-2"></i>
-                        Back to home
+<body class="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-[1000px] overflow-hidden grid grid-cols-1 md:grid-cols-2">
+        <div class="p-12">
+            <a href="{% url 'homepage_before_login' %}" class="text-gray-600 hover:text-black inline-flex items-center mb-8 text-sm">
+                <i class="bi bi-arrow-left mr-2"></i>
+                Back to home
+            </a>
+
+            {% if messages %}
+                <div id="message-container" class="fixed top-5 right-5 z-50 w-[300px]">
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show p-4 mb-2.5 border-l-4 rounded-lg shadow-md opacity-100 transition-all duration-300 
+                            {% if message.tags == 'success' %}bg-green-100 text-green-800 border-green-500{% endif %}
+                            {% if message.tags == 'error' %}bg-red-100 text-red-800 border-red-500{% endif %}"
+                            role="alert">
+                            {% if message.tags == 'success' %}
+                                <i class="bi bi-check-circle-fill mr-2"></i>
+                            {% elif message.tags == 'error' %}
+                                <i class="bi bi-exclamation-triangle-fill mr-2"></i>
+                            {% endif %}
+                            {{ message }}
+                            <button type="button" class="btn-close absolute right-2.5 top-1/2 transform -translate-y-1/2 opacity-50 hover:opacity-100" data-bs-dismiss="alert" aria-label="Close">
+                                <i class="bi bi-x"></i>
+                            </button>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <h1 class="text-[#ff6b6b] text-4xl font-bold mb-2">Login Here</h1>
+            <h2 class="text-gray-700 text-xl mb-6">Welcome !!!</h2>
+            
+            <form action="{% url 'user_login' %}" method="post" class="space-y-4">
+                {% csrf_token %}
+                <div>
+                    <label for="username" class="block mb-2 text-sm font-medium text-gray-700">Username</label>
+                    <input type="text" id="username" name="username" 
+                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ff6b6b]/25 focus:border-[#ff6b6b]" 
+                        placeholder="Enter your username" required>
+                    <span id="username_error" class="text-red-500 text-sm mt-1 block"></span>
+                </div>
+                
+                <div class="mb-4 relative">
+                    <div class="relative">
+                        <label for="password" class="block mb-2 text-sm font-medium text-gray-700">Password</label>
+                        <input type="password" id="password" name="password" 
+                            class="w-full border border-gray-300 rounded-lg px-4 py-3 text-sm pr-10 focus:border-[#ff5c5c] focus:ring-[#ff5c5c]/25" 
+                            placeholder="Password" required>
+                        <i id="togglePassword" class="fas fa-eye absolute right-3 top-1/2 transform -translate-y-1/2 cursor-pointer text-gray-500"></i>
+                        <div class="mt-2">
+                            <p id="passwordStrengthLabel" class="text-sm text-gray-600"></p>
+                        </div>
+                        <span id="password_error" class="text-red-500 text-sm hidden"></span>
+                    </div>
+                </div>
+                
+                <div class="flex justify-between items-center">
+                    <div class="flex items-center">
+                        <input type="checkbox" id="remember" name="remember" 
+                            class="mr-2 rounded text-[#ff6b6b] focus:ring-[#ff6b6b]/50">
+                        <label for="remember" class="text-sm text-gray-600">Remember me</label>
+                    </div>
+                    <a href="{% url 'forgot_password' %}" class="text-sm text-[#ff6b6b] hover:underline">
+                        Forgot Password?
                     </a>
-                    <h1 class="login-title">Login Here</h1>
-                    <h2 class="welcome-text">Welcome !!!</h2>
-                    {% if messages %}
-                        <div id="message-container">
-                            {% for message in messages %}
-                                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                                    {% if message.tags == 'success' %}
-                                        <i class="bi bi-check-circle-fill me-2"></i>
-                                    {% elif message.tags == 'error' %}
-                                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
-                                    {% endif %}
-                                    {{ message }}
-                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                                </div>
-                            {% endfor %}
-                        </div>
-                    {% endif %}
-                    
-                    <form action="{% url 'user_login' %}" method="post">
-                        {% csrf_token %}
-                        <div class="mb-3">
-                            <label for="username" class="form-label">Username</label>
-                            <input type="text" class="form-control" id="username" name="username" placeholder="Enter your username" required>
-                            <span class="error-message" id="username_error"></span>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label for="password" class="form-label">Password</label>
-                            <input type="password" class="form-control" id="password" name="password" placeholder="Enter your password" required>
-                            <span class="error-message" id="password_error"></span>
-                        </div>
-                        <div class="login-options">
-                            <div class="form-check">
-                                <input type="checkbox" class="form-check-input" id="remember" name="remember">
-                                <label class="form-check-label" for="remember">Remember me</label>
-                            </div>
-                            <a href="{% url 'forgot_password' %}" class="text-decoration-none">Forgot Password?</a>
-                        </div>
-                        
-                        <button type="submit" class="btn-signin">SIGN IN</button>
-                        
-                        <div class="text-center mb-3">
-                            Don't have an account? <a href="{% url 'user_signup' %}" class="text-decoration-none">Sign up</a>
-                        </div>
-                        <a href="{% provider_login_url 'google' %}" id="google-login-btn" class="btn-google">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 48 48">
-                                <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
-                                <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
-                                <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
-                                <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
-                            </svg>
-                            <span class="ms-2">Continue with Google</span>
-                        </a>
                 </div>
-            </div>
-            <div class="col-md-6">
-                <div class="login-image-container">
-                    <img src="{% static 'user/images/logo/login_image.png' %}" alt="Login" class="login-image">
+                
+                <button type="submit" 
+                    class="w-full bg-[#ff6b6b] text-white py-3 rounded-lg hover:bg-[#ff5252] transition duration-300 font-semibold">
+                    SIGN IN
+                </button>
+                
+                <div class="text-center mt-4">
+                    Don't have an account? 
+                    <a href="{% url 'user_signup' %}" class="text-[#ff6b6b] hover:underline">
+                        Sign up
+                    </a>
                 </div>
-            </div>
+                
+                <a href="{% provider_login_url 'google' %}" 
+                    class="flex items-center justify-center w-full border border-gray-300 py-3 rounded-lg hover:bg-gray-50 transition duration-300 gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 48 48">
+                        <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+                        <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+                        <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+                        <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+                    </svg>
+                    Continue with Google
+                </a>
+            </form>
+        </div>
+        
+        <div class="hidden md:flex items-center justify-center bg-[#fff5f5] p-8">
+            <img src="{% static 'user/images/logo/login_image.png' %}" alt="Login" class="max-w-full h-auto">
         </div>
     </div>
 
@@ -264,26 +116,112 @@
             const passwordInput = document.getElementById("password");
             const passwordError = document.getElementById("password_error");
         
-            usernameInput.addEventListener("input", function () {
-                const usernameValue = usernameInput.value;
-                const validPattern = /^[a-zA-Z0-9_-]*$/;
+            function calculatePasswordStrength(password) {
+                let score = 0;
+                if (password.length >= 8) score += 1;
+                if (/[A-Z]/.test(password)) score += 1;
+                if (/[a-z]/.test(password)) score += 1;
+                if (/\d/.test(password)) score += 1;
+                if (/[!@#$%^&*]/.test(password)) score += 1;
+                return score;
+            }
         
-                if (!validPattern.test(usernameValue)) {
-                    usernameError.textContent = "Username can only contain letters, numbers, underscores, and hyphens.";
-                    usernameError.style.color = "red";
+            function updatePasswordStrengthUI(strength) {
+                // Create strength bar and label if not already exists
+                let passwordStrengthBar = document.getElementById('passwordStrengthBar');
+                let passwordStrengthLabel = document.getElementById('passwordStrengthLabel');
+        
+                if (!passwordStrengthBar) {
+                    passwordStrengthBar = document.createElement('div');
+                    passwordStrengthBar.id = 'passwordStrengthBar';
+                    passwordStrengthBar.className = 'h-2 rounded-full bg-gray-200 mt-1 transition-all';
+                    passwordInput.parentNode.insertBefore(passwordStrengthBar, passwordError);
+                }
+        
+                if (!passwordStrengthLabel) {
+                    passwordStrengthLabel = document.createElement('div');
+                    passwordStrengthLabel.id = 'passwordStrengthLabel';
+                    passwordStrengthLabel.className = 'text-sm mt-1';
+                    passwordInput.parentNode.insertBefore(passwordStrengthLabel, passwordStrengthBar);
+                }
+        
+                const strengthClass = strength < 3 ? 'bg-red-500' :
+                    strength < 4 ? 'bg-yellow-500' : 'bg-green-500';
+                const strengthText = strength < 3 ? 'Weak' :
+                    strength < 4 ? 'Medium' : 'Strong';
+        
+                passwordStrengthBar.className = `h-2 rounded-full transition-all ${strengthClass}`;
+                passwordStrengthLabel.textContent = strengthText;
+                passwordStrengthLabel.className = `text-sm ${strengthClass.replace('bg-', 'text-')} mt-1`;
+            }
+        
+            function validateUsernameField() {
+                const numericPattern = /^\d+$/;
+                const validUsernamePattern = /^[A-Za-z][A-Za-z0-9_-]*$/;
+        
+                if (usernameInput.value.length > 0) {
+                    if (numericPattern.test(usernameInput.value)) {
+                        usernameError.style.display = 'block';
+                        usernameError.textContent = 'Username cannot be only numeric. It must be alphanumeric or start with a letter.';
+                        return false;
+                    } else if (!validUsernamePattern.test(usernameInput.value)) {
+                        usernameError.style.display = 'block';
+                        usernameError.textContent = 'Username must start with a letter and can contain letters, numbers, underscores, and hyphens.';
+                        return false;
+                    } else {
+                        usernameError.style.display = 'none';
+                        usernameError.textContent = '';
+                        return true;
+                    }
+                }
+                return true;
+            }
+        
+            function validatePasswordField() {
+                const password = passwordInput.value;
+                const strength = calculatePasswordStrength(password);
+                let errorMessage = '';
+        
+                if (password.length > 0) {
+                    if (password.length < 8) {
+                        errorMessage = 'Password must be at least 8 characters';
+                    } else if (!/[A-Z]/.test(password)) {
+                        errorMessage = 'Password must contain uppercase letters';
+                    } else if (!/[a-z]/.test(password)) {
+                        errorMessage = 'Password must contain lowercase letters';
+                    } else if (!/\d/.test(password)) {
+                        errorMessage = 'Password must contain numbers';
+                    } else if (!/[!@#$%^&*]/.test(password)) {
+                        errorMessage = 'Password must contain special characters (!@#$%^&*)';
+                    }
+                }
+        
+                if (errorMessage) {
+                    passwordError.style.display = 'block';
+                    passwordError.textContent = errorMessage;
+                    return false;
                 } else {
-                    usernameError.textContent = ""; // Clear error message
+                    passwordError.style.display = 'none';
+                    return true;
+                }
+            }
+        
+            // Blur event listeners
+            usernameInput.addEventListener('blur', validateUsernameField);
+            passwordInput.addEventListener('blur', validatePasswordField);
+        
+            // Input event listeners
+            usernameInput.addEventListener("input", function () {
+                if (usernameInput.value.length > 0) {
+                    validateUsernameField();
                 }
             });
         
-            passwordInput.addEventListener("input", function () {
-                const passwordValue = passwordInput.value;
-        
-                if (passwordValue.length < 5) {
-                    passwordError.textContent = "Password must be at least 5 characters long.";
-                    passwordError.style.color = "red";
-                } else {
-                    passwordError.textContent = ""; // Clear error message
+            passwordInput.addEventListener('input', function() {
+                if (passwordInput.value.length > 0) {
+                    const strength = calculatePasswordStrength(passwordInput.value);
+                    updatePasswordStrengthUI(strength);
+                    validatePasswordField();
                 }
             });
         });

@@ -20,11 +20,9 @@ from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.db.models import Prefetch
 # Create your views here.
 #######################################################################################################################
-def user_profile(request):
-    profile = UserTable.objects.get(id=request.user.id)
 
-    # updating the user information
-    if request.method=="POST":
+def user_profile(request):
+    if request.method == "POST":
         first_name = request.POST.get('first_name')
         last_name = request.POST.get('last_name')
         username = request.POST.get('username')
@@ -32,18 +30,87 @@ def user_profile(request):
         phone_number = request.POST.get('phone_number')
         gender = request.POST.get('gender')
 
-        # updating the existing field
-        profile.first_name = first_name
-        profile.last_name = last_name
-        profile.username = username
-        profile.email = email
-        profile.phone_number = phone_number
-        profile.gender = gender
+        is_valid = True
+        errors = {}
 
-        profile.save()
-        messages.success(request,"profile updated successfully")
-        return redirect('user_profile')
-    return render(request,'user_profile.html',{'profile':profile})
+        # First name validation
+        if not first_name:
+            errors['first_name'] = "First name is required"
+            is_valid = False
+        elif not all(char.isalpha() or char.isspace() for char in first_name):
+            errors['first_name'] = "First name should only contain letters and spaces"
+            is_valid = False
+        elif len(first_name) < 2:
+            errors['first_name'] = "First name should be at least 2 characters"
+            is_valid = False
+
+        # Last name validation
+        if not last_name:
+            errors['last_name'] = "Last name is required"
+            is_valid = False
+        elif not all(char.isalpha() or char.isspace() for char in last_name):
+            errors['last_name'] = "Last name should only contain letters and spaces"
+            is_valid = False
+        elif len(last_name) < 2:
+            errors['last_name'] = "Last name should be at least 2 characters" 
+            is_valid = False
+
+        # Username validation
+        if not username:
+            errors['username'] = "Username is required"
+            is_valid = False
+        elif not re.match(r'^[a-zA-Z0-9_]+$', username):
+            errors['username'] = "Username should only contain letters, numbers and underscores"
+            is_valid = False
+        elif UserTable.objects.exclude(id=request.user.id).filter(username=username).exists():
+            errors['username'] = "This username is already taken"
+            is_valid = False
+
+        # Email validation
+        if not email:
+            errors['email'] = "Email is required"
+            is_valid = False
+        elif not re.match(r'^[^\s@]+@[^\s@]+\.[^\s@]+$', email):
+            errors['email'] = "Please enter a valid email address"
+            is_valid = False
+        elif UserTable.objects.exclude(id=request.user.id).filter(email=email).exists():
+            errors['email'] = "This email is already registered"
+            is_valid = False
+
+        # Phone validation
+        if phone_number and not re.match(r'^[6-9]\d{9}$', phone_number):
+            errors['phone_number'] = "Please enter a valid 10-digit phone number"
+            is_valid = False
+
+        if is_valid:
+            try:
+                profile = UserTable.objects.get(id=request.user.id)
+                profile.first_name = first_name
+                profile.last_name = last_name
+                profile.username = username
+                profile.email = email
+                profile.phone_number = phone_number
+                profile.gender = gender
+                profile.save()
+                
+                return JsonResponse({
+                    'status': 'success',
+                    'message': 'Profile updated successfully!',
+                    'redirect_url': reverse('user_profile')
+                })
+            except Exception as e:
+                return JsonResponse({
+                    'status': 'error', 
+                    'message': f'An error occurred: {str(e)}'
+                })
+        else:
+            return JsonResponse({
+                'status': 'error',
+                'errors': errors
+            })
+
+    profile = UserTable.objects.get(id=request.user.id)
+    return render(request, 'user_profile.html', {'profile': profile})
 
 #######################################################################################################################
 
@@ -235,25 +302,49 @@ def user_password_reset(request):
         new_password = request.POST.get('new_password')
         confirm_password = request.POST.get('confirm_password')
 
-        if not request.user.check_password(current_password):
-            messages.error(request,"current password is incorrect")
-            return redirect('user_password_reset')
-        
-        if new_password != confirm_password:
-            messages.error(request,"New password and confirm password do not match")
-            return redirect('user_password_reset')
-        
-        user = request.user
-        request.user.set_password(new_password)
-        user.save()
+        errors = {}
+        if not current_password:
+            errors['current_password'] = 'Current password is required'
+        elif not request.user.check_password(current_password):
+            errors['current_password'] = 'Current password is incorrect'
 
-        update_session_auth_hash(request, user) 
-        return JsonResponse({
-            'status': 'success',
-            'message': 'Your password has been successfully updated.',
-            'redirect_url': reverse('user_profile')  # Ensure this URL exists
-        })
-    return render(request,'user_password_reset.html')
+        if not new_password:
+            errors['new_password'] = 'New password is required'
+        elif len(new_password) < 8:
+            errors['new_password'] = 'Password must be at least 8 characters'
+        elif not any(c.isupper() for c in new_password):
+            errors['new_password'] = 'Password must contain uppercase letters'
+        elif not any(c.islower() for c in new_password):
+            errors['new_password'] = 'Password must contain lowercase letters'
+        elif not any(c.isdigit() for c in new_password):
+            errors['new_password'] = 'Password must contain numbers'
+
+        if new_password != confirm_password:
+            errors['confirm_password'] = 'Passwords do not match'
+
+        if errors:
+            return JsonResponse({
+                'status': 'error',
+                'errors': errors
+            })
+
+        try:
+            user = request.user
+            user.set_password(new_password)
+            user.save()
+            update_session_auth_hash(request, user)
+            return JsonResponse({
+                'status': 'success',
+                'message': 'Your password has been successfully updated.',
+                'redirect_url': reverse('user_profile')
+            })
+        except Exception as e:
+            return JsonResponse({
+                'status': 'error',
+                'message': str(e)
+            })
+
+    return render(request, 'user_password_reset.html')
 
 #######################################################################################################################
 @login_required

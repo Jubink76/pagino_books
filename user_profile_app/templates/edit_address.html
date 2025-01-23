@@ -151,217 +151,264 @@
 {% endblock %}
 {% block script %}
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script>
+<script>
         // Address type selection
-        let originalFormValues = {};
+let originalFormValues = {};
+let selectedType = 'home'; // Default type
 
-        // Initialize form when page loads
-        document.addEventListener('DOMContentLoaded', function() {
-            const form = document.getElementById('addressForm');
-            const submitButton = form.querySelector('button[type="submit"]');
-            
-            // Store original values and disable submit button
-            submitButton.disabled = true;
-            submitButton.classList.add('opacity-50', 'cursor-not-allowed');
-            
-            form.querySelectorAll('input').forEach(input => {
-                originalFormValues[input.name] = input.value;
-                
-                // Add change detection to inputs
-                input.addEventListener('input', function() {
-                    this.classList.remove('border-red-500', 'bg-red-50');
-                    checkFormChanges();
-                });
-            });
+// Initialize form when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('addressForm');
+    const submitButton = form.querySelector('button[type="submit"]');
+    
+    // Store original values and disable submit button
+    submitButton.disabled = true;
+    submitButton.classList.add('opacity-50', 'cursor-not-allowed');
+    
+    // Store original values
+    form.querySelectorAll('input').forEach(input => {
+        originalFormValues[input.name] = input.value;
+    });
+    
+    // Store original address type
+    const activeType = document.querySelector('.type-option.active').dataset.type;
+    originalFormValues['address_type'] = activeType;
+    selectedType = activeType;
+});
+
+// Validation rules object
+const validationRules = {
+    address_name: {
+        validate: (value) => {
+            if (!value.trim()) return "Full name is required";
+            if (!/^[A-Za-z\s]+$/.test(value.trim())) return "Name should only contain letters and spaces";
+            return null;
+        }
+    },
+    street_name: {
+        validate: (value) => {
+            if (!value.trim()) return "Street address is required";
+            return null;
+        }
+    },
+    city: {
+        validate: (value) => {
+            if (!value.trim()) return "City is required";
+            if (!/^[A-Za-z\s]+$/.test(value.trim())) return "City should only contain letters and spaces";
+            return null;
+        }
+    },
+    pincode: {
+        validate: (value) => {
+            if (!value.trim()) return "Postal code is required";
+            if (!/^\d{6}$/.test(value.trim())) return "Please enter a valid 6-digit postal code";
+            return null;
+        }
+    },
+    address_phone: {
+        validate: (value) => {
+            if (!value.trim()) return "Phone number is required";
+            if (!/^[6-9]\d{9}$/.test(value.trim())) return "Please enter a valid 10-digit Indian phone number";
+            return null;
+        }
+    },
+    state: {
+        validate: (value) => {
+            if (!value.trim()) return "State is required";
+            if (!/^[A-Za-z\s]+$/.test(value.trim())) return "State should only contain letters and spaces";
+            return null;
+        }
+    }
+};
+
+// Function to show error message below input field
+function showFieldError(input, message) {
+    removeFieldError(input);
+    
+    const errorDiv = document.createElement('div');
+    errorDiv.className = 'text-red-500 text-sm mt-1 validation-error';
+    errorDiv.textContent = message;
+    
+    input.classList.add('border-red-500', 'bg-red-50');
+    input.parentNode.appendChild(errorDiv);
+}
+
+// Function to remove error message
+function removeFieldError(input) {
+    const existingError = input.parentNode.querySelector('.validation-error');
+    if (existingError) {
+        existingError.remove();
+    }
+    input.classList.remove('border-red-500', 'bg-red-50');
+}
+
+// Check if form values have changed
+function checkFormChanges() {
+    const form = document.getElementById('addressForm');
+    const submitButton = form.querySelector('button[type="submit"]');
+    let hasChanges = false;
+    
+    // Check input values
+    form.querySelectorAll('input').forEach(input => {
+        if (input.value !== originalFormValues[input.name]) {
+            hasChanges = true;
+        }
+    });
+    
+    // Check address type
+    const activeType = document.querySelector('.type-option.active').dataset.type;
+    if (activeType !== originalFormValues['address_type']) {
+        hasChanges = true;
+    }
+    
+    // Enable/disable submit button based on changes
+    submitButton.disabled = !hasChanges;
+    if (hasChanges) {
+        submitButton.classList.remove('opacity-50', 'cursor-not-allowed');
+    } else {
+        submitButton.classList.add('opacity-50', 'cursor-not-allowed');
+    }
+}
+
+// Add real-time validation to all inputs
+document.querySelectorAll('input').forEach(input => {
+    const fieldName = input.getAttribute('name');
+    if (validationRules[fieldName]) {
+        // Validate on input
+        input.addEventListener('input', function() {
+            const error = validationRules[fieldName].validate(this.value);
+            if (error) {
+                showFieldError(this, error);
+            } else {
+                removeFieldError(this);
+            }
+            checkFormChanges();
         });
-        
-        // Address type selection
-        const typeOptions = document.querySelectorAll('.type-option');
-        typeOptions.forEach(option => {
-            option.addEventListener('click', () => {
-                typeOptions.forEach(opt => {
-                    opt.classList.remove('active', 'border-red-500', 'bg-red-50');
-                    opt.classList.add('border-gray-300');
-                });
-                option.classList.add('active', 'border-red-500', 'bg-red-50');
-                option.classList.remove('border-gray-300');
-                checkFormChanges(); // Check for changes when address type is changed
-            });
+
+        // Validate on blur
+        input.addEventListener('blur', function() {
+            const error = validationRules[fieldName].validate(this.value);
+            if (error) {
+                showFieldError(this, error);
+            }
         });
+    }
+});
+
+// Address type selection
+const typeOptions = document.querySelectorAll('.type-option');
+typeOptions.forEach(option => {
+    option.addEventListener('click', () => {
+        typeOptions.forEach(opt => {
+            opt.classList.remove('active', 'border-red-500', 'bg-red-50');
+            opt.classList.add('border-gray-300');
+        });
+        option.classList.add('active', 'border-red-500', 'bg-red-50');
+        option.classList.remove('border-gray-300');
+        selectedType = option.dataset.type;
+        checkFormChanges();
+    });
+});
+
+// Client-side validation function
+function validateForm() {
+    let isValid = true;
+    const errorMessages = [];
+    
+    // Reset all fields' styles
+    document.querySelectorAll('input').forEach(input => {
+        removeFieldError(input);
+    });
+
+    // Validate each field
+    Object.keys(validationRules).forEach(fieldName => {
+        const input = document.getElementsByName(fieldName)[0];
+        const error = validationRules[fieldName].validate(input.value);
         
-        // Check if form values have changed
-        function checkFormChanges() {
-            const form = document.getElementById('addressForm');
-            const submitButton = form.querySelector('button[type="submit"]');
-            let hasChanges = false;
-            
-            form.querySelectorAll('input').forEach(input => {
-                if (input.value !== originalFormValues[input.name]) {
-                    hasChanges = true;
+        if (error) {
+            errorMessages.push(error);
+            showFieldError(input, error);
+            isValid = false;
+        }
+    });
+
+    if (!isValid) {
+        Swal.fire({
+            title: 'Validation Error',
+            html: errorMessages.join('<br>'),
+            icon: 'error',
+            confirmButtonText: 'OK'
+        });
+        return false;
+    }
+
+    return true;
+}
+
+// Form submission handler
+document.getElementById('addressForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    if (!validateForm()) {
+        return;
+    }
+
+    const formData = new FormData(this);
+    formData.append('address_type', selectedType);
+
+    try {
+        const url = this.getAttribute('data-url');
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrfToken
+            },
+            body: formData
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            Swal.fire({
+                title: 'Success!',
+                text: 'Address updated successfully',
+                icon: 'success',
+                confirmButtonText: 'OK'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = document.querySelector('a[href*="user_address"]').href;
                 }
             });
-            
-            // Also check if address type has changed
-            const activeType = document.querySelector('.type-option.active').dataset.type;
-            if (activeType !== originalFormValues['address_type']) {
-                hasChanges = true;
-            }
-            
-            // Enable/disable submit button based on changes
-            if (hasChanges) {
-                submitButton.disabled = false;
-                submitButton.classList.remove('opacity-50', 'cursor-not-allowed');
-            } else {
-                submitButton.disabled = true;
-                submitButton.classList.add('opacity-50', 'cursor-not-allowed');
-            }
-        }
-        
-        // Form validation (your existing validation function)
-        function validateForm() {
-            let isValid = true;
-            const errorMessages = [];
-            
-            // Reset all fields' styles
-            document.querySelectorAll('input').forEach(input => {
-                input.classList.remove('border-red-500', 'bg-red-50');
-            });
-        
-            // Full Name validation
-            const addressName = document.getElementsByName('address_name')[0];
-            if (!addressName.value.trim()) {
-                errorMessages.push("Full name is required");
-                addressName.classList.add('border-red-500', 'bg-red-50');
-                isValid = false;
-            } else if (!/^[A-Za-z\s]+$/.test(addressName.value.trim())) {
-                errorMessages.push("Name should only contain letters and spaces");
-                addressName.classList.add('border-red-500', 'bg-red-50');
-                isValid = false;
-            }
-        
-            // Street Address validation
-            const streetName = document.getElementsByName('street_name')[0];
-            if (!streetName.value.trim()) {
-                errorMessages.push("Street address is required");
-                streetName.classList.add('border-red-500', 'bg-red-50');
-                isValid = false;
-            }
-        
-            // City validation
-            const city = document.getElementsByName('city')[0];
-            if (!city.value.trim()) {
-                errorMessages.push("City is required");
-                city.classList.add('border-red-500', 'bg-red-50');
-                isValid = false;
-            } else if (!/^[A-Za-z\s]+$/.test(city.value.trim())) {
-                errorMessages.push("City should only contain letters and spaces");
-                city.classList.add('border-red-500', 'bg-red-50');
-                isValid = false;
-            }
-        
-            // Pincode validation
-            const pincode = document.getElementsByName('pincode')[0];
-            if (!pincode.value.trim()) {
-                errorMessages.push("Postal code is required");
-                pincode.classList.add('border-red-500', 'bg-red-50');
-                isValid = false;
-            } else if (!/^\d{6}$/.test(pincode.value.trim())) {
-                errorMessages.push("Please enter a valid 6-digit postal code");
-                pincode.classList.add('border-red-500', 'bg-red-50');
-                isValid = false;
-            }
-        
-            // Phone number validation
-            const phone = document.getElementsByName('address_phone')[0];
-            if (!phone.value.trim()) {
-                errorMessages.push("Phone number is required");
-                phone.classList.add('border-red-500', 'bg-red-50');
-                isValid = false;
-            } else if (!/^[6-9]\d{9}$/.test(phone.value.trim())) {
-                errorMessages.push("Please enter a valid 10-digit Indian phone number");
-                phone.classList.add('border-red-500', 'bg-red-50');
-                isValid = false;
-            }
-        
-            // State validation
-            const state = document.getElementsByName('state')[0];
-            if (!state.value.trim()) {
-                errorMessages.push("State is required");
-                state.classList.add('border-red-500', 'bg-red-50');
-                isValid = false;
-            } else if (!/^[A-Za-z\s]+$/.test(state.value.trim())) {
-                errorMessages.push("State should only contain letters and spaces");
-                state.classList.add('border-red-500', 'bg-red-50');
-                isValid = false;
-            }
-        
-            // Show errors using SweetAlert if validation fails
-            if (!isValid) {
+        } else {
+            const errorMessages = Object.values(data.errors || {}).flat();
+            if (errorMessages.length > 0) {
                 Swal.fire({
                     title: 'Validation Error',
                     html: errorMessages.join('<br>'),
                     icon: 'error',
                     confirmButtonText: 'OK'
                 });
-                return false;
             }
-        
-            return true;
+
+            // Show field-specific errors
+            Object.entries(data.errors || {}).forEach(([field, errors]) => {
+                const input = document.getElementsByName(field)[0];
+                if (input) {
+                    showFieldError(input, errors[0]);
+                }
+            });
         }
-        
-        // Updated form submission handler with AJAX
-        document.getElementById('addressForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            if (validateForm()) {
-                const formData = new FormData(this);
-                const activeType = document.querySelector('.type-option.active').dataset.type;
-                formData.append('address_type', activeType);
-                
-                const url = this.getAttribute('data-url');
-                
-                // Get CSRF token
-                const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-                
-                fetch(url, {
-                    method: 'POST',
-                    body: formData,
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'X-CSRFToken': csrfToken
-                    }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        Swal.fire({
-                            title: 'Success!',
-                            text: 'Address updated successfully',
-                            icon: 'success',
-                            confirmButtonText: 'OK'
-                        }).then((result) => {
-                            if (result.isConfirmed) {
-                                window.location.href = data.redirect_url;
-                            }
-                        });
-                    } else {
-                        Swal.fire({
-                            title: 'Error',
-                            text: data.message || 'Something went wrong',
-                            icon: 'error',
-                            confirmButtonText: 'OK'
-                        });
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    Swal.fire({
-                        title: 'Error',
-                        text: 'Something went wrong',
-                        icon: 'error',
-                        confirmButtonText: 'OK'
-                    });
-                });
-            }
+    } catch (error) {
+        console.error('Submission error:', error);
+        Swal.fire({
+            title: 'Error',
+            text: 'An error occurred while updating the address. Please try again.',
+            icon: 'error',
+            confirmButtonText: 'OK'
         });
-    </script>
+    }
+});
+</script>
 {% endblock %}

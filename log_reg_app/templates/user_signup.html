@@ -6,207 +6,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sign Up</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <style>
-        body {
-            background-color: #f8f9fa;
-            height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0;
-            padding: 20px;
-        }
-
-        .signup-container {
-            background: white;
-            border-radius: 24px;
-            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.08);
-            width: 100%;
-            max-width: 1200px;
-            overflow: hidden;
-            display: flex;
-        }
-
-        .form-section {
-            flex: 1;
-            padding: 40px;
-        }
-
-        .image-section {
-            flex: 1;
-            background-color: #fff5f5;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 40px;
-        }
-
-        .back-link {
-            color: #6c757d;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            margin-bottom: 32px;
-            font-size: 15px;
-        }
-
-        .back-link:hover { 
-            color: #000;
-        }
-
-        .signup-title {
-            color: #ff5c5c;
-            font-size: 32px;
-            margin-bottom: 8px;
-            font-weight: 600;
-        }
-
-        .welcome-text {
-            color: #495057;
-            font-size: 24px;
-            margin-bottom: 32px;
-        }
-
-        .form-label {
-            color: #495057;
-            font-size: 15px;
-            margin-bottom: 8px;
-        }
-
-        .form-control {
-            border: 1px solid #dee2e6;
-            border-radius: 8px;
-            padding: 12px 16px;
-            height: auto;
-            font-size: 15px;
-            margin-bottom: 16px;
-        }
-
-        .form-control:focus {
-            border-color: #ff5c5c;
-            box-shadow: 0 0 0 0.2rem rgba(255, 92, 92, 0.25);
-        }
-
-        .form-select {
-            border: 1px solid #dee2e6;
-            border-radius: 8px;
-            padding: 12px 16px;
-            height: auto;
-            font-size: 15px;
-            margin-bottom: 16px;
-        }
-
-        .form-select:focus {
-            border-color: #ff5c5c;
-            box-shadow: 0 0 0 0.2rem rgba(255, 92, 92, 0.25);
-        }
-
-        .btn-signup {
-            background: #ff5c5c;
-            border: none;
-            border-radius: 8px;
-            color: white;
-            width: 100%;
-            padding: 12px;
-            font-size: 16px;
-            font-weight: 500;
-            margin: 24px 0;
-            transition: background-color 0.2s;
-        }
-
-        .btn-signup:hover {
-            background: #ff4444;
-        }
-
-        .login-link {
-            text-align: center;
-            color: #6c757d;
-            margin-bottom: 24px;
-        }
-
-        .login-link a {
-            color: #ff5c5c;
-            text-decoration: none;
-        }
-
-        .btn-google {
-            border: 1px solid #dee2e6;
-            background: white;
-            border-radius: 8px;
-            width: 100%;
-            padding: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            color: #333;
-            text-decoration: none;
-            transition: background-color 0.2s;
-        }
-
-        .btn-google:hover {
-            background: #f8f9fa;
-        }
-
-        .form-row {
-            display: flex;
-            gap: 16px;
-            margin-bottom: 0;
-        }
-
-        .form-row .form-group {
-            flex: 1;
-        }
-        .error-message {
-            color: red;
-            font-size: 0.9em;
-            display: none; /* Hide by default */
-        }
-        .form-group {
-            margin-bottom: 15px;
-            position: relative; /* Make this relative for absolute positioning of icon */
-        }
-        .form-control {
-            width: 100%; /* Full width */
-            padding-right: 40px; /* Add space for the icon */
-            box-sizing: border-box; /* Include padding in the width calculation */
-        }
-        .fas {
-            position: absolute;
-            right: 10px; /* Distance from the right edge of the input */
-            top: 50%;
-            transform: translateY(-50%); /* Center the icon vertically */
-            cursor: pointer; /* Change cursor to pointer */
-            color: #888; /* Optional: Change icon color */
-        }
-        @media (max-width: 768px) {
-            .signup-container {
-                flex-direction: column;
-            }
-            
-            .image-section {
-                display: none;
-            }
-            
-            .form-section {
-                padding: 24px;
-            }
-            
-            .form-row {
-                flex-direction: column;
-                gap: 0;
-            }
-        }
-    </style>
 </head>
-<body>
-    <div class="signup-container">
-        <div class="form-section">
-            <a href="{% url 'homepage_before_login' %}" class="back-link">
+<body class="bg-gray-50 h-screen flex items-center justify-center p-5">
+    <div class="bg-white rounded-3xl shadow-xl w-full max-w-6xl overflow-hidden flex">
+        <div class="w-full md:w-1/2 p-10">
+            <a href="{% url 'homepage_before_login' %}" class="text-gray-600 hover:text-black inline-flex items-center mb-8 text-sm">
                 ← Back to home
             </a>
+
             {% if messages %}
                 <div id="message-container">
                     {% for message in messages %}
@@ -222,75 +31,103 @@
                     {% endfor %}
                 </div>
             {% endif %}
-            <h1 class="signup-title">Sign Up</h1>
-            <h2 class="welcome-text">Create Account !!!</h2>
+
+            <h1 class="text-[#ff5c5c] text-3xl font-semibold mb-2">Sign Up</h1>
+            <h2 class="text-gray-700 text-2xl mb-8">Create Account !!!</h2>
             
             <form action="{% url 'user_signup' %}" method="post" class="signup-form">
                 {% csrf_token %}
-                <div class="form-row">
-                    <div class="form-group">
-                        <input type="text" class="form-control" name="first_name" id="first_name" placeholder="First Name" required>
-                        <span class="error-message" id="first_name_error"></span>
+                <div class="flex gap-4 mb-4">
+                    <div class="flex-1">
+                        <input type="text" id="first_name" name="first_name" 
+                            class="w-full border border-gray-300 rounded-lg px-4 py-3 text-sm focus:border-[#ff5c5c] focus:ring-[#ff5c5c]/25" 
+                            placeholder="First Name" required>
+                        <span id="first_name_error" class="text-red-500 text-sm hidden"></span>
                     </div>
-                    <div class="form-group">
-                        <input type="text" class="form-control" name="last_name" id="last_name" placeholder="Last Name" required>
-                        <span class="error-message" id="last_name_error"></span>
+                    <div class="flex-1">
+                        <input type="text" id="last_name" name="last_name" 
+                            class="w-full border border-gray-300 rounded-lg px-4 py-3 text-sm focus:border-[#ff5c5c] focus:ring-[#ff5c5c]/25" 
+                            placeholder="Last Name" required>
+                        <span id="last_name_error" class="text-red-500 text-sm hidden"></span>
                     </div>
                 </div>
                 
-                <div class="form-group">
-                    <input type="text" class="form-control" name="username" id="username" placeholder="Username" required>
-                    <span class="error-message" id="username_error"></span> 
-                </div>
-                <div class="form-group">
-                    <input type="email" class="form-control" name="email" id="email" placeholder="Email" required>
-                    <span class="error-message" id="email_error"></span>
-                </div>
-                <div class="form-group">
-                    <input type="tel" class="form-control" id="phone_number" name="phone_number" placeholder="Phone Number" required>
-                    <span class="error-message" id="phone_number_error" style="display: none; color: red;"></span>
+                <div class="mb-4">
+                    <input type="text" id="username" name="username" 
+                        class="w-full border border-gray-300 rounded-lg px-4 py-3 text-sm focus:border-[#ff5c5c] focus:ring-[#ff5c5c]/25" 
+                        placeholder="Username" required>
+                    <span id="username_error" class="text-red-500 text-sm hidden"></span>
                 </div>
                 
-                <select class="form-select" name="gender" required="required">
+                <div class="mb-4">
+                    <input type="email" id="email" name="email" 
+                        class="w-full border border-gray-300 rounded-lg px-4 py-3 text-sm focus:border-[#ff5c5c] focus:ring-[#ff5c5c]/25" 
+                        placeholder="Email" required>
+                    <span id="email_error" class="text-red-500 text-sm hidden"></span>
+                </div>
+                
+                <div class="mb-4 relative">
+                    <input type="tel" id="phone_number" name="phone_number" 
+                        class="w-full border border-gray-300 rounded-lg px-4 py-3 text-sm focus:border-[#ff5c5c] focus:ring-[#ff5c5c]/25" 
+                        placeholder="Phone Number" required>
+                    <span id="phone_number_error" class="text-red-500 text-sm hidden"></span>
+                </div>
+                
+                <select name="gender" 
+                    class="w-full border border-gray-300 rounded-lg px-4 py-3 text-sm mb-4 focus:border-[#ff5c5c] focus:ring-[#ff5c5c]/25" 
+                    required>
                     <option value="" selected disabled>Select Gender</option>
                     <option value="male">Male</option>
                     <option value="female">Female</option>
                     <option value="other">Other</option>
                 </select>
                 
-                <div class="form-group">
-                    <input type="password" class="form-control" id="password" name="password" placeholder="Password" required>
-                    <span class="error-message" id="password_error" style="display: none; color: red;"></span>
-                    <i id="togglePassword" class="fas fa-eye" style="cursor: pointer;"></i> 
+                <div class="mb-4 relative">
+                    <div class="relative">
+                        <input type="password" id="password" name="password" 
+                            class="w-full border border-gray-300 rounded-lg px-4 py-3 text-sm pr-10 focus:border-[#ff5c5c] focus:ring-[#ff5c5c]/25" 
+                            placeholder="Password" required>
+                        <i id="togglePassword" class="fas fa-eye absolute right-3 top-1/2 transform -translate-y-1/2 cursor-pointer text-gray-500"></i>
+                        <div class="mt-2">
+                            <p id="passwordStrengthLabel" class="text-sm text-gray-600"></p>
+                        </div>
+                        <span id="password_error" class="text-red-500 text-sm hidden"></span>
+                    </div>
                 </div>
                 
-                <div class="form-group">
-                    <input type="password" class="form-control" id="confirm_password" name="confirm_password" placeholder="Confirm Password" required>
-                    <span class="error-message" id="confirm_password_error" style="display: none; color: red;"></span>
-                    <i id="toggleConfirmPassword" class="fas fa-eye" style="cursor: pointer;"></i>
+                <div class="mb-4 relative">
+                    <input type="password" id="confirm_password" name="confirm_password" 
+                        class="w-full border border-gray-300 rounded-lg px-4 py-3 text-sm pr-10 focus:border-[#ff5c5c] focus:ring-[#ff5c5c]/25" 
+                        placeholder="Confirm Password" required>
+                    <i id="toggleConfirmPassword" class="fas fa-eye absolute right-3 top-1/2 transform -translate-y-1/2 cursor-pointer text-gray-500"></i>
+                    <span id="confirm_password_error" class="text-red-500 text-sm hidden"></span>
                 </div>
                 
-                <button type="submit" class="btn-signup">SIGN UP</button>
+                <button type="submit" 
+                    class="w-full bg-[#ff5c5c] text-white rounded-lg py-3 text-base font-medium hover:bg-[#ff4444] transition duration-200 mb-6">
+                    SIGN UP
+                </button>
                 
-                <div class="login-link">
-                    Already have an account? <a href="{% url 'user_login' %}">Sign in</a>
+                <div class="text-center text-gray-600 mb-6">
+                    Already have an account? <a href="{% url 'user_login' %}" class="text-[#ff5c5c]">Sign in</a>
                 </div>
                 
-                <a href="{% provider_login_url 'google' %}" class="btn-google">
+                <a href="{% provider_login_url 'google' %}" 
+                    class="flex items-center justify-center w-full border border-gray-300 rounded-lg py-3 text-gray-700 hover:bg-gray-50 transition duration-200 gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 48 48">
                         <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
                         <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
                         <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
                         <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
                     </svg>
-                    <span class="ms-2">Continue with Google</span>
+                    Continue with Google
                 </a>
             </form>
         </div>
         
-        <div class="image-section">
-            <img src="{% static 'user/images/logo/login_image.png' %}" alt="Sign Up" style="max-width: 100%; height: auto;">
-        </div>
+        <div class="hidden md:block md:w-1/2 bg-[#fff5f5] flex items-center justify-center p-10">
+            <img src="{% static 'user/images/logo/login_image.png' %}" alt="Sign Up" class="mx-auto my-auto max-w-full max-h-full object-contain mt-20">
+         </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
@@ -308,7 +145,7 @@
             const toggleConfirmPassword = document.getElementById('toggleConfirmPassword');
             const phoneInput = document.getElementById('phone_number');
             const phoneErrorMessage = document.getElementById('phone_number_error');
-    
+            
         
                 function validateAlphabeticField(inputField, errorFieldId) {
                     const namePattern = /^[A-Za-z]+$/;
@@ -326,39 +163,49 @@
                 }
         
                 function validateUsernameField() {
-                    const usernamePattern = /^[A-Za-z0-9_-]+$/; 
+                    const numericPattern = /^\d+$/;
+                    const validUsernamePattern = /^[A-Za-z][A-Za-z0-9_-]*$/;
                     const errorMessageElement = document.getElementById('username_error');
-        
-                    if (!usernamePattern.test(usernameInput.value) && usernameInput.value.length > 0) {
-                        errorMessageElement.style.display = 'block';
-                        errorMessageElement.textContent = 'Username can only contain letters, numbers, underscores, and hyphens.';
-                        return false;
-                    } else {
-                        errorMessageElement.style.display = 'none';
-                        errorMessageElement.textContent = '';
-                        return true;
+                
+                    if (usernameInput.value.length > 0) {
+                        if (numericPattern.test(usernameInput.value)) {
+                            errorMessageElement.style.display = 'block';
+                            errorMessageElement.textContent = 'Username cannot be only numeric. It must be alphanumeric or start with a letter.';
+                            return false;
+                        } else if (!validUsernamePattern.test(usernameInput.value)) {
+                            errorMessageElement.style.display = 'block';
+                            errorMessageElement.textContent = 'Username must start with a letter and can contain letters, numbers, underscores, and hyphens.';
+                            return false;
+                        } else {
+                            errorMessageElement.style.display = 'none';
+                            errorMessageElement.textContent = '';
+                            return true;
+                        }
                     }
+                    return true;
                 }
         
                 function validateEmailField() {
-                    const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-                    const invalidChars = /[^a-zA-Z0-9._%+-]/;
-                    const hasInvalidChars = invalidChars.test(emailInput.value.split('@')[0]); 
+                    const gmailPattern = /^[a-zA-Z][a-zA-Z0-9._%+-]*@gmail\.com$/;
                     const errorMessageElement = document.getElementById('email_error');
-        
+                
                     if (emailInput.value.length > 0) {
-                        if (hasInvalidChars) {
+                        if (!gmailPattern.test(emailInput.value)) {
                             errorMessageElement.style.display = 'block';
-                            errorMessageElement.textContent = 'Email can only contain valid characters before the "@" symbol.';
-                        } else if (!emailPattern.test(emailInput.value) && emailInput.value.includes('@')) {
-                            errorMessageElement.style.display = 'block';
-                            errorMessageElement.textContent = 'Invalid email format.';
+                            if (emailInput.value.match(/^\d/)) {
+                                errorMessageElement.textContent = 'Email cannot start with a digit';
+                            } else if (!emailInput.value.endsWith('@gmail.com')) {
+                                errorMessageElement.textContent = 'Only Gmail addresses(.com) are allowed';
+                            } else {
+                                errorMessageElement.textContent = 'Invalid email format';
+                            }
+                            return false;
                         } else {
-                            errorMessageElement.style.display = 'none'; 
+                            errorMessageElement.style.display = 'none';
+                            return true;
                         }
-                    } else {
-                        errorMessageElement.style.display = 'none'; 
                     }
+                    return true;
                 }
                 function validatePhoneNumber() {
                     const phonePattern = /^[6-9]\d{9}$/; // Start with 6-9, followed by exactly 9 other digits
@@ -374,20 +221,73 @@
                         return true;
                     }
                 }
-        
+
+                function calculatePasswordStrength(password) {
+                    let score = 0;
+                    if (password.length >= 8) score += 1;
+                    if (/[A-Z]/.test(password)) score += 1;
+                    if (/[a-z]/.test(password)) score += 1;
+                    if (/\d/.test(password)) score += 1;
+                    if (/[!@#$%^&*]/.test(password)) score += 1;
+                    return score;
+                }
+
+                function updatePasswordStrengthUI(strength) {
+                    const strengthClass = strength < 3 ? 'bg-red-500' :
+                        strength < 4 ? 'bg-yellow-500' : 'bg-green-500';
+                    const strengthText = strength < 3 ? 'Weak' :
+                        strength < 4 ? 'Medium' : 'Strong';
+            
+                    passwordStrengthBar.className = `h-2 rounded-full transition-all ${strengthClass}`;
+                    passwordStrengthLabel.textContent = strengthText;
+                    passwordStrengthLabel.className = `text-sm ${strengthClass.replace('bg-', 'text-')} mt-1`;
+                }
+            
+                // Add password strength indicator
+                const passwordStrengthBar = document.createElement('div');
+                passwordStrengthBar.className = 'h-2 rounded-full bg-gray-200 transition-all';
+                passwordInput.parentNode.insertBefore(passwordStrengthBar, passwordErrorMessage);
+            
+                const passwordStrengthLabel = document.createElement('div');
+                passwordStrengthLabel.className = 'text-sm mt-1';
+                passwordInput.parentNode.insertBefore(passwordStrengthLabel, passwordErrorMessage);
+            
+                passwordInput.addEventListener('input', () => {
+                    const strength = calculatePasswordStrength(passwordInput.value);
+                    updatePasswordStrengthUI(strength);
+                    validatePasswordField();
+                });
+                
                 function validatePasswordField() {
-                    const minLength = 5; 
+                    const password = passwordInput.value;
+                    const strength = calculatePasswordStrength(password);
                     const errorMessageElement = passwordErrorMessage;
-        
-                    if (passwordInput.value.length < minLength && passwordInput.value.length > 0) {
+                    let errorMessage = '';
+                
+                    if (password.length > 0) {
+                        if (password.length < 8) {
+                            errorMessage = 'Password must be at least 8 characters';
+                        } else if (!/[A-Z]/.test(password)) {
+                            errorMessage = 'Password must contain uppercase letters';
+                        } else if (!/[a-z]/.test(password)) {
+                            errorMessage = 'Password must contain lowercase letters';
+                        } else if (!/\d/.test(password)) {
+                            errorMessage = 'Password must contain numbers';
+                        } else if (!/[!@#$%^&*]/.test(password)) {
+                            errorMessage = 'Password must contain special characters (!@#$%^&*)';
+                        }
+                    }
+                
+                    if (errorMessage) {
                         errorMessageElement.style.display = 'block';
-                        errorMessageElement.textContent = `Password must be at least ${minLength} characters.`;
+                        errorMessageElement.textContent = errorMessage;
                         return false;
                     } else {
-                        errorMessageElement.style.display = 'none'; 
+                        errorMessageElement.style.display = 'none';
                         return true;
                     }
                 }
+                
         
                 function validateConfirmPasswordField() {
                     const errorMessageElement = confirmPasswordErrorMessage;
@@ -414,32 +314,67 @@
                 }
         
                 // Attach event listeners to input fields with blur event for error messages
+                firstNameInput.addEventListener('blur', function() {
+                    validateAlphabeticField(firstNameInput, 'first_name_error');
+                });
+            
+                lastNameInput.addEventListener('blur', function() {
+                    validateAlphabeticField(lastNameInput, 'last_name_error');
+                });
+            
+                usernameInput.addEventListener('blur', validateUsernameField);
+                
+                emailInput.addEventListener('blur', validateEmailField);
+                
+                phoneInput.addEventListener('blur', validatePhoneNumber);
+                
+                passwordInput.addEventListener('blur', validatePasswordField);
+                
+                confirmPasswordInput.addEventListener('blur', validateConfirmPasswordField);
+            
+                // Input event listeners for real-time validation
                 firstNameInput.addEventListener('input', function() {
-                    checkFormValidity();
+                    if (this.value.length > 0) {
+                        validateAlphabeticField(this, 'first_name_error');
+                    }
                 });
-                
+            
                 lastNameInput.addEventListener('input', function() {
-                    checkFormValidity();
+                    if (this.value.length > 0) {
+                        validateAlphabeticField(this, 'last_name_error');
+                    }
                 });
-                
+            
                 usernameInput.addEventListener('input', function() {
-                    checkFormValidity();
+                    if (this.value.length > 0) {
+                        validateUsernameField();
+                    }
                 });
-                
+            
                 emailInput.addEventListener('input', function() {
-                    checkFormValidity();
+                    if (this.value.length > 0) {
+                        validateEmailField();
+                    }
                 });
+            
                 phoneInput.addEventListener('input', function() {
-                    validatePhoneNumber();
-                    checkFormValidity(); 
+                    if (this.value.length > 0) {
+                        validatePhoneNumber();
+                    }
                 });
-                
+            
                 passwordInput.addEventListener('input', function() {
-                    checkFormValidity();
+                    if (this.value.length > 0) {
+                        const strength = calculatePasswordStrength(this.value);
+                        updatePasswordStrengthUI(strength);
+                        validatePasswordField();
+                    }
                 });
-                
+            
                 confirmPasswordInput.addEventListener('input', function() {
-                    checkFormValidity();
+                    if (this.value.length > 0) {
+                        validateConfirmPasswordField();
+                    }
                 });
         
                  //Toggle password visibility

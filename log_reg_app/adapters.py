@@ -1,23 +1,29 @@
 
-
+from django.shortcuts import redirect
 from allauth.account.adapter import DefaultAccountAdapter
 from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
 from django.db import IntegrityError
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from log_reg_app.models import UserTable
+from django.contrib import messages
 
 class CustomSocialAccountAdapter(DefaultSocialAccountAdapter):
     def pre_social_login(self, request, sociallogin):
         user = sociallogin.user
         email = user.email
-
+        
         if not email:
             return  # Skip if no email is provided
 
         try:
             # Check if a user with the same email already exists
             existing_user = UserTable.objects.get(email=email)
+
+            if existing_user.is_superuser:
+                messages.error(request, "Superusers are not allowed to log in using Google authentication.")
+                raise PermissionError("Superuser login via Google is not allowed.")
             sociallogin.connect(request, existing_user)
+            
         except ObjectDoesNotExist:
             # No user exists, proceed with social login
             pass

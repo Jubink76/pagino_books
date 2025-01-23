@@ -232,7 +232,6 @@ def create_order(request):
                             'currency': 'INR',
                             'payment_capture': '1'
                         })
-                        
                         order.razorpay_order_id = razorpay_order['id']
                         order.save()
                         
@@ -1129,3 +1128,4 @@ def submit_review(request, order_id):
     return JsonResponse({'status': 'error', 'message': 'Invalid request method.'}, status=405)
 
 ###################################################################################################################
+
