@@ -130,8 +130,12 @@ document.addEventListener('DOMContentLoaded', function () {
         await showLoadingAlert();
 
         const formData = new FormData();
+
+        console.log("forma data loading")
         formData.append('savedAddress', addressId);
+        console.log("address:",addressId)
         formData.append('payment', paymentMethod);
+        console.log("payment",paymentMethod)
 
         try {
             const response = await fetch(orderForm.getAttribute('data-url'), {
@@ -180,11 +184,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
         try {
             if (selectedPayment.value === 'ONLINE') {
-                /*await showLoadingAlert('Initializing payment...');*/
-                
+                await showLoadingAlert('Initializing payment...');
+                console.log("for online order")
                 const formData = new FormData();
                 formData.append('savedAddress', addressId);
+                console.log("address detail",addressId)
                 formData.append('payment', selectedPayment.value);
+                console.log("payment details",selectedPayment)
 
                 const response = await fetch(orderForm.getAttribute('data-url'), {
                     method: 'POST',
