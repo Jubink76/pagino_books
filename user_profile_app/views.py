@@ -348,18 +348,10 @@ def user_password_reset(request):
 
 #######################################################################################################################
 @login_required
-def user_orders(request, order_id=None):
+def user_orders(request):
+
     try:
-        show_return_form = False
-        show_review_form = False
-        selected_order = None
-        selected_book = None
-
-        orders_with_button = OrderDetails.objects.filter(
-            Q(payment_method__in=['ONLINE', 'WALLET']) | Q(order_status='Delivered'),
-            user=request.user
-        ).values_list('order_id', flat=True)
-
+        # Calculate order statistics
         order_stats = OrderDetails.objects.filter(user=request.user).aggregate(
             total_orders=Count('order_id'),
             delivered_orders=Count('order_id', filter=Q(order_status='Delivered')),
@@ -368,53 +360,18 @@ def user_orders(request, order_id=None):
             shipped_orders=Count('order_id', filter=Q(order_status='Shipped')),
             canceled_orders=Count('order_id', filter=Q(order_status='Canceled'))
         )
+        print(order_stats.items)
+        # Determine which orders can have an invoice button
+        orders_with_button = OrderDetails.objects.filter(
+            Q(payment_method__in=['ONLINE', 'WALLET']) | Q(order_status='Delivered'),
+            user=request.user
+        ).values_list('order_id', flat=True)
 
+        # Get user's reviews to mark reviewed items
         user_reviews = ReviewTable.objects.filter(user=request.user).values_list('order_id', 'book_id')
         reviewed_items = set((order_id, book_id) for order_id, book_id in user_reviews)
 
-        if request.method == "POST":
-            if 'return_order' in request.POST:
-                order_id = request.POST.get('order_id')
-                selected_order = get_object_or_404(
-                    OrderDetails.objects.prefetch_related('orderitem_set__book__images')
-                                     .prefetch_related('returnrequest_set')
-                                     .annotate(item_count=Count('orderitem')),
-                    order_id=order_id,
-                    user=request.user
-                )
-                show_return_form = True
-
-            elif 'review_order' in request.POST:
-                order_id = request.POST.get('order_id')
-                book_id = request.POST.get('book_id')
-
-                selected_order = get_object_or_404(
-                    OrderDetails.objects.prefetch_related('orderitem_set__book__images')
-                                     .prefetch_related('returnrequest_set'),
-                    order_id=order_id,
-                    user=request.user
-                )
-                selected_book = get_object_or_404(OrderItem.objects.select_related('book'), id=book_id).book
-                show_review_form = True
-
-        # Handle GET requests or specific order selection
-        if order_id:
-            selected_order = get_object_or_404(
-                OrderDetails.objects.select_related('user', 'address')
-                                 .prefetch_related('orderitem_set__book__images')
-                                 .prefetch_related('returnrequest_set')
-                                 .prefetch_related('returnrequest_set__items__order_item__book')
-                                 .annotate(item_count=Count('orderitem')),
-                order_id=order_id,
-                user=request.user
-            )
-
-        if selected_order:
-            is_single_item_order = selected_order.item_count == 1
-        else:
-            is_single_item_order = False
-
-        # Get all orders and apply pagination
+        # Fetch and prefetch orders with related data
         order_list = OrderDetails.objects.filter(user=request.user)\
             .prefetch_related(
                 Prefetch(
@@ -433,7 +390,7 @@ def user_orders(request, order_id=None):
             for item in order.orderitem_set.all():
                 item.is_reviewed = (order.order_id, item.book.id) in reviewed_items
 
-        # Create paginator object
+        # Paginate the orders
         paginator = Paginator(order_list, 5)  # Show 5 orders per page
         page_number = request.GET.get('page')
         
@@ -444,19 +401,10 @@ def user_orders(request, order_id=None):
         except EmptyPage:
             orders = paginator.page(paginator.num_pages)
 
-        if selected_order:
-            for item in selected_order.orderitem_set.all():
-                item.is_reviewed = (selected_order.order_id, item.book.id) in reviewed_items
-
         context = {
             'orders': orders,
-            'selected_order': selected_order,
-            'selected_book': selected_book,
             'order_stats': order_stats,
             'orders_with_button': orders_with_button,
-            'show_return_form': show_return_form,
-            'show_review_form': show_review_form,
-            'is_single_item_order': is_single_item_order,
             'reviewed_items': reviewed_items,
         }
 
@@ -464,8 +412,57 @@ def user_orders(request, order_id=None):
     
     except Exception as e:
         # Log the error for debugging
+        print(f"Error in user_orders_list view: {str(e)}")
         messages.error(request, "An error occurred while loading your orders. Please try again.")
+        return redirect('homepage_after_login')
+    
+########################################################################################################################
+@login_required
+def user_order_detail(request,order_id):
+    try:
+        # Fetch the specific order with all related data
+        selected_order = get_object_or_404(
+            OrderDetails.objects.select_related('user', 'address')
+                             .prefetch_related('orderitem_set__book__images')
+                             .prefetch_related('returnrequest_set')
+                             .prefetch_related('returnrequest_set__items__order_item__book')
+                             .annotate(item_count=Count('orderitem')),
+            order_id=order_id,
+            user=request.user
+        )
+
+        # Check if the user wants to write a review
+        show_review_form = False
+        selected_book = None
+
+        if request.method == "POST" and 'review_order' in request.POST:
+            book_id = request.POST.get('book_id')
+            selected_book = get_object_or_404(OrderItem.objects.select_related('book'), id=book_id).book
+            show_review_form = True
+
+        # Get user's reviews to mark reviewed items
+        user_reviews = ReviewTable.objects.filter(user=request.user).values_list('order_id', 'book_id')
+        reviewed_items = set((order_id, book_id) for order_id, book_id in user_reviews)
+
+        # Mark items as reviewed
+        for item in selected_order.orderitem_set.all():
+            item.is_reviewed = (selected_order.order_id, item.book.id) in reviewed_items
+
+        context = {
+            'selected_order': selected_order,
+            'selected_book': selected_book,
+            'show_review_form': show_review_form,
+            'is_single_item_order': selected_order.item_count == 1,
+        }
+
+        return render(request, 'user_order_detail.html', context)
+    
+    except Exception as e:
+        # Log the error for debugging
+        print(f"Error in user_order_detail view: {str(e)}")
+        messages.error(request, "An error occurred while loading your order details. Please try again.")
         return redirect('user_orders')
+    
 
 ########################################################################################################################
 
