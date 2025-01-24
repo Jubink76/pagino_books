@@ -364,12 +364,23 @@ def cancel_order(request, order_id):
 
         # Check if the order is already canceled
         if order.order_status != 'Canceled':
-            # Calculate the refund amount
-            refund_amount = order.total_amount
+            # Identify non-canceled items
+            non_canceled_items = OrderItem.objects.filter(order=order, is_canceled=False)
+
+            # Calculate the refund amount for non-canceled items
+            refund_amount = sum(item.total_price for item in non_canceled_items)
 
             # Adjust refund amount if coupon or offer was applied
             if order.coupon_applied:
-                refund_amount -= order.coupon_discount
+                # Proportionally adjust coupon discount
+                total_original_amount = sum(item.total_price for item in order.orderitem_set.all())
+                item_proportion = refund_amount / total_original_amount
+                refund_amount -= order.coupon_discount * item_proportion
+
+            for item in non_canceled_items:
+                book = item.book
+                book.stock_quantity += item.quantity
+                book.save()
 
             # Handle refund if payment method is ONLINE
             if order.payment_method in ['ONLINE', 'WALLET']:
@@ -389,19 +400,21 @@ def cancel_order(request, order_id):
                     transaction_time=timezone.now()
                 )
 
-            # Update order status
-            order.order_status = 'Canceled'
-            order.is_canceled = True
-            order.save()
-
-            OrderItem.objects.filter(order=order).update(
+            # Update order status for non-canceled items
+            non_canceled_items.update(
                 order_status='Canceled',
                 is_canceled=True
             )
 
+            # Update order total and status
+            order.total_amount = Decimal('0.00')
+            order.order_status = 'Canceled'
+            order.is_canceled = True
+            order.save()
+
             return JsonResponse({
                 'status': 'success',
-                'message': f"Order {order.order_id} has been canceled and refunded. Refund amount: {refund_amount}",
+                'message': f"Order {order.order_id} has been canceled. Refund amount: {refund_amount}",
                 'redirect_url': reverse('user_orders')
             })
 
@@ -468,6 +481,10 @@ def user_single_item_cancel(request, order_id, order_item_id):
                     refund_amount = order_item.total_price
 
             with transaction.atomic():
+                # Increase stock quantity for the canceled book
+                book = order_item.book
+                book.stock_quantity += order_item.quantity
+                book.save()
                 # Cancel the specific item
                 order_item.is_canceled = True
                 order_item.order_status = 'Canceled'
@@ -510,7 +527,6 @@ def user_single_item_cancel(request, order_id, order_item_id):
             })
 
         except Exception as e:
-            logger.error(f"Error in single item cancellation: {str(e)}")
             return JsonResponse({
                 'status': 'error',
                 'message': "An error occurred. Please try again."
@@ -676,6 +692,12 @@ def approve_return_request(request, return_request_id):
                 
                 # Calculate refund amount
                 if return_request.return_entire_order:
+                    # Entire order return - increment quantities for all order items
+                    order_items = order.orderitem_set.all()
+                    for item in order_items:
+                        book = item.book
+                        book.stock_quantity += item.quantity
+                        book.save()
                     # Entire order return
                     total_refund_amount = order.total_amount
                     
@@ -692,6 +714,12 @@ def approve_return_request(request, return_request_id):
                     # Partial order return
                     return_items = return_request.items.all()
                     
+                    # Increment stock for returned items
+                    for return_item in return_items:
+                        item = return_item.order_item
+                        book = item.book
+                        book.stock_quantity += item.quantity
+                        book.save()
                     # Calculate total returned items price
                     total_returned_items_price = sum(item.order_item.total_price for item in return_items)
                     total_order_amount = sum(item.total_price for item in order.orderitem_set.all())

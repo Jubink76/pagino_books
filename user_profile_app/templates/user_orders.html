@@ -213,6 +213,9 @@
                                 </div>
                                 <div>
                                     {% if selected_order.order_status == 'Delivered' %}
+                                        {% if item.is_canceled %}
+                                            <span id="canceledTag-{{ item.id }}" class="px-4 py-2 bg-gray-500 text-white rounded">Canceled</span>
+                                        {% elif item.is_reviewed %}
                                         {% if item.is_reviewed %}
                                             <div class="text-green-600 font-medium flex items-center">
                                                 <span class="mr-2">Thanks for your review!</span>

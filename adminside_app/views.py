@@ -1127,7 +1127,6 @@ def admin_single_item_cancel(request,order_id,order_item_id):
     return redirect('update_order',order_id=order_id)
 
 #############################################################################################################################
-
 @login_required(login_url='admin_login')
 def status_update(request,order_id):
     if request.method =="POST":
