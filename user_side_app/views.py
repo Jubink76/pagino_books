@@ -581,7 +581,6 @@ def checkout_page(request):
         valid_from__lte=current_time,
         valid_to__gte=current_time
     )
-    print(f"thi is first available coupon,{available_coupons}")
     # Get user's used coupons
     used_coupon_ids = CouponUsage.objects.filter(
         user=user,
@@ -601,7 +600,6 @@ def checkout_page(request):
         Q(max_uses__isnull=True) | Q(total_uses__lt=F('max_uses')),
         user_uses__lt=F('max_uses_per_user')
     )
-    print(f"thi is seconnd available coupon,{available_coupons}")
     # Fetch addresses and cart items
     addresses = AddressTable.objects.filter(user=user)
     cart_items = CartTable.objects.filter(user=user)

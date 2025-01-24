@@ -69,15 +69,10 @@ document.addEventListener('DOMContentLoaded', function () {
     // Plus button click handler
     plusButtons.forEach(button => {
         button.addEventListener('click', function() {
-            console.log('Plus button clicked'); // Debug log
             const itemId = this.getAttribute('data-id');
             const quantityInput = document.querySelector(`input[data-id="${itemId}"]`);
             const currentQuantity = parseInt(quantityInput.value);
             const maxQuantity = parseInt(quantityInput.getAttribute('max'));
-
-            console.log('ItemId:', itemId); // Debug log
-            console.log('Current Quantity:', currentQuantity); // Debug log
-            console.log('Max Quantity:', maxQuantity); // Debug log
 
             if (currentQuantity < maxQuantity) {
                 updateCartQuantity(itemId, currentQuantity + 1);

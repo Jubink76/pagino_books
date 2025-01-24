@@ -428,25 +428,6 @@ def user_orders(request, order_id=None):
             .annotate(item_count=Count('orderitem'))\
             .order_by('-order_date')
 
-        # Debug output for return requests
-        for order in order_list:
-            if order.returnrequest_set.exists():
-                return_request = order.returnrequest_set.last()
-                print(f"Order {order.order_id}:")
-                print(f"- Order Status: {order.order_status}")
-                print(f"- Has Return Request: Yes")
-                print(f"- Return Status: {return_request.status}")
-                print(f"- Created at: {return_request.created_at}")
-                print(f"- Updated at: {return_request.updated_at}")
-                if return_request.admin_note:
-                    print(f"- Admin note: {return_request.admin_note}")
-                print("---")
-            else:
-                print(f"Order {order.order_id}:")
-                print(f"- Order Status: {order.order_status}")
-                print(f"- Has Return Request: No")
-                print("---")
-
         # Add review status to order items
         for order in order_list:
             for item in order.orderitem_set.all():
@@ -483,7 +464,6 @@ def user_orders(request, order_id=None):
     
     except Exception as e:
         # Log the error for debugging
-        print(f"Error in user_orders view: {str(e)}")
         messages.error(request, "An error occurred while loading your orders. Please try again.")
         return redirect('user_orders')
 
