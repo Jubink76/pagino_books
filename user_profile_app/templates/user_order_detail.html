@@ -109,6 +109,62 @@
                         </div>
                     </form>
                 </div>
+                {% elif show_return_form %}
+                <!-- Custom Return Request Form -->
+                <div class="bg-white rounded-lg p-6">
+                    <h2 class="text-xl font-bold mb-4">Return Request</h2>
+                    <form id="returnOrderForm-{{ selected_order.order_id }}" 
+                        method="POST" 
+                        action="{% url 'return_request' selected_order.order_id %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="order_id" value="{{ selected_order.order_id }}">
+                    
+                        <!-- Reason for Return -->
+                        <label for="reason" class="block mb-2 text-sm font-medium text-gray-700">
+                            Reason for Return
+                        </label>
+                        <textarea id="reason" name="reason" 
+                            class="w-full border border-gray-300 rounded-lg p-2 mb-4"
+                            placeholder="Enter your reason for return" required></textarea>                    
+                        <!-- Order Items -->
+                        <label class="block mb-2 text-sm font-medium text-gray-700">
+                            Items to Return
+                        </label>
+                        <div class="border border-gray-300 rounded-lg p-4 mb-4">
+                            <div class="flex items-center mb-4">
+                                <input type="checkbox" id="entire_order" class="mr-2"
+                                       onclick="toggleAllItems(this)">
+                                <label for="entire_order" class="text-sm font-medium text-gray-700">
+                                    Return Entire Order
+                                </label>
+                            </div>
+                            <div class="space-y-2">
+                                {% for item in selected_order.orderitem_set.all %}
+                                <div class="flex items-center">
+                                    <input type="checkbox" name="items[]" id="item-{{ item.book.id }}" value="{{ item.id }}" 
+                                           class="mr-2 item-checkbox">
+                                    <label for="item-{{ item.id }}" class="text-sm font-medium text-gray-700">
+                                        {{ item.book.book_name }} (Qty: {{ item.quantity }})
+                                    </label>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    
+                        <!-- Action Buttons -->
+                        <div class="flex gap-4">
+                            <button type="button" 
+                                class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+                                onclick="confirmAction('returnOrderForm-{{ selected_order.order_id }}', 'Confirm Return', 'Are you sure you want to return this order?', 'Yes, confirm return!')">
+                                Submit
+                            </button>
+                            <a href="{% url 'user_orders' %}" 
+                               class="bg-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-400">
+                                Cancel
+                            </a>
+                        </div>
+                    </form>                    
+                </div>
                 {% else %}
                 <!-- Order Detail View -->
                 <div class="bg-white rounded-lg p-6">
@@ -166,7 +222,7 @@
                                                 </svg>
                                             </div>
                                         {% else %}
-                                            <form method="POST" action="{% url 'user_orders' %}" name="review-form">
+                                            <form method="POST" action="{% url 'user_order_detail' order_id=selected_order.order_id %}" name="review-form">
                                                 {% csrf_token %}
                                                 <input type="hidden" name="order_id" value="{{ selected_order.order_id }}">
                                                 <input type="hidden" name="review_order" value="true">
@@ -178,14 +234,6 @@
                                                 </button>
                                             </form>
                                         {% endif %}
-                                        {% comment %} <form method="POST" action="{% url 'user_single_item_return' selected_order.order_id item.id %}" id="returnItemForm-{{ item.id }}">
-                                            {% csrf_token %}
-                                            <button type="button" 
-                                                    class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600" 
-                                                    onclick="confirmReturnItem('{{ item.id }}')">
-                                                Return Item
-                                            </button>
-                                        </form>                                      {% endcomment %}
                                     {% elif selected_order.item_count > 1 and selected_order.order_status != 'Delivered' and selected_order.order_status != 'Canceled' %}
                                         {% if item.is_canceled %}
                                             <!-- Display canceled tag if the item is canceled -->

@@ -239,7 +239,7 @@
                                                 </div>
                                             {% endwith %}
                                         {% else %}
-                                            <form method="POST" action="{% url 'user_orders' %}">
+                                            <form method="POST" action="{% url 'user_order_detail' order.order_id %}">
                                                 {% csrf_token %}
                                                 <input type="hidden" name="order_id" value="{{ order.order_id }}">
                                                 <input type="hidden" name="return_order" value="true">

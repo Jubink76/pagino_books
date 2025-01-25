@@ -360,7 +360,6 @@ def user_orders(request):
             shipped_orders=Count('order_id', filter=Q(order_status='Shipped')),
             canceled_orders=Count('order_id', filter=Q(order_status='Canceled'))
         )
-        print(order_stats.items)
         # Determine which orders can have an invoice button
         orders_with_button = OrderDetails.objects.filter(
             Q(payment_method__in=['ONLINE', 'WALLET']) | Q(order_status='Delivered'),
@@ -434,11 +433,22 @@ def user_order_detail(request,order_id):
         # Check if the user wants to write a review
         show_review_form = False
         selected_book = None
+        show_return_form = None
 
         if request.method == "POST" and 'review_order' in request.POST:
             book_id = request.POST.get('book_id')
             selected_book = get_object_or_404(OrderItem.objects.select_related('book'), id=book_id).book
             show_review_form = True
+        elif request.method == "POST" and 'return_order' in request.POST:
+                order_id = request.POST.get('order_id')
+                selected_order = get_object_or_404(
+                    OrderDetails.objects.prefetch_related('orderitem_set__book__images')
+                                     .prefetch_related('returnrequest_set')
+                                     .annotate(item_count=Count('orderitem')),
+                    order_id=order_id,
+                    user=request.user
+                )
+                show_return_form = True
 
         # Get user's reviews to mark reviewed items
         user_reviews = ReviewTable.objects.filter(user=request.user).values_list('order_id', 'book_id')
@@ -452,6 +462,7 @@ def user_order_detail(request,order_id):
             'selected_order': selected_order,
             'selected_book': selected_book,
             'show_review_form': show_review_form,
+            'show_return_form': show_return_form,
             'is_single_item_order': selected_order.item_count == 1,
         }
 
@@ -459,7 +470,6 @@ def user_order_detail(request,order_id):
     
     except Exception as e:
         # Log the error for debugging
-        print(f"Error in user_order_detail view: {str(e)}")
         messages.error(request, "An error occurred while loading your order details. Please try again.")
         return redirect('user_orders')
     
