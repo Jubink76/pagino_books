@@ -691,6 +691,7 @@ def return_request(request, order_id):
     return JsonResponse({'status': 'error', 'message': "Invalid request method."}, status=405)
 
 #############################################################################################################################
+
 def approve_return_request(request, return_request_id):
     if request.method == "POST":
         return_request = get_object_or_404(ReturnRequest, id=return_request_id)
@@ -708,15 +709,18 @@ def approve_return_request(request, return_request_id):
                 
                 # Calculate refund amount
                 if return_request.return_entire_order:
-                    # Entire order return - increment quantities for all order items
-                    order_items = order.orderitem_set.all()
-                    for item in order_items:
-                        book = item.book
-                        book.stock_quantity += item.quantity
-                        book.save()
                     # Entire order return
                     total_refund_amount = order.total_amount
+                    order.order_status = 'Returned'
+                    order.is_returned = True
+                    order.is_refund = True
+                    order.refund_date = now()
                     
+                    OrderItem.objects.filter(order=order).update(
+                        order_status='Returned',
+                        is_returned=True
+                    )
+
                     # Handle coupon discount for full order
                     if order.coupon_applied and order.coupon:
                         coupon = order.coupon
@@ -730,16 +734,23 @@ def approve_return_request(request, return_request_id):
                     # Partial order return
                     return_items = return_request.items.all()
                     
-                    # Increment stock for returned items
-                    for return_item in return_items:
-                        item = return_item.order_item
-                        book = item.book
-                        book.stock_quantity += item.quantity
-                        book.save()
                     # Calculate total returned items price
                     total_returned_items_price = sum(item.order_item.total_price for item in return_items)
                     total_order_amount = sum(item.total_price for item in order.orderitem_set.all())
 
+                    for return_item in return_items:
+                        order_item = return_item.order_item
+                        order_item.order_status = 'Returned'
+                        order_item.is_returned = True
+                        order_item.save()
+
+                    remaining_non_returned_items = order.orderitem_set.exclude(order_status='Returned').count()
+                    if remaining_non_returned_items == 0:
+                        order.order_status = 'Returned'
+                        order.is_returned = True
+                        order.is_refund = True
+                        order.refund_date = now()
+                        
                     # Handle coupon discount for partial return
                     if order.coupon_applied and order.coupon:
                         coupon = order.coupon
