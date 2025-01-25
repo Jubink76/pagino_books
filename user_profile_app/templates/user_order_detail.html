@@ -212,24 +212,8 @@
                                 </div>
                                 <div>
                                     {% if selected_order.order_status == 'Delivered' %}
-                                        {# Return Request Status Check #}
-                                        {% with return_requests=selected_order.returnrequest_set.filter(items__order_item=item) %}
-                                            {% if return_requests.exists %}
-                                                {% with latest_return_request=return_requests.last %}
-                                                    {% if latest_return_request.status == 'Pending' %}
-                                                        <span class="px-4 py-2 bg-yellow-500 text-white rounded">Return Pending</span>
-                                                    {% elif latest_return_request.status == 'Approved' %}
-                                                        <span class="px-4 py-2 bg-green-500 text-white rounded">Return Approved</span>
-                                                    {% elif latest_return_request.status == 'Rejected' %}
-                                                        <span class="px-4 py-2 bg-red-500 text-white rounded">Return Rejected</span>
-                                                    {% endif %}
-                                                {% endwith %}
-                                            {% endif %}
-                                        {% endwith %}
                                         {% if item.is_canceled %}
-                                            <span id="canceledTag-{{ item.id }}" class="px-4 py-2 bg-gray-500 text-white rounded">Canceled</span>
-                                        {% elif item.order_status == 'Returned' %}
-                                            <span class="px-4 py-2 bg-green-500 text-white rounded">Returned</span>
+                                        <span id="canceledTag-{{ item.id }}" class="px-4 py-2 bg-gray-500 text-white rounded">Canceled</span>
                                         {% elif item.is_reviewed %}
                                             <div class="text-green-600 font-medium flex items-center">
                                                 <span class="mr-2">Thanks for your review!</span>
@@ -252,9 +236,8 @@
                                         {% endif %}
                                     {% elif selected_order.item_count > 1 and selected_order.order_status != 'Delivered' and selected_order.order_status != 'Canceled' %}
                                         {% if item.is_canceled %}
+                                            <!-- Display canceled tag if the item is canceled -->
                                             <span id="canceledTag-{{ item.id }}" class="px-4 py-2 bg-gray-500 text-white rounded">Canceled</span>
-                                        {% elif item.order_status == 'Returned' %}
-                                            <span class="px-4 py-2 bg-green-500 text-white rounded">Returned</span>
                                         {% else %}
                                             <!-- Display cancel button if the item is not canceled -->
                                             <button type="button" 
