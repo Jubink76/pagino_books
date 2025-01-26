@@ -495,7 +495,8 @@ def user_order_detail(request,order_id):
             ), None)
 
         returnable_items = selected_order.orderitem_set.exclude(
-            Q(order_status='Returned') | 
+            Q(order_status='Returned') |
+            Q(order_status='Canceled') | 
             Q(id__in=ReturnRequest.objects.filter(
                 order=selected_order, 
                 status__in=['Pending', 'Approved']

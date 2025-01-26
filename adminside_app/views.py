@@ -1128,20 +1128,32 @@ def admin_single_item_cancel(request,order_id,order_item_id):
 
 #############################################################################################################################
 @login_required(login_url='admin_login')
-def status_update(request,order_id):
-    if request.method =="POST":
-        order = get_object_or_404(OrderDetails, order_id = order_id)
+def status_update(request, order_id):
+    if request.method == "POST":
+        order = get_object_or_404(OrderDetails, order_id=order_id)
         new_status = request.POST.get('new_status')
 
+        # Check if the order is already in a final state
+        final_states = ['Delivered', 'Canceled', 'Returned']
+        if order.order_status in final_states:
+            messages.warning(request, f"Order {order.order_id} cannot be modified as it is in {order.order_status} status.")
+            return redirect('update_order', order_id=order_id)
+
         if new_status and new_status != order.order_status:
+            # Filter out canceled and returned items
+            returnable_items = order.orderitem_set.exclude(
+                Q(order_status='Canceled') | 
+                Q(order_status='Returned')
+            )
+
+            # Update status for non-canceled and non-returned items
+            returnable_items.update(order_status=new_status)
+
+            # Update overall order status
             order.order_status = new_status
             order.save()
 
-             # Update the status of all items in the order
-            order_items = OrderItem.objects.filter(order=order)
-            order_items.update(order_status=new_status)
-
-            messages.success(request,f"Order{order.order_id} status updated to {new_status}.")
+            messages.success(request, f"Order {order.order_id} status updated to {new_status}.")
         else:
             messages.warning(request, f"Order {order.order_id} is already in the {new_status} status.")
 

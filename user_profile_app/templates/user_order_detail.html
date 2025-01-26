@@ -141,13 +141,15 @@
                             <div class="space-y-2">
                                 {% if returnable_items %}
                                     {% for item in returnable_items %}
-                                    <div class="flex items-center">
-                                        <input type="checkbox" name="items[]" id="item-{{ item.book.id }}" value="{{ item.id }}" 
-                                            class="mr-2 item-checkbox">
-                                        <label for="item-{{ item.id }}" class="text-sm font-medium text-gray-700">
-                                            {{ item.book.book_name }} (Qty: {{ item.quantity }})
-                                        </label>
-                                    </div>
+                                        {% if not item.is_canceled %}
+                                        <div class="flex items-center">
+                                            <input type="checkbox" name="items[]" id="item-{{ item.book.id }}" value="{{ item.id }}" 
+                                                class="mr-2 item-checkbox">
+                                            <label for="item-{{ item.id }}" class="text-sm font-medium text-gray-700">
+                                                {{ item.book.book_name }} (Qty: {{ item.quantity }})
+                                            </label>
+                                        </div>
+                                        {% endif %}
                                     {% endfor %}
                                 {% else %}
                                     <p>No items are currently available for return.</p>
@@ -280,7 +282,9 @@
                                     {% endif %}
                                 
                                     {% if selected_order.item_count > 1 and selected_order.order_status != 'Delivered' and selected_order.order_status != 'Canceled' and selected_order.order_status != 'Returned' %}
-                                        {% if not item.is_canceled %}
+                                        {% if item.is_canceled %}
+                                            <span id="canceledTag-{{ item.id }}" class="px-4 py-2 bg-gray-500 text-white rounded text-center">Canceled</span>
+                                        {% elif not item.is_canceled %}
                                             <div class="flex justify-center">
                                                 <button type="button" 
                                                     id="cancelButton-{{ item.id }}"
