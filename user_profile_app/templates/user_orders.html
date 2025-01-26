@@ -186,7 +186,11 @@
                                 <!-- Cancel Button and Price -->
                                 <div class="flex flex-col items-center gap-2">
                                     {% if order.order_status == 'Delivered' or order.order_status == 'Returned' %}
-                                        {% if order.can_return %}
+                                        {% if order.has_pending_return_request %}
+                                            <div class="bg-yellow-100 text-yellow-800 px-4 py-2 rounded">
+                                                Return Request Pending
+                                            </div>
+                                        {% elif order.can_return %}
                                             <form method="POST" action="{% url 'user_order_detail' order.order_id %}">
                                                 {% csrf_token %}
                                                 <input type="hidden" name="order_id" value="{{ order.order_id }}">

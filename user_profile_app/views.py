@@ -403,6 +403,14 @@ def user_orders(request):
                 not order.all_items_returned   # No existing return request
             )
 
+            # Check for pending return requests
+            pending_return_requests = order.returnrequest_set.filter(
+                status='Pending',
+                items__order_item__order_status__in=['Delivered', 'Partial']
+            ).exists()
+
+            order.has_pending_return_request = pending_return_requests
+            
             # Mark individual items as reviewed
             for item in order.orderitem_set.all():
                 item.is_reviewed = (order.order_id, item.book.id) in reviewed_items
