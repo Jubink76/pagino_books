@@ -139,15 +139,19 @@
                                 </label>
                             </div>
                             <div class="space-y-2">
-                                {% for item in selected_order.orderitem_set.all %}
-                                <div class="flex items-center">
-                                    <input type="checkbox" name="items[]" id="item-{{ item.book.id }}" value="{{ item.id }}" 
-                                           class="mr-2 item-checkbox">
-                                    <label for="item-{{ item.id }}" class="text-sm font-medium text-gray-700">
-                                        {{ item.book.book_name }} (Qty: {{ item.quantity }})
-                                    </label>
-                                </div>
-                                {% endfor %}
+                                {% if returnable_items %}
+                                    {% for item in returnable_items %}
+                                    <div class="flex items-center">
+                                        <input type="checkbox" name="items[]" id="item-{{ item.book.id }}" value="{{ item.id }}" 
+                                            class="mr-2 item-checkbox">
+                                        <label for="item-{{ item.id }}" class="text-sm font-medium text-gray-700">
+                                            {{ item.book.book_name }} (Qty: {{ item.quantity }})
+                                        </label>
+                                    </div>
+                                    {% endfor %}
+                                {% else %}
+                                    <p>No items are currently available for return.</p>
+                                {% endif %}
                             </div>
                         </div>
                     
@@ -210,19 +214,51 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div>
+                                <div class="flex flex-col items-center justify-center space-y-2">
+                                    {% if selected_order.order_status == 'Delivered' %}
+                                        {% with return_request=selected_order.returnrequest_set.first %}
+                                            {% if return_request %}
+                                                {% for return_item in return_request.items.all %}
+                                                    {% if return_item.order_item == item %}
+                                                    <div class="relative group flex items-center justify-center space-x-4">
+                                                        <div class="flex-grow-0">
+                                                            {% if return_request.status == 'Pending' %}
+                                                                <div class="bg-yellow-100 text-yellow-800 px-4 py-2 rounded cursor-help">
+                                                                    Return Request Pending
+                                                                </div>
+                                                                <div class="hidden group-hover:block absolute z-10 w-48 p-2 mt-2 text-sm bg-gray-900 text-white rounded shadow-lg">
+                                                                    Request submitted on {{ return_request.created_at|date:"M d, Y" }}
+                                                                </div>
+                                                            {% elif return_request.status == 'Approved' %}
+                                                                <div class="bg-green-100 text-green-800 px-4 py-2 rounded cursor-help">
+                                                                    Return Request Approved
+                                                                </div>
+                                                                <div class="hidden group-hover:block absolute z-10 w-48 p-2 mt-2 text-sm bg-gray-900 text-white rounded shadow-lg">
+                                                                    Approved on {{ return_request.updated_at|date:"M d, Y" }}
+                                                                </div>
+                                                            {% elif return_request.status == 'Rejected' %}
+                                                                <div class="bg-red-100 text-red-800 px-4 py-2 rounded cursor-help">
+                                                                    Return Request Rejected
+                                                                </div>
+                                                                <div class="hidden group-hover:block absolute z-10 w-48 p-2 mt-2 text-sm bg-gray-900 text-white rounded shadow-lg">
+                                                                    {% if return_request.admin_note %}
+                                                                        Reason: {{ return_request.admin_note }}
+                                                                    {% endif %}
+                                                                </div>
+                                                            {% endif %}
+                                                        </div>
+                                                    </div>
+                                                    {% endif %}
+                                                {% endfor %}
+                                            {% endif %}
+                                        {% endwith %}
+                                    {% endif %}
+                                
                                     {% if selected_order.order_status == 'Delivered' %}
                                         {% if item.is_canceled %}
-                                        <span id="canceledTag-{{ item.id }}" class="px-4 py-2 bg-gray-500 text-white rounded">Canceled</span>
-                                        {% elif item.is_reviewed %}
-                                            <div class="text-green-600 font-medium flex items-center">
-                                                <span class="mr-2">Thanks for your review!</span>
-                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                                                </svg>
-                                            </div>
-                                        {% else %}
-                                            <form method="POST" action="{% url 'user_order_detail' order_id=selected_order.order_id %}" name="review-form">
+                                            <span id="canceledTag-{{ item.id }}" class="px-4 py-2 bg-gray-500 text-white rounded text-center">Canceled</span>
+                                        {% elif not return_request and not item.is_reviewed %}
+                                            <form method="POST" action="{% url 'user_order_detail' order_id=selected_order.order_id %}" name="review-form" class="flex justify-center">
                                                 {% csrf_token %}
                                                 <input type="hidden" name="order_id" value="{{ selected_order.order_id }}">
                                                 <input type="hidden" name="review_order" value="true">
@@ -233,32 +269,30 @@
                                                     Write a Review
                                                 </button>
                                             </form>
+                                        {% elif item.is_reviewed %}
+                                            <div class="text-green-600 font-medium flex items-center justify-center">
+                                                <span class="mr-2">Thanks for your review!</span>
+                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                                </svg>
+                                            </div>
                                         {% endif %}
-                                    {% elif selected_order.item_count > 1 and selected_order.order_status != 'Delivered' and selected_order.order_status != 'Canceled' %}
-                                        {% if item.is_canceled %}
-                                            <!-- Display canceled tag if the item is canceled -->
-                                            <span id="canceledTag-{{ item.id }}" class="px-4 py-2 bg-gray-500 text-white rounded">Canceled</span>
-                                        {% else %}
-                                            <!-- Display cancel button if the item is not canceled -->
-                                            <button type="button" 
-                                                id="cancelButton-{{ item.id }}"
-                                                class="action-btn px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600" 
-                                                data-url="{% url 'user_single_item_cancel' order_id=selected_order.order_id order_item_id=item.id %}"
-                                                data-title="Cancel Item"
-                                                data-text="Are you sure you want to cancel this item?"
-                                                data-success-message="Item has been successfully canceled">
-                                            Cancel Item
-                                        </button>
+                                    {% endif %}
+                                
+                                    {% if selected_order.item_count > 1 and selected_order.order_status != 'Delivered' and selected_order.order_status != 'Canceled' and selected_order.order_status != 'Returned' %}
+                                        {% if not item.is_canceled %}
+                                            <div class="flex justify-center">
+                                                <button type="button" 
+                                                    id="cancelButton-{{ item.id }}"
+                                                    class="action-btn px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600" 
+                                                    data-url="{% url 'user_single_item_cancel' order_id=selected_order.order_id order_item_id=item.id %}"
+                                                    data-title="Cancel Item"
+                                                    data-text="Are you sure you want to cancel this item?"
+                                                    data-success-message="Item has been successfully canceled">
+                                                    Cancel Item
+                                                </button>
+                                            </div>
                                         {% endif %}
-                                    {% elif selected_order.item_count == 1 and selected_order.order_status == 'Pending' %}
-                                        <form method="POST" action="{% url 'cancel_order' selected_order.order_id %}" class="mr-4">
-                                            {% csrf_token %}
-                                            <button 
-                                                type="submit" 
-                                                class="action-btn bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition">
-                                                Cancel Order
-                                            </button>
-                                        </form>
                                     {% endif %}
                                 </div>
                             </div>

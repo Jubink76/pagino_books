@@ -186,59 +186,7 @@
                                 <!-- Cancel Button and Price -->
                                 <div class="flex flex-col items-center gap-2">
                                     {% if order.order_status == 'Delivered' or order.order_status == 'Returned' %}
-                                        {% if order.returnrequest_set.exists %}
-                                            {% with return_request=order.returnrequest_set.last %}
-                                                <div class="relative group">
-                                                    {% if return_request %}
-                                                        {% if return_request.status == 'Pending' %}
-                                                            <div class="bg-yellow-100 text-yellow-800 px-4 py-2 rounded cursor-help">
-                                                                Return Request Pending
-                                                                {% if return_request.return_entire_order %}
-                                                                    (Entire Order)
-                                                                {% else %}
-                                                                    (Partial Order)
-                                                                {% endif %}
-                                                            </div>
-                                                            <div class="hidden group-hover:block absolute z-10 w-48 p-2 mt-2 text-sm bg-gray-900 text-white rounded shadow-lg">
-                                                                Request submitted on {{ return_request.created_at|date:"M d, Y" }}
-                                                                {% if not return_request.return_entire_order %}
-                                                                    <br>Items:
-                                                                    {% for return_item in return_request.items.all %}
-                                                                        <br>- {{ return_item.order_item.book.book_name }}
-                                                                    {% endfor %}
-                                                                {% endif %}
-                                                            </div>
-                                                        {% elif return_request.status == 'Approved' %}
-                                                                <div class="bg-green-100 text-green-800 px-4 py-2 rounded cursor-help">
-                                                                    Return Request Approved
-                                                                </div>
-                                                            <div class="hidden group-hover:block absolute z-10 w-48 p-2 mt-2 text-sm bg-gray-900 text-white rounded shadow-lg">
-                                                                Approved on {{ return_request.updated_at|date:"M d, Y" }}
-                                                                {% if return_request.admin_note %}
-                                                                    <br>Note: {{ return_request.admin_note }}
-                                                                {% endif %}
-                                                            </div>
-                                                        {% elif return_request.status == 'Rejected' %}
-                                                            <div class="bg-red-100 text-red-800 px-4 py-2 rounded cursor-help">
-                                                                Return Request Rejected
-                                                            </div>
-                                                            <div class="hidden group-hover:block absolute z-10 w-48 p-2 mt-2 text-sm bg-gray-900 text-white rounded shadow-lg">
-                                                                {% if return_request.admin_note %}
-                                                                    Reason: {{ return_request.admin_note }}
-                                                                {% endif %}
-                                                            </div>
-                                                        {% elif return_request.status == 'Processed' %}
-                                                            <div class="bg-blue-100 text-blue-800 px-4 py-2 rounded cursor-help">
-                                                                Return Request Processed
-                                                            </div>
-                                                            <div class="hidden group-hover:block absolute z-10 w-48 p-2 mt-2 text-sm bg-gray-900 text-white rounded shadow-lg">
-                                                                Processed on {{ return_request.updated_at|date:"M d, Y" }}
-                                                            </div>
-                                                        {% endif %}
-                                                    {% endif %}
-                                                </div>
-                                            {% endwith %}
-                                        {% else %}
+                                        {% if order.can_return %}
                                             <form method="POST" action="{% url 'user_order_detail' order.order_id %}">
                                                 {% csrf_token %}
                                                 <input type="hidden" name="order_id" value="{{ order.order_id }}">
@@ -249,6 +197,10 @@
                                                     Return Order
                                                 </button>
                                             </form>
+                                        {% elif order.all_items_returned %}
+                                            <div class="bg-green-100 text-green-800 px-4 py-2 rounded">
+                                                All Items Returned
+                                            </div>
                                         {% endif %}
                                     {% elif order.order_status != 'Canceled' %}
                                     <form 

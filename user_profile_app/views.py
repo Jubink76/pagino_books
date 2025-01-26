@@ -385,16 +385,27 @@ def user_orders(request):
             )\
             .annotate(
                 item_count=Count('orderitem'),
-                non_returned_items_count=Count('orderitem', filter=~Q(orderitem__order_status='Returned'))
+                non_returned_items_count=Count('orderitem', filter=~Q(orderitem__order_status='Returned')),
+                returned_items_count=Count('orderitem', filter=Q(orderitem__order_status='Returned'))
             )\
             .order_by('-order_date')
 
         # Add review status to order items
         for order in order_list:
+            # Check if all items are returned
+            order.all_items_returned = (
+                order.item_count > 0 and 
+                order.item_count == order.returned_items_count
+            )
+            # Determine if return is possible
+            order.can_return = (
+                order.order_status == 'Delivered' and 
+                not order.all_items_returned   # No existing return request
+            )
+
+            # Mark individual items as reviewed
             for item in order.orderitem_set.all():
                 item.is_reviewed = (order.order_id, item.book.id) in reviewed_items
-
-                order.has_returnable_items = order.non_returned_items_count > 0
 
         # Paginate the orders
         paginator = Paginator(order_list, 5)  # Show 5 orders per page
@@ -417,8 +428,6 @@ def user_orders(request):
         return render(request, 'user_orders.html', context)
     
     except Exception as e:
-        # Log the error for debugging
-        print(f"Error in user_orders_list view: {str(e)}")
         messages.error(request, "An error occurred while loading your orders. Please try again.")
         return redirect('homepage_after_login')
     
@@ -435,6 +444,8 @@ def user_order_detail(request,order_id):
                                  ),
                                  Prefetch('returnrequest_set', 
                                      queryset=ReturnRequest.objects.prefetch_related('items')
+                                     # Ensure all statuses are fetched
+                                     .filter(status__in=['Pending', 'Approved', 'Rejected'])
                                  )
                              )
                              .annotate(item_count=Count('orderitem')),
@@ -474,7 +485,23 @@ def user_order_detail(request,order_id):
         for item in selected_order.orderitem_set.all():
             item.is_reviewed = (selected_order.order_id, item.book.id) in reviewed_items
         
-        returnable_items = selected_order.orderitem_set.exclude(order_status='Returned')
+        for item in selected_order.orderitem_set.all():
+            # Check if there's a return request for this specific item
+            item.return_request = next((
+                (return_request, return_item) 
+                for return_request in selected_order.returnrequest_set.all() 
+                for return_item in return_request.items.all() 
+                if return_item.order_item == item
+            ), None)
+
+        returnable_items = selected_order.orderitem_set.exclude(
+            Q(order_status='Returned') | 
+            Q(id__in=ReturnRequest.objects.filter(
+                order=selected_order, 
+                status__in=['Pending', 'Approved']
+            ).values_list('items__order_item_id', flat=True))
+        )
+
         context = {
             'selected_order': selected_order,
             'selected_book': selected_book,
@@ -487,8 +514,6 @@ def user_order_detail(request,order_id):
         return render(request, 'user_order_detail.html', context)
     
     except Exception as e:
-        # Log the error for debugging
-        print(f"Error in user_order_detail view: {str(e)}")
         messages.error(request, "An error occurred while loading your order details. Please try again.")
         return redirect('user_orders')
     

@@ -750,19 +750,21 @@ def approve_return_request(request, return_request_id):
                         order.is_returned = True
                         order.is_refund = True
                         order.refund_date = now()
+                        order.save()
+
                         
                     # Handle coupon discount for partial return
                     if order.coupon_applied and order.coupon:
                         coupon = order.coupon
                         
-                        if coupon.discount_type == 'percentage':
+                        if coupon.coupon_type == 'percentage':
                             # Percentage-based coupon
                             coupon_discount = total_order_amount * (coupon.discount_value / Decimal(100))
                             item_proportion = total_returned_items_price / total_order_amount
                             returned_items_coupon_discount = coupon_discount * item_proportion
                             total_returned_items_price -= returned_items_coupon_discount
                         
-                        elif coupon.discount_type == 'fixed':
+                        elif coupon.coupon_type == 'fixed':
                             # Fixed amount coupon
                             item_proportion = total_returned_items_price / total_order_amount
                             returned_items_coupon_discount = coupon.discount_value * item_proportion
@@ -798,12 +800,6 @@ def approve_return_request(request, return_request_id):
                 return_request.status = 'Approved'
                 return_request.processed_at = now()
                 return_request.save()
-
-                order.order_status = 'Returned'
-                order.is_returned = True
-                order.is_refund = True
-                order.refund_date = now()
-                order.save()
 
                 return JsonResponse({
                     'status': 'success',
