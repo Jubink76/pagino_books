@@ -126,12 +126,12 @@
                                     <h3 class="text-white font-bold mt-2">{{ coupon.code|upper }}</h3>
                                 </div>
                                 <div class="flex space-x-2">
-                                    <button class="text-gray-400 hover:text-white edit-coupon-btn" 
+                                    {% comment %} <button class="text-gray-400 hover:text-white edit-coupon-btn" 
                                         data-url="{% url 'get_coupon_details' coupon.id %}">
                                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                                         </svg>
-                                    </button>
+                                    </button> {% endcomment %}
                                     <button class="delete-coupon-btn text-gray-400 hover:text-white"
                                         data-url="{% url 'delete_coupon' coupon.id %}">
                                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -152,7 +152,7 @@
                                 <div class="flex justify-between text-gray-400">
                                     <span>Uses Left:</span>
                                     <span class="text-gray-300">
-                                        0/{{ coupon.max_uses }}
+                                        {{ coupon.usage_count }}/{{ coupon.max_uses }}
                                     </span>
                                 </div>
                                 <div class="flex justify-between text-gray-400">

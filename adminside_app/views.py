@@ -1202,13 +1202,16 @@ def admin_coupon(request, coupon_id=None):
                 
                 if not coupon_type:
                     errors.append("Coupon type is required.")
-                
+
+                    
                 if not discount_value:
-                    errors.append("Discount value is required.")
+                    errors.append("discount values required")
                 else:
                     try:
                         discount_value = float(discount_value)
-                        if discount_value <= 0:
+                        if coupon_type == 'percentage' and (discount_value < 0 or discount_value > 95):
+                            errors.append("Percentage discount must be between 0 and 95.")
+                        elif coupon_type == 'fixed' and discount_value <= 0:
                             errors.append("Discount value must be greater than 0.")
                     except (ValueError, TypeError):
                         errors.append("Invalid discount value.")
@@ -1218,8 +1221,8 @@ def admin_coupon(request, coupon_id=None):
                 else:
                     try:
                         min_purchase_amount = float(min_purchase_amount)
-                        if min_purchase_amount <= 0:
-                            errors.append("Minimum purchase amount must be greater than 0.")
+                        if min_purchase_amount <= 99:
+                            errors.append("Minimum purchase amount must be min 100.")
                     except (ValueError, TypeError):
                         errors.append("Invalid minimum purchase amount.")
                 
@@ -1235,14 +1238,35 @@ def admin_coupon(request, coupon_id=None):
                 
                 # Validate date range
                 try:
-                    # Make datetime timezone-aware
-                    valid_from = timezone.make_aware(timezone.datetime.fromisoformat(valid_from))
-                    valid_to = timezone.make_aware(timezone.datetime.fromisoformat(valid_to))
+                    # Parse valid_from and set time to start of day if no time specified
+                    valid_from_dt = timezone.datetime.fromisoformat(valid_from)
+                    if valid_from.find('T') == -1:
+                        valid_from_dt = valid_from_dt.replace(hour=0, minute=0, second=0, microsecond=0)
                     
-                    if valid_from >= valid_to:
+                    # Parse valid_to and set time to end of day if no time specified
+                    valid_to_dt = timezone.datetime.fromisoformat(valid_to)
+                    if valid_to.find('T') == -1:
+                        valid_to_dt = valid_to_dt.replace(hour=23, minute=59, second=59, microsecond=999999)
+                    
+                    # Make dates timezone-aware
+                    if timezone.is_naive(valid_from_dt):
+                        valid_from_dt = timezone.make_aware(valid_from_dt)
+                    if timezone.is_naive(valid_to_dt):
+                        valid_to_dt = timezone.make_aware(valid_to_dt)
+
+                    # Get current time
+                    current_time = timezone.now()
+                    
+                    # Check if valid_from is before current date
+                    if valid_from_dt.date() < current_time.date():
+                        errors.append("Valid from date must be today or a future date.")
+
+                    # Check if valid_to is before valid_from
+                    if valid_from_dt.date() > valid_to_dt.date():
                         errors.append("Valid from date must be before valid to date.")
-                except (ValueError, TypeError) as e:
-                    errors.append(f"Invalid date range: {str(e)}")
+
+                except (ValueError, TypeError):
+                    errors.append("Invalid date range.")
 
                 # If there are validation errors, return them
                 if errors:
@@ -1296,7 +1320,9 @@ def admin_coupon(request, coupon_id=None):
             'coupon': coupon,
             'COUPON_TYPES': CouponTable._meta.get_field('coupon_type').choices,
             'default_coupon_type': 'percentage',
-            'coupons': CouponTable.objects.all().order_by('-valid_to')
+            'coupons': CouponTable.objects.annotate(
+                usage_count=Count('couponusage', filter=Q(couponusage__is_used=True))
+            ).order_by('-valid_to')
         }
         return render(request, 'admin_coupon.html', context)
 
