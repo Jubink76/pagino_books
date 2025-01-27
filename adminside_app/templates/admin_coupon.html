@@ -146,6 +146,10 @@
                                     <span class="text-gray-300">₹{{ coupon.min_purchase_amount|floatformat:2 }}</span>
                                 </div>
                                 <div class="flex justify-between text-gray-400">
+                                    <span>Valid From:</span>
+                                    <span class="text-gray-300">{{ coupon.valid_from|date:"M d, Y" }}</span>
+                                </div>
+                                <div class="flex justify-between text-gray-400">
                                     <span>Valid Until:</span>
                                     <span class="text-gray-300">{{ coupon.valid_to|date:"M d, Y" }}</span>
                                 </div>

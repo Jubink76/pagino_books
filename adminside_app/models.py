@@ -49,17 +49,27 @@ class BookTable(models.Model):
         regular_discount = (self.base_price * self.discount_percentage) / Decimal('100')
         return self.base_price - regular_discount
 
-    def calculate_offer_price(self, base_price, offer):
-        """Calculate price with a specific offer"""
+    def calculate_offer_price(self, offer):
+        """Calculate price with a specific offer based on base price"""
         if not offer:
-            return base_price
+            return self.calculate_regular_price()
             
         if offer.discount_type == 'percentage':
-            discount_amount = (base_price * Decimal(str(offer.discount_value))) / Decimal('100')
-            return base_price - discount_amount
+            # Calculate discount amount from base price
+            discount_amount = (self.base_price * Decimal(str(offer.discount_value))) / Decimal('100')
+            # Also apply regular discount percentage if any
+            regular_discount = (self.base_price * self.discount_percentage) / Decimal('100')
+            # Take the larger discount
+            final_discount = max(discount_amount, regular_discount)
+            return self.base_price - final_discount
         elif offer.discount_type == 'fixed':
-            return max(base_price - Decimal(str(offer.discount_value)), Decimal('0'))
-        return base_price
+            # For fixed discount, first apply the fixed amount to base price
+            price_after_fixed = max(self.base_price - Decimal(str(offer.discount_value)), Decimal('0'))
+            # Calculate regular discount
+            regular_price = self.calculate_regular_price()
+            # Return the lower of the two prices
+            return min(price_after_fixed, regular_price)
+        return self.calculate_regular_price()
 
     def update_price_with_offer(self, offer=None, skip_save=False):
         """
@@ -69,9 +79,10 @@ class BookTable(models.Model):
         regular_price = self.calculate_regular_price()
         
         if offer:
-            new_price = self.calculate_offer_price(regular_price, offer)
-            if new_price < (self.offer_price or regular_price):
-                self.previous_offer_price = self.offer_price or regular_price
+            new_price = self.calculate_offer_price(offer)
+            # Compare with regular price to determine if offer is better
+            if new_price < regular_price:
+                self.previous_offer_price = self.offer_price
                 self.offer_price = new_price
                 self.additional_offer_applied = True
                 self.applied_offer = offer

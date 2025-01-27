@@ -35,6 +35,7 @@ from collections import defaultdict
 from datetime import datetime, timedelta
 from django.db.models.functions import TruncMonth, TruncYear,TruncDay
 from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
+from django.db.models import Min
 # Create your views here.
 
 ##############################################################################################################
@@ -1419,13 +1420,40 @@ def add_category_offer(request, category_id):
                 errors.append("Discount type is required.")
             
             # Validate discount value based on discount type
-            try:
-                discount_value = float(discount_value)
-                if discount_type == 'percentage' and (discount_value < 0 or discount_value > 95):
+            if discount_type == 'percentage':
+                if discount_value < 0 or discount_value > 95:
                     errors.append("Percentage discount must be between 0 and 95.")
-                elif discount_type in ['fixed', 'bundle'] and discount_value <= 0:
-                    errors.append("Discount value must be greater than 0.")
-            except (ValueError, TypeError):
+            elif discount_type == 'fixed':
+                try:
+                    min_offer_price = BookTable.objects.filter(
+                        category=category,
+                        is_available=True
+                    ).aggregate(min_price=Min('offer_price'))['min_price']
+
+                    if min_offer_price is None:
+                        errors.append("No available products in this category")
+                    else:
+                        if discount_value <= 0:
+                            errors.append("Discount value cannot be zero or less")
+                        
+                        if discount_value >= float(min_offer_price):
+                            formatted_min_price = "{:.2f}".format(min_offer_price)
+                            errors.append(f"Fixed discount ({discount_value}) cannot be greater than or equal to the minimum selling price ({formatted_min_price}).")
+                        
+                        # Check for products that would become free or negative
+                        products_below_threshold = BookTable.objects.filter(
+                            category=category,
+                            is_available=True,
+                            offer_price__lte=discount_value
+                        ).exists()
+                        
+                        if products_below_threshold:
+                            errors.append("Fixed discount would make some products free or negative in price.")
+                            
+                except Exception as e:
+                    errors.append(f"Error checking product prices: {str(e)}")
+
+            else:
                 errors.append("Invalid discount value.")
             
             # Validate date range
@@ -1551,12 +1579,58 @@ def edit_category_offer(request, category_id):
             # Validate discount value
             try:
                 discount_value = float(discount_value)
-                if discount_type == 'percentage' and (discount_value < 0 or discount_value > 95):
-                    errors.append("Percentage discount must be between 0 and 95.")
-                elif discount_type in ['fixed', 'bundle'] and discount_value <= 0:
-                    errors.append("Discount value must be greater than 0.")
             except (ValueError, TypeError):
-                errors.append("Invalid discount value.")
+                errors.append("Invalid discount value format. Please enter a valid number.")
+                return JsonResponse({
+                    'status': 'error',
+                    'message': '; '.join(errors)
+                }, status=400)
+
+            # Business logic validation
+            if discount_type == 'percentage':
+                if discount_value < 0 or discount_value > 95:
+                    errors.append("Percentage discount must be between 0 and 95.")
+            elif discount_type == 'fixed':
+                try:
+                    # Get all available products in the category
+                    products = BookTable.objects.filter(
+                        category=category,
+                        is_available=True
+                    )
+
+                    if not products.exists():
+                        errors.append("No available products in this category")
+                    else:
+                        # Calculate minimum regular price across all products
+                        min_regular_price = None
+                        for product in products:
+                            regular_price = product.calculate_regular_price()
+                            if min_regular_price is None or regular_price < min_regular_price:
+                                min_regular_price = regular_price
+
+                        if discount_value <= 0:
+                            errors.append("Discount value cannot be zero or less")
+                        
+                        if min_regular_price and discount_value >= float(min_regular_price):
+                            formatted_min_price = "{:.2f}".format(min_regular_price)
+                            errors.append(f"Fixed discount ({discount_value}) cannot be greater than or equal to the minimum regular price ({formatted_min_price}).")
+                        
+                        # Check for products that would become free or negative based on regular price
+                        products_below_threshold = False
+                        for product in products:
+                            regular_price = product.calculate_regular_price()
+                            if regular_price <= discount_value:
+                                products_below_threshold = True
+                                break
+                        
+                        if products_below_threshold:
+                            errors.append("Fixed discount would make some products free or negative in price after applying to their regular price.")
+                            
+                except Exception as e:
+                    errors.append(f"Error checking product prices: {str(e)}")
+
+            else:
+                errors.append("Invalid discount type.")
             
             # Validate date range
             try:
@@ -1577,13 +1651,14 @@ def edit_category_offer(request, category_id):
                 # Get current time
                 current_time = timezone.now()
 
-                # Check if valid_from is before today when creating new dates
-                if valid_from_dt != offer.valid_from and valid_from_dt < current_time.date():
-                    errors.append("Valid from date must be today or a future date.")
+                # Only validate against current date if the date is being changed
+                if valid_from_dt.date() != offer.valid_from.date():
+                    if valid_from_dt.date() < current_time.date():
+                        errors.append("New valid from date must be today or a future date.")
 
                 # Check if valid_to is before valid_from
                 if valid_from_dt.date() > valid_to_dt.date():
-                    errors.append("Valid from date must be before valid to date.")
+                    errors.append("Valid to date must be after valid from date.")
 
             except (ValueError, TypeError):
                 errors.append("Invalid date range.")
@@ -1706,12 +1781,46 @@ def add_product_offer(request, product_id):
             # Validate discount value
             try:
                 discount_value = float(discount_value)
-                if discount_type == 'percentage' and (discount_value <= 0 or discount_value > 95):
-                    errors.append("Percentage discount must be greater than 0 and less than 95.")
-                elif discount_type in ['fixed', 'bundle'] and discount_value <= 0:
-                    errors.append("Discount value must be greater than 0.")
             except (ValueError, TypeError):
-                errors.append("Invalid discount value.")
+                errors.append("Invalid discount value format. Please enter a valid number.")
+                return JsonResponse({
+                    'status': 'error',
+                    'message': '; '.join(errors)
+                }, status=400)
+
+            # Then proceed with business logic validation
+            if discount_type == 'percentage':
+                if discount_value < 0 or discount_value > 95:
+                    errors.append("Percentage discount must be between 0 and 95.")
+                else:
+                    try:
+                        regular_price = product.calculate_regular_price()
+                        discount_amount = (regular_price * discount_value) / 100
+                        
+                        if discount_amount >= regular_price:
+                            formatted_price = "{:.2f}".format(regular_price)
+                            max_allowed = ((regular_price - 0.01) / regular_price * 100)
+                            errors.append(f"Percentage discount would reduce price below 0. Maximum allowed discount is {max_allowed:.1f}% based on regular price {formatted_price}")
+                            
+                    except Exception as e:
+                        errors.append(f"Error calculating percentage discount: {str(e)}")
+
+            elif discount_type == 'fixed':
+                try:
+                    regular_price = product.calculate_regular_price()
+                    
+                    if discount_value <= 0:
+                        errors.append("Discount value cannot be zero or less")
+                    
+                    if discount_value >= float(regular_price):
+                        formatted_price = "{:.2f}".format(regular_price)
+                        errors.append(f"Fixed discount ({discount_value}) cannot be greater than or equal to the regular price ({formatted_price}).")
+                        
+                except Exception as e:
+                    errors.append(f"Error checking product price: {str(e)}")
+
+            else:
+                errors.append("Invalid discount type.")
 
             # Validate date range with proper time handling
             try:
@@ -1834,12 +1943,46 @@ def edit_product_offer(request, product_id):
             # Validate discount value
             try:
                 discount_value = float(discount_value)
-                if discount_type == 'percentage' and (discount_value <= 0 or discount_value > 95):
-                    errors.append("Percentage discount must be greater than 0 and less than 95.")
-                elif discount_type in ['fixed', 'bundle'] and discount_value <= 0:
-                    errors.append("Discount value must be greater than 0.")
             except (ValueError, TypeError):
-                errors.append("Invalid discount value.")
+                errors.append("Invalid discount value format. Please enter a valid number.")
+                return JsonResponse({
+                    'status': 'error',
+                    'message': '; '.join(errors)
+                }, status=400)
+
+            # Then proceed with business logic validation
+            if discount_type == 'percentage':
+                if discount_value < 0 or discount_value > 95:
+                    errors.append("Percentage discount must be between 0 and 95.")
+                else:
+                    try:
+                        regular_price = product.calculate_regular_price()
+                        discount_amount = (regular_price * discount_value) / 100
+                        
+                        if discount_amount >= regular_price:
+                            formatted_price = "{:.2f}".format(regular_price)
+                            max_allowed = ((regular_price - 0.01) / regular_price * 100)
+                            errors.append(f"Percentage discount would reduce price below 0. Maximum allowed discount is {max_allowed:.1f}% based on regular price {formatted_price}")
+                            
+                    except Exception as e:
+                        errors.append(f"Error calculating percentage discount: {str(e)}")
+
+            elif discount_type == 'fixed':
+                try:
+                    regular_price = product.calculate_regular_price()
+                    
+                    if discount_value <= 0:
+                        errors.append("Discount value cannot be zero or less")
+                    
+                    if discount_value >= float(regular_price):
+                        formatted_price = "{:.2f}".format(regular_price)
+                        errors.append(f"Fixed discount ({discount_value}) cannot be greater than or equal to the regular price ({formatted_price}).")
+                        
+                except Exception as e:
+                    errors.append(f"Error checking product price: {str(e)}")
+
+            else:
+                errors.append("Invalid discount type.")
             
             # Validate date range
             try:
@@ -1894,43 +2037,7 @@ def edit_product_offer(request, product_id):
                 old_discount_value != discount_value or 
                 old_is_active != offer.is_active):
                 
-                if offer.is_active:
-                    # Calculate and apply new offer price
-                    new_offer_price = calculate_offer_price(
-                        product.base_price,
-                        discount_type,
-                        discount_value
-                    )
-                    
-                    if new_offer_price < product.offer_price:
-                        product.previous_offer_price = product.offer_price
-                        product.offer_price = new_offer_price
-                        product.additional_offer_applied = True
-                        product.applied_offer = offer
-                        product.save(update_fields=[
-                            'previous_offer_price',
-                            'offer_price',
-                            'additional_offer_applied',
-                            'applied_offer'
-                        ])
-                else:
-                    # Revert price if offer is deactivated
-                    if product.previous_offer_price is not None:
-                        product.offer_price = product.previous_offer_price
-                        product.previous_offer_price = None
-                    else:
-                        # Calculate regular price if no previous offer price exists
-                        regular_discount = (product.base_price * product.discount_percentage) / Decimal('100')
-                        product.offer_price = product.base_price - regular_discount
-                        
-                    product.additional_offer_applied = False
-                    product.applied_offer = None
-                    product.save(update_fields=[
-                        'previous_offer_price',
-                        'offer_price',
-                        'additional_offer_applied',
-                        'applied_offer'
-                    ])
+                product.update_price_with_offer(offer if offer.is_active else None)
 
             return JsonResponse({
                 'status': 'success', 

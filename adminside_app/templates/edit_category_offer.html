@@ -10,7 +10,7 @@
         <!-- Header Section -->
         <div class="flex justify-between items-center mb-6">
             <h1 class="text-white text-2xl font-medium">
-                Edit Category Offer
+                Edit Category Offer of {{ category.category_name }}
             </h1>
             <nav aria-label="breadcrumb">
                 <ol class="flex space-x-2 text-sm text-gray-400">
@@ -124,184 +124,175 @@
 {% block script %}
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-    const validFromInput = document.getElementById('valid-from');
-    const validToInput = document.getElementById('valid-to');
-    const form = document.querySelector('#couponForm');
-    const isEditMode = form.hasAttribute('data-edit');
-
-    // Store the original values
-    const originalFromValue = validFromInput.value;
-    const originalToValue = validToInput.value;
-
-    // Function to get current date in YYYY-MM-DDThh:mm format
-    function getCurrentDateTime() {
-        const now = new Date();
-        const year = now.getFullYear();
-        const month = String(now.getMonth() + 1).padStart(2, '0');
-        const day = String(now.getDate()).padStart(2, '0');
-        const hours = String(now.getHours()).padStart(2, '0');
-        const minutes = String(now.getMinutes()).padStart(2, '0');
-        return `${year}-${month}-${day}T${hours}:${minutes}`;
-    }
-
-    // Function to set end of day time (23:59) for valid_to
-    function setEndOfDay() {
-        if (validToInput.value) {
-            const date = validToInput.value.split('T')[0];
-            validToInput.value = `${date}T23:59`;
+    document.addEventListener('DOMContentLoaded', function() {
+        const validFromInput = document.getElementById('valid-from');
+        const validToInput = document.getElementById('valid-to');
+        const form = document.querySelector('#offer-form');
+        const isEditMode = form.hasAttribute('data-edit');
+    
+        // Store the original values
+        const originalFromValue = validFromInput.value;
+        const originalToValue = validToInput.value;
+    
+        // Function to get current date in YYYY-MM-DDThh:mm format
+        function getCurrentDateTime() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            return `${year}-${month}-${day}T${hours}:${minutes}`;
         }
-    }
-
-    // Function to check if a date is in the past
-    function isDateInPast(dateStr) {
-        const currentDateTime = new Date();
-        const selectedDateTime = new Date(dateStr);
-        return selectedDateTime < currentDateTime;
-    }
-
-    // Function to update validation rules based on edit mode
-    function updateDateTimeValidation() {
-        const currentDateTime = getCurrentDateTime();
-        
-        if (!isEditMode) {
-            // For new coupons, enforce future dates
-            validFromInput.min = currentDateTime;
-            validToInput.min = currentDateTime;
-
-            if (validFromInput.value && isDateInPast(validFromInput.value)) {
-                validFromInput.value = currentDateTime;
-            }
-            
-            if (validToInput.value && isDateInPast(validToInput.value)) {
-                validToInput.value = currentDateTime;
-            }
-        } else {
-            // For editing, preserve original dates
-            if (validFromInput.value === '') {
-                validFromInput.value = originalFromValue;
-            }
-            if (validToInput.value === '') {
-                validToInput.value = originalToValue;
+    
+        // Function to set end of day time (23:59) for valid_to
+        function setEndOfDay() {
+            if (validToInput.value) {
+                const date = validToInput.value.split('T')[0];
+                validToInput.value = `${date}T23:59`;
             }
         }
-
-        // Always ensure valid-to is after valid-from
-        if (validFromInput.value && validToInput.value) {
-            const fromDate = new Date(validFromInput.value);
-            const toDate = new Date(validToInput.value);
+    
+        // Function to check if a date is in the past
+        function isDateInPast(dateStr) {
+            const currentDateTime = new Date();
+            const selectedDateTime = new Date(dateStr);
+            return selectedDateTime < currentDateTime;
+        }
+    
+        // Function to update validation rules based on edit mode
+        function updateDateTimeValidation() {
+            const currentDateTime = getCurrentDateTime();
             
-            if (toDate < fromDate) {
-                if (isEditMode && originalToValue) {
+            if (!isEditMode) {
+                validFromInput.min = currentDateTime;
+                validToInput.min = currentDateTime;
+    
+                if (validFromInput.value && isDateInPast(validFromInput.value)) {
+                    validFromInput.value = currentDateTime;
+                }
+                
+                if (validToInput.value && isDateInPast(validToInput.value)) {
+                    validToInput.value = currentDateTime;
+                }
+            } else {
+                if (validFromInput.value === '') {
+                    validFromInput.value = originalFromValue;
+                }
+                if (validToInput.value === '') {
                     validToInput.value = originalToValue;
-                } else {
-                    validToInput.value = validFromInput.value;
-                    setEndOfDay();
+                }
+            }
+    
+            if (validFromInput.value && validToInput.value) {
+                const fromDate = new Date(validFromInput.value);
+                const toDate = new Date(validToInput.value);
+                
+                if (toDate < fromDate) {
+                    if (isEditMode && originalToValue) {
+                        validToInput.value = originalToValue;
+                    } else {
+                        validToInput.value = validFromInput.value;
+                        setEndOfDay();
+                    }
                 }
             }
         }
-    }
-
-    // Add event listeners for date changes
-    validFromInput.addEventListener('change', function() {
-        if (this.value !== originalFromValue) {
-            // Only modify if it's not the original value
-            if (isDateInPast(this.value)) {
-                this.value = getCurrentDateTime();
-            }
-            
-            // Update valid-to if needed
-            if (this.value && validToInput.value) {
-                const selectedDateTime = new Date(this.value);
-                const validToDate = new Date(validToInput.value);
-                if (validToDate < selectedDateTime) {
-                    validToInput.value = this.value;
-                    setEndOfDay();
+    
+        // Add event listeners for date changes
+        validFromInput.addEventListener('change', function() {
+            if (!isEditMode || this.value !== originalFromValue) {
+                if (!isEditMode && isDateInPast(this.value)) {
+                    this.value = getCurrentDateTime();
                 }
-            }
-        }
-    });
-
-    validFromInput.addEventListener('change', function() {
-        if (!isEditMode || this.value !== originalFromValue) {
-            if (!isEditMode && isDateInPast(this.value)) {
-                this.value = getCurrentDateTime();
-            }
-            updateDateTimeValidation();
-        }
-    });
-
-    validToInput.addEventListener('change', function() {
-        if (!isEditMode || this.value !== originalToValue) {
-            if (!isEditMode && isDateInPast(this.value)) {
-                this.value = getCurrentDateTime();
-            }
-            updateDateTimeValidation();
-            setEndOfDay();
-        }
-    });
-
-    updateDateTimeValidation();
-
-    // Create a MutationObserver to watch for dynamically added min attributes
-    const observer = new MutationObserver(function(mutations) {
-        mutations.forEach(function(mutation) {
-            if (mutation.type === "attributes" && mutation.attributeName === "min") {
-                const target = mutation.target;
-                if (target.value === (target === validFromInput ? originalFromValue : originalToValue)) {
-                    // Remove min attribute for original values
-                    target.removeAttribute("min");
-                }
+                updateDateTimeValidation();
             }
         });
-    });
-
-    // Start observing both inputs for min attribute changes
-    observer.observe(validFromInput, { attributes: true });
-    observer.observe(validToInput, { attributes: true });
-
-    // Form submission handling
-    document.addEventListener('DOMContentLoaded', function() {
-        document.getElementById("offer-form").addEventListener("submit", function (e) {
-            e.preventDefault();
-            const form = this;
-            const url = form.getAttribute("data-url");
-            const formData = new FormData(form);
-
-            fetch(url, {
-                method: "POST",
-                body: formData,
-                headers: {
-                    "X-CSRFToken": form.querySelector("[name=csrfmiddlewaretoken]").value
-                },
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === "success") {
-                    Swal.fire({
-                        title: "Success!",
-                        text: data.message,
-                        icon: "success",
-                        confirmButtonText: "OK",
-                    }).then(() => {
-                        window.location.href = data.redirect_url;
-                    });
-                } else {
-                    Swal.fire({
-                        title: "Error!",
-                        text: data.message,
-                        icon: "error",
-                        confirmButtonText: "Try Again",
-                    });
+    
+        validToInput.addEventListener('change', function() {
+            if (!isEditMode || this.value !== originalToValue) {
+                if (!isEditMode && isDateInPast(this.value)) {
+                    this.value = getCurrentDateTime();
                 }
-            })
-            .catch(error => {
-                Swal.fire({
-                    title: "Error!",
-                    text: "Something went wrong. Please try again later.",
-                    icon: "error",
-                    confirmButtonText: "OK",
-                });
+                updateDateTimeValidation();
+                setEndOfDay();
+            }
+        });
+    
+        // Initialize validation
+        updateDateTimeValidation();
+    
+        // Create MutationObserver for min attributes
+        const observer = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+                if (mutation.type === "attributes" && mutation.attributeName === "min") {
+                    const target = mutation.target;
+                    if (target.value === (target === validFromInput ? originalFromValue : originalToValue)) {
+                        target.removeAttribute("min");
+                    }
+                }
             });
+        });
+    
+        // Start observing inputs
+        observer.observe(validFromInput, { attributes: true });
+        observer.observe(validToInput, { attributes: true });
+    
+        // Enhanced form submission handling
+        form.addEventListener("submit", async function(e) {
+            e.preventDefault();
+            
+            try {
+                const url = this.getAttribute("data-url");
+                const formData = new FormData(this);
+                
+                // Show loading state
+                Swal.fire({
+                    title: 'Processing...',
+                    text: 'Please wait while we update the offer',
+                    allowOutsideClick: false,
+                    allowEscapeKey: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+    
+                const response = await fetch(url, {
+                    method: "POST",
+                    body: formData,
+                    headers: {
+                        "X-CSRFToken": this.querySelector("[name=csrfmiddlewaretoken]").value,
+                        "X-Requested-With": "XMLHttpRequest"
+                    }
+                });
+    
+                const data = await response.json();
+    
+                // Close loading state
+                await Swal.close();
+    
+                if (data.status === "success") {
+                    await Swal.fire({
+                        title: "Success!",
+                        text: data.message || "Offer updated successfully!",
+                        icon: "success",
+                        confirmButtonText: "OK"
+                    });
+                    
+                    if (data.redirect_url) {
+                        window.location.href = data.redirect_url;
+                    }
+                } else {
+                    throw new Error(data.message || "Something went wrong");
+                }
+            } catch (error) {
+                await Swal.fire({
+                    title: "Error!",
+                    text: error.message || "Something went wrong. Please try again later.",
+                    icon: "error",
+                    confirmButtonText: "OK"
+                });
+            }
         });
     });
 </script>

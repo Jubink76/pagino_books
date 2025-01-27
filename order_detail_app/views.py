@@ -879,7 +879,10 @@ def apply_coupon(request):
                 new_total = total_amount - discount_amount
             else:
                 return JsonResponse({'status': 'error', 'message': 'Invalid coupon type.'})
-
+            
+            if total_amount < discount_amount:
+                return JsonResponse({'status':'error','message': f'Total amount should be greater than ₹{discount_amount}.'})
+            
             # Store converted float values in session
             request.session['temp_coupon'] = {
                 'code': coupon_code,
