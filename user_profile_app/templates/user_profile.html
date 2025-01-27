@@ -71,7 +71,7 @@
                     </div>
 
                     <!-- Profile Form -->
-                    <form action="" method="post" id="user-profile-form" class="space-y-6">
+                    <form action="{% url 'user_profile' %}" method="post" id="user-profile-form" class="space-y-6">
                         {% csrf_token %}
                         <!-- Name Grid -->
                         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -104,8 +104,8 @@
                             <label class="block text-sm font-medium text-gray-700 mb-2">Gender</label>
                             <select id="gender" name="gender" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none bg-white">
                                 <option value="male" {% if profile.gender == "male" %}selected{% endif %}>Male</option>
-                                <option value="female"{% if profile.gender == "female" %}selected{% endif %} selected>Female</option>
-                                <option value="other"{% if profile.gender == "other" %}selected{% endif %}>Other</option>
+                                <option value="female" {% if profile.gender == "female" %}selected{% endif %}>Female</option>
+                                <option value="other" {% if profile.gender == "other" %}selected{% endif %}>Other</option>
                             </select>
                         </div>
 
@@ -129,53 +129,59 @@
 {% block script %}
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-    const validationRules = {
-        first_name: {
-            validate: (value) => {
-                if (!value.trim()) return "First name is required";
-                if (!/^[A-Za-z\s]+$/.test(value.trim())) return "Name should only contain letters and spaces";
-                return null;
-            }
-        },
-        last_name: {
-            validate: (value) => {
-                if (!value.trim()) return "Last name is required"; 
-                if (!/^[A-Za-z\s]+$/.test(value.trim())) return "Name should only contain letters and spaces";
-                return null;
-            }
-        },
-        username: {
-            validate: (value) => {
-                if (!value.trim()) return "Username is required";
-                if (!/^[a-zA-Z0-9_]+$/.test(value.trim())) return "Username should only contain letters, numbers and underscores";
-                return null;
-            }
-        },
-        email: {
-            validate: (value) => {
-                if (!value.trim()) return "Email is required";
-                if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim())) return "Please enter a valid email address";
-                return null;
-            }
-        },
-        phone_number: {
-            validate: (value) => {
-                if (value.trim() && !/^[6-9]\d{9}$/.test(value.trim())) return "Please enter a valid 10-digit phone number";
-                return null;
-            }
-        }
-    };
-    
-    let originalFormValues = {};
     document.addEventListener('DOMContentLoaded', function() {
+        const validationRules = {
+            first_name: {
+                validate: (value) => {
+                    if (!value.trim()) return "First name is required";
+                    if (!/^[A-Za-z\s]+$/.test(value.trim())) return "Name should only contain letters and spaces";
+                    if (value.trim().length < 2) return "First name should be at least 2 characters";
+                    return null;
+                }
+            },
+            last_name: {
+                validate: (value) => {
+                    if (!value.trim()) return "Last name is required"; 
+                    if (!/^[A-Za-z\s]+$/.test(value.trim())) return "Name should only contain letters and spaces";
+                    if (value.trim().length < 2) return "Last name should be at least 2 characters";
+                    return null;
+                }
+            },
+            username: {
+                validate: (value) => {
+                    if (!value.trim()) return "Username is required";
+                    if (!/^[a-zA-Z0-9_]+$/.test(value.trim())) return "Username should only contain letters, numbers and underscores";
+                    return null;
+                }
+            },
+            email: {
+                validate: (value) => {
+                    if (!value.trim()) return "Email is required";
+                    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim())) return "Please enter a valid email address";
+                    return null;
+                }
+            },
+            phone_number: {
+                validate: (value) => {
+                    if (value.trim() && !/^[6-9]\d{9}$/.test(value.trim())) return "Please enter a valid 10-digit phone number";
+                    return null;
+                }
+            }
+        };
+    
+        let originalFormValues = {};
         const form = document.getElementById('user-profile-form');
         const saveButton = document.getElementById('save-changes');
-        
-        // Store original values
+        const genderSelect = document.getElementById('gender');
+    
+        // Store original form values
         form.querySelectorAll('input, select').forEach(field => {
             originalFormValues[field.id] = field.value;
         });
-        
+    
+        // Add change event listener for gender select
+        genderSelect.addEventListener('change', checkFormChanges);
+    
         // Add validation to fields
         Object.entries(validationRules).forEach(([fieldName, rule]) => {
             const input = document.getElementById(fieldName);
@@ -199,31 +205,47 @@
             });
         });
     
-        form.addEventListener('submit', function(e) {
+        // Form submission handler
+        form.addEventListener('submit', async function(e) {
             e.preventDefault();
             if (!validateForm()) return;
-        
+    
             const formData = new FormData(this);
-            fetch(this.action, {
-                method: 'POST',
-                headers: {
-                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
-                },
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    
+            try {
+                const response = await fetch(this.action, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'X-CSRFToken': csrfToken,
+                        'Accept': 'application/json'
+                    },
+                    body: new URLSearchParams(formData)
+                });
+    
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+    
+                const contentType = response.headers.get('content-type');
+                if (!contentType || !contentType.includes('application/json')) {
+                    throw new Error('Server returned non-JSON response');
+                }
+    
+                const data = await response.json();
+    
                 if (data.status === 'success') {
-                    Swal.fire({
+                    await Swal.fire({
                         title: 'Success!',
                         text: data.message,
                         icon: 'success',
                         confirmButtonText: 'OK'
-                    }).then(() => {
-                        if (data.redirect_url) {
-                            window.location.href = data.redirect_url;
-                        }
                     });
+                    
+                    if (data.redirect_url) {
+                        window.location.href = data.redirect_url;
+                    }
                 } else {
                     if (data.errors) {
                         Object.entries(data.errors).forEach(([field, message]) => {
@@ -235,82 +257,77 @@
                         throw new Error(data.message || 'Update failed');
                     }
                 }
-            })
-            .catch(error => {
-                Swal.fire({
+            } catch (error) {
+                console.error('Error:', error);
+                await Swal.fire({
                     title: 'Error',
                     text: error.message || 'An error occurred while updating the profile',
                     icon: 'error',
                     confirmButtonText: 'OK'
                 });
-            });
+            }
         });
+    
+        function showFieldError(input, message) {
+            removeFieldError(input);
+            
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'text-red-500 text-sm mt-1 validation-error';
+            errorDiv.textContent = message;
+            
+            input.classList.add('border-red-500', 'bg-red-50');
+            input.parentNode.appendChild(errorDiv);
+        }
+    
+        function removeFieldError(input) {
+            const existingError = input.parentNode.querySelector('.validation-error');
+            if (existingError) {
+                existingError.remove();
+            }
+            input.classList.remove('border-red-500', 'bg-red-50');
+        }
+    
+        function checkFormChanges() {
+            let hasChanges = false;
+            
+            form.querySelectorAll('input, select').forEach(field => {
+                if (field.value !== originalFormValues[field.id]) {
+                    hasChanges = true;
+                }
+            });
+            
+            saveButton.disabled = !hasChanges;
+            saveButton.classList.toggle('opacity-50', !hasChanges);
+            saveButton.classList.toggle('cursor-not-allowed', !hasChanges);
+        }
+    
+        function validateForm() {
+            let isValid = true;
+            const errorMessages = [];
+            
+            Object.entries(validationRules).forEach(([fieldName, rule]) => {
+                const input = document.getElementById(fieldName);
+                if (!input) return;
+    
+                const error = rule.validate(input.value);
+                if (error) {
+                    errorMessages.push(error);
+                    showFieldError(input, error);
+                    isValid = false;
+                }
+            });
+    
+            if (!isValid) {
+                Swal.fire({
+                    title: 'Validation Error',
+                    html: errorMessages.join('<br>'),
+                    icon: 'error',
+                    confirmButtonText: 'OK'
+                });
+            }
+    
+            return isValid;
+        }
     });
-    
-    function showFieldError(input, message) {
-        removeFieldError(input);
-        
-        const errorDiv = document.createElement('div');
-        errorDiv.className = 'text-red-500 text-sm mt-1 validation-error';
-        errorDiv.textContent = message;
-        
-        input.classList.add('border-red-500', 'bg-red-50');
-        input.parentNode.appendChild(errorDiv);
-    }
-    
-    function removeFieldError(input) {
-        const existingError = input.parentNode.querySelector('.validation-error');
-        if (existingError) {
-            existingError.remove();
-        }
-        input.classList.remove('border-red-500', 'bg-red-50');
-    }
-    
-    function checkFormChanges() {
-        const form = document.getElementById('user-profile-form');
-        const saveButton = document.getElementById('save-changes');
-        let hasChanges = false;
-        
-        form.querySelectorAll('input, select').forEach(field => {
-            if (field.value !== originalFormValues[field.id]) {
-                hasChanges = true;
-            }
-        });
-        
-        saveButton.disabled = !hasChanges;
-        if (hasChanges) {
-            saveButton.classList.remove('opacity-50', 'cursor-not-allowed');
-        } else {
-            saveButton.classList.add('opacity-50', 'cursor-not-allowed');
-        }
-    }
-    
-    function validateForm() {
-        let isValid = true;
-        const errorMessages = [];
-        
-        Object.entries(validationRules).forEach(([fieldName, rule]) => {
-            const input = document.getElementById(fieldName);
-            if (!input) return;
-    
-            const error = rule.validate(input.value);
-            if (error) {
-                errorMessages.push(error);
-                showFieldError(input, error);
-                isValid = false;
-            }
-        });
-    
-        if (!isValid) {
-            Swal.fire({
-                title: 'Validation Error',
-                html: errorMessages.join('<br>'),
-                icon: 'error',
-                confirmButtonText: 'OK'
-            });
-        }
-    
-        return isValid;
-    }
 </script>
 {% endblock %}
