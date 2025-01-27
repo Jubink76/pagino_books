@@ -59,16 +59,14 @@
             
                 <!-- Dropdown Menu -->
                 <ul id="filter-dropdown" class="absolute right-0 mt-2 w-48 bg-gray-800 border border-gray-600 rounded-md shadow-lg z-10 hidden">
-                    <li><a href="?status=active" class="block px-4 py-2 text-gray-300 hover:bg-gray-700">Available</a></li>
-                    <li><a href="?status=inactive" class="block px-4 py-2 text-gray-300 hover:bg-gray-700">Out of stock </a></li>
-                    <li><a href="?status=pending" class="block px-4 py-2 text-gray-300 hover:bg-gray-700">Popular</a></li>
-                    <li><a href="?status=blocked" class="block px-4 py-2 text-gray-300 hover:bg-gray-700">Price-low-to-high</a></li>
-                    <li><a href="?status=blocked" class="block px-4 py-2 text-gray-300 hover:bg-gray-700">Price-high-to-low</a></li>
-                    <li><a href="?status=blocked" class="block px-4 py-2 text-gray-300 hover:bg-gray-700">Price-rating</a></li>
-                    <li><a href="?status=blocked" class="block px-4 py-2 text-gray-300 hover:bg-gray-700">Price-Featured</a></li>
-                    <li><a href="?status=blocked" class="block px-4 py-2 text-gray-300 hover:bg-gray-700">Price-New products</a></li>
-                    <li><a href="?status=blocked" class="block px-4 py-2 text-gray-300 hover:bg-gray-700">Aa-Zz</a></li>
-                    <li><a href="?status=blocked" class="block px-4 py-2 text-gray-300 hover:bg-gray-700">Zz-Aa</a></li>
+                    <li><a href="?{% if search_query %}search={{ search_query }}{% endif %}" class="block px-4 py-2 text-gray-300 hover:bg-gray-700 {% if not current_filter %}bg-gray-700{% endif %}">Show All</a></li>
+                    <li><a href="?status=active{% if search_query %}&search={{ search_query }}{% endif %}" class="block px-4 py-2 text-gray-300 hover:bg-gray-700 {% if current_filter == 'active' %}bg-gray-700{% endif %}">Available</a></li>
+                    <li><a href="?status=inactive{% if search_query %}&search={{ search_query }}{% endif %}" class="block px-4 py-2 text-gray-300 hover:bg-gray-700 {% if current_filter == 'inactive' %}bg-gray-700{% endif %}">Out of stock</a></li>
+                    <li><a href="?status=price-low-to-high{% if search_query %}&search={{ search_query }}{% endif %}" class="block px-4 py-2 text-gray-300 hover:bg-gray-700 {% if current_filter == 'price-low-to-high' %}bg-gray-700{% endif %}">Price low to high</a></li>
+                    <li><a href="?status=price-high-to-low{% if search_query %}&search={{ search_query }}{% endif %}" class="block px-4 py-2 text-gray-300 hover:bg-gray-700 {% if current_filter == 'price-high-to-low' %}bg-gray-700{% endif %}">Price high to low</a></li>
+                    <li><a href="?status=price-new{% if search_query %}&search={{ search_query }}{% endif %}" class="block px-4 py-2 text-gray-300 hover:bg-gray-700 {% if current_filter == 'price-new' %}bg-gray-700{% endif %}">New products</a></li>
+                    <li><a href="?status=aa-zz{% if search_query %}&search={{ search_query }}{% endif %}" class="block px-4 py-2 text-gray-300 hover:bg-gray-700 {% if current_filter == 'aa-zz' %}bg-gray-700{% endif %}">A-Z</a></li>
+                    <li><a href="?status=zz-aa{% if search_query %}&search={{ search_query }}{% endif %}" class="block px-4 py-2 text-gray-300 hover:bg-gray-700 {% if current_filter == 'zz-aa' %}bg-gray-700{% endif %}">Z-A</a></li>
                 </ul>
             </div>
             

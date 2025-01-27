@@ -53,13 +53,29 @@
                             <svg class="-ml-1 mr-2 h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
                                 <path fill-rule="evenodd" d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V3z" clip-rule="evenodd"></path>
                             </svg>
-                            Filter
+                            Filter: {{ current_status|default:"All"|title }} Users
                         </button>
                     
                         <!-- Dropdown Menu -->
                         <ul id="filter-dropdown" class="absolute right-0 mt-2 w-48 bg-gray-800 border border-gray-600 rounded-md shadow-lg z-10 hidden">
-                            <li><a href="?status=active" class="block px-4 py-2 text-gray-300 hover:bg-gray-700">Active</a></li>
-                            <li><a href="?status=blocked" class="block px-4 py-2 text-gray-300 hover:bg-gray-700">Blocked</a></li>
+                            <li>
+                                <a href="?status=all{% if search_query %}&search={{ search_query }}{% endif %}{% if users.paginator.per_page %}&users_per_page={{ users.paginator.per_page }}{% endif %}" 
+                                   class="block px-4 py-2 text-gray-300 hover:bg-gray-700 {% if current_status == 'all' or not current_status %}bg-gray-700{% endif %}">
+                                    All Users
+                                </a>
+                            </li>
+                            <li>
+                                <a href="?status=active{% if search_query %}&search={{ search_query }}{% endif %}{% if users.paginator.per_page %}&users_per_page={{ users.paginator.per_page }}{% endif %}" 
+                                   class="block px-4 py-2 text-gray-300 hover:bg-gray-700 {% if current_status == 'active' %}bg-gray-700{% endif %}">
+                                    Active
+                                </a>
+                            </li>
+                            <li>
+                                <a href="?status=blocked{% if search_query %}&search={{ search_query }}{% endif %}{% if users.paginator.per_page %}&users_per_page={{ users.paginator.per_page }}{% endif %}" 
+                                   class="block px-4 py-2 text-gray-300 hover:bg-gray-700 {% if current_status == 'blocked' %}bg-gray-700{% endif %}">
+                                    Blocked
+                                </a>
+                            </li>
                         </ul>
                     </div>
                     
@@ -144,62 +160,30 @@
         
             <div class="flex space-x-2">
                 {% if users.has_previous %}
-                    <a href="?page={{ users.previous_page_number }}" class="px-4 py-2 rounded-md 
-                        bg-gradient-to-r from-blue-500 to-blue-600 
-                        text-white font-semibold 
-                        hover:from-blue-600 hover:to-blue-700 
-                        transition duration-300 ease-in-out 
-                        transform hover:-translate-y-0.5 
-                        shadow-md hover:shadow-lg">
+                    <a href="?page={{ users.previous_page_number }}{% if current_status %}&status={{ current_status }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}&users_per_page={{ users.paginator.per_page }}" 
+                    class="px-4 py-2 rounded-md bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold hover:from-blue-600 hover:to-blue-700">
                         Previous
                     </a>
-                {% else %}
-                    <span class="px-4 py-2 rounded-md 
-                        bg-gray-300 text-gray-500 
-                        cursor-not-allowed opacity-70">
-                        Previous
-                    </span>
                 {% endif %}
         
                 {% for page_num in users.paginator.page_range %}
                     {% if users.number == page_num %}
-                        <span class="px-4 py-2 rounded-md 
-                            bg-gradient-to-r from-blue-600 to-blue-700 
-                            text-white font-bold 
-                            shadow-md">
+                        <span class="px-4 py-2 rounded-md bg-gradient-to-r from-blue-600 to-blue-700 text-white font-bold shadow-md">
                             {{ page_num }}
                         </span>
                     {% else %}
-                        <a href="?page={{ page_num }}&users_per_page={{ users.paginator.per_page }}" 
-                            class="px-4 py-2 rounded-md 
-                            bg-white border border-gray-300 
-                            text-gray-700 font-semibold 
-                            hover:bg-blue-50 hover:text-blue-700 
-                            hover:border-blue-300 
-                            transition duration-300 ease-in-out 
-                            transform hover:-translate-y-0.5 
-                            shadow-sm hover:shadow-md">
+                        <a href="?page={{ page_num }}{% if current_status %}&status={{ current_status }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}&users_per_page={{ users.paginator.per_page }}" 
+                        class="px-4 py-2 rounded-md bg-white border border-gray-300 text-gray-700 font-semibold hover:bg-blue-50">
                             {{ page_num }}
                         </a>
                     {% endif %}
                 {% endfor %}
         
                 {% if users.has_next %}
-                    <a href="?page={{ users.next_page_number }}" class="px-4 py-2 rounded-md 
-                        bg-gradient-to-r from-blue-500 to-blue-600 
-                        text-white font-semibold 
-                        hover:from-blue-600 hover:to-blue-700 
-                        transition duration-300 ease-in-out 
-                        transform hover:-translate-y-0.5 
-                        shadow-md hover:shadow-lg">
+                    <a href="?page={{ users.next_page_number }}{% if current_status %}&status={{ current_status }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}&users_per_page={{ users.paginator.per_page }}" 
+                    class="px-4 py-2 rounded-md bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold hover:from-blue-600 hover:to-blue-700">
                         Next
                     </a>
-                {% else %}
-                    <span class="px-4 py-2 rounded-md 
-                        bg-gray-300 text-gray-500 
-                        cursor-not-allowed opacity-70">
-                        Next
-                    </span>
                 {% endif %}
             </div>
         </div>
@@ -212,40 +196,49 @@
     document.getElementById('users-per-page').addEventListener('change', function() {
         const usersPerPage = this.value;
         const currentUrl = new URL(window.location.href);
-
+        const status = currentUrl.searchParams.get('status') || '';
+        const search = currentUrl.searchParams.get('search') || '';
+    
         currentUrl.searchParams.set('users_per_page', usersPerPage);
-        // Fetch data from the server with selected number of users per page
-        fetch(`/admin-users/?users_per_page=${usersPerPage}&status={{ request.GET.status }}`)
+        
+        // Keep existing parameters
+        if (status) currentUrl.searchParams.set('status', status);
+        if (search) currentUrl.searchParams.set('search', search);
+        
+        // Fetch data from the server
+        fetch(`/admin-users/?users_per_page=${usersPerPage}&status=${status}&search=${search}`)
             .then(response => response.json())
             .then(data => {
                 const userTableBody = document.getElementById('user-table-body');
-                userTableBody.innerHTML = ''; // Clear current table rows
-
-                // Populate with new rows from the response data
+                userTableBody.innerHTML = '';
+    
                 data.users.forEach(user => {
                     const row = document.createElement('tr');
                     row.classList.add("hover:bg-gray-700", "group");
-
+    
                     row.innerHTML = `
-                        <td class="px-6 py-4 text-sm group-hover:text-white">${user.counter}</td>
-                        <td class="px-6 py-4 text-sm group-hover:text-white">${user.id}</td>
-                        <td class="px-6 py-4 text-sm group-hover:text-white">${user.first_name}</td>
-                        <td class="px-6 py-4 text-sm group-hover:text-white">${user.last_name}</td>
-                        <td class="px-6 py-4 text-sm group-hover:text-white">${user.email}</td>
-                        <td class="px-6 py-4 text-sm group-hover:text-white">${user.phone_number}</td>
-                        <td class="px-6 py-4 text-sm group-hover:text-white">${user.gender}</td>
-                        <td class="px-6 py-4 text-sm group-hover:text-white">${user.role}</td>
-                        <td class="px-6 py-4 text-sm">
-                            <span class="${user.is_blocked ? 'text-red-500' : (user.is_pending ? 'text-yellow-500' : 'text-green-500')} group-hover:text-opacity-90">
-                                ${user.is_blocked ? 'Blocked' : (user.is_pending ? 'Pending' : 'Active')}
+                        <td class="px-2 py-2 whitespace-nowrap text-sm text-gray-400 group-hover:text-white">${user.counter}</td>
+                        <td class="px-2 py-2 whitespace-nowrap text-sm text-gray-400 group-hover:text-white">${user.id}</td>
+                        <td class="px-2 py-2 whitespace-nowrap text-sm text-gray-400 group-hover:text-white">${user.first_name}</td>
+                        <td class="px-2 py-2 whitespace-nowrap text-sm text-gray-400 group-hover:text-white">${user.last_name}</td>
+                        <td class="px-2 py-2 whitespace-nowrap text-sm text-gray-400 group-hover:text-white">${user.email}</td>
+                        <td class="px-2 py-2 whitespace-nowrap text-sm text-gray-400 group-hover:text-white">${user.phone_number}</td>
+                        <td class="px-2 py-2 whitespace-nowrap text-sm text-gray-400 group-hover:text-white">${user.gender}</td>
+                        <td class="px-2 py-2 whitespace-nowrap text-sm text-gray-400 group-hover:text-white">${user.role || ''}</td>
+                        <td class="px-2 py-2 whitespace-nowrap text-sm">
+                            <span class="${user.is_blocked ? 'text-red-500' : 'text-green-500'} px-2 py-1 rounded-full text-xs font-semibold group-hover:text-opacity-90">
+                                ${user.is_blocked ? 'Blocked' : 'Active'}
                             </span>
                         </td>
-                        <td class="px-6 py-4 text-sm">${user.date_joined}</td>
-                        <td class="px-6 py-4 text-sm">
-                            <div class="flex gap-2">
-                                <a href="{% url 'view_users' user.id %}"><button class="p-1 hover:text-blue-500">👁️</button></a>
-                                <a href=""><button class="p-1 hover:text-green-500">✏️</button></a>
-                                <a href=""><button class="p-1 hover:text-red-500">🗑️</button></a>
+                        <td class="px-2 py-2 whitespace-nowrap text-sm text-gray-400 group-hover:text-white">${user.date_joined}</td>
+                        <td class="px-2 py-2 whitespace-nowrap text-sm">
+                            <div class="flex items-center space-x-2">
+                                <a href="/view-users/${user.id}" class="text-blue-500 hover:text-blue-600 transition-colors">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                        <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                                        <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd" />
+                                    </svg>
+                                </a>
                             </div>
                         </td>
                     `;
@@ -253,7 +246,8 @@
                 });
             })
             .catch(error => console.error('Error fetching user data:', error));
-            window.location.href = currentUrl.toString();
+        
+        window.location.href = currentUrl.toString();
     });
 </script>
 <script>

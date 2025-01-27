@@ -59,15 +59,29 @@
                             <svg class="-ml-1 mr-2 h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
                                 <path fill-rule="evenodd" d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V3z" clip-rule="evenodd"></path>
                             </svg>
-                            Filter
+                            Filter: {{ current_status|default:"All"|title }}
                         </button>
                     
                         <!-- Dropdown Menu -->
                         <ul id="filter-dropdown" class="absolute right-0 mt-2 w-48 bg-gray-800 border border-gray-600 rounded-md shadow-lg z-10 hidden">
-                            <li><a href="?status=active" class="block px-4 py-2 text-gray-300 hover:bg-gray-700">Active</a></li>
-                            <li><a href="?status=inactive" class="block px-4 py-2 text-gray-300 hover:bg-gray-700">Inactive</a></li>
-                            <li><a href="?status=pending" class="block px-4 py-2 text-gray-300 hover:bg-gray-700">Pending</a></li>
-                            <li><a href="?status=blocked" class="block px-4 py-2 text-gray-300 hover:bg-gray-700">Blocked</a></li>
+                            <li>
+                                <a href="?status=all{% if search_query %}&search={{ search_query }}{% endif %}{% if categories.paginator.per_page %}&categories_per_page={{ categories.paginator.per_page }}{% endif %}" 
+                                   class="block px-4 py-2 text-gray-300 hover:bg-gray-700 {% if current_status == 'all' or not current_status %}bg-gray-700{% endif %}">
+                                    All Categories
+                                </a>
+                            </li>
+                            <li>
+                                <a href="?status=active{% if search_query %}&search={{ search_query }}{% endif %}{% if categories.paginator.per_page %}&categories_per_page={{ categories.paginator.per_page }}{% endif %}" 
+                                   class="block px-4 py-2 text-gray-300 hover:bg-gray-700 {% if current_status == 'active' %}bg-gray-700{% endif %}">
+                                    Active
+                                </a>
+                            </li>
+                            <li>
+                                <a href="?status=inactive{% if search_query %}&search={{ search_query }}{% endif %}{% if categories.paginator.per_page %}&categories_per_page={{ categories.paginator.per_page }}{% endif %}" 
+                                   class="block px-4 py-2 text-gray-300 hover:bg-gray-700 {% if current_status == 'inactive' %}bg-gray-700{% endif %}">
+                                    Inactive
+                                </a>
+                            </li>
                         </ul>
                     </div>
                     
@@ -343,7 +357,8 @@
                 currentUrl.searchParams.set('categories_per_page', categoriesPerPage);
 
                 // Fetch updated categories data from the server
-                fetch(`/admin-categories/?categories_per_page=${categoriesPerPage}`)
+                const status = currentUrl.searchParams.get('status') || '';
+                fetch(`/admin-categories/?categories_per_page=${categoriesPerPage}&status=${status}&search=${search}`)
                     .then(response => {
                         if (!response.ok) {
                             throw new Error('Network response was not ok');

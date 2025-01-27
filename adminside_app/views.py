@@ -176,6 +176,15 @@ def admin_dashboard(request):
 def admin_users(request):
     users = UserTable.objects.all().order_by('id')
 
+    # Get filter status from URL parameters
+    status = request.GET.get('status', 'all')
+    
+    # Apply status filter if present
+    if status == 'blocked':
+        users = users.filter(is_blocked=True)
+    elif status == 'active':
+        users = users.filter(is_blocked=False)
+
     users_per_page = request.GET.get('users_per_page', 5)
     try:
         users_per_page = int(users_per_page)
@@ -200,9 +209,6 @@ def admin_users(request):
                 Q(username__icontains=search_query) |
                 Q(email__icontains=search_query)
             ).order_by('id')
-    else:
-        users = UserTable.objects.all().order_by('id')
-    # implement pagination
 
     paginator = Paginator(users, users_per_page)
     page_number = request.GET.get('page')
@@ -227,7 +233,8 @@ def admin_users(request):
 
     return render(request,'admin_users.html',{
         'users':users,
-        'search_query':search_query
+        'search_query':search_query,
+        'current_status': status
     })
 
 ######################################################################################################################
@@ -307,6 +314,20 @@ def view_users(request, pk):
 def admin_category(request):
     categories = CategoryTable.objects.annotate(product_count=Count('booktable'))
 
+    status = request.GET.get('status', 'all')
+
+    # Apply status filter if present
+    if status == 'active':
+        categories = categories.filter(is_available=True)
+    elif status == 'inactive':
+        categories = categories.filter(is_available=False)
+    elif status == 'pending':
+        # Add your pending logic here if needed
+        pass
+    elif status == 'blocked':
+        # Add your blocked logic here if needed
+        pass
+
     categories_per_page = request.GET.get('categories_per_page', 5)
     try:
         categories_per_page = int(categories_per_page)
@@ -352,7 +373,10 @@ def admin_category(request):
         ]
         return JsonResponse({"categories": categories_data})
 
-    return render(request, 'admin_category.html', {'categories': categories, 'categories_per_page': categories_per_page})
+    return render(request, 'admin_category.html', {'categories': categories,
+                                                    'categories_per_page': categories_per_page,
+                                                    'search_query': search_query,
+                                                    'current_status': status})
 
 ##############################################################################################################################
 @login_required(login_url='admin_login')
@@ -493,13 +517,10 @@ def delete_category(request, pk):
 ######################################################################################################################
 @login_required(login_url='admin_login')
 def admin_products(request):
-    books = BookTable.objects.all()
 
-    products_per_page = request.GET.get('product_per_page', 5)
-    try:
-        products_per_page = int(products_per_page)
-    except:
-        products_per_page = 5
+    books = BookTable.objects.all().order_by('id')
+
+    filter_status = request.GET.get('status', '')
 
     # search query for products
     search_query = request.GET.get('search','')
@@ -514,14 +535,42 @@ def admin_products(request):
                 Q(language__name__icontains = search_query) |
                 Q(category__category_name__icontains = search_query)
             ).order_by('id')
-    else:
-        books = BookTable.objects.all().order_by('id')
+
+    if filter_status:
+        if filter_status == 'active':
+            books = books.filter(is_available=True)
+        elif filter_status == 'inactive':
+            books = books.filter(is_available=False)
+        elif filter_status == 'popular':
+            books = books.order_by('-sales_count')  # Assuming you have a sales_count field
+        elif filter_status == 'price-low-to-high':
+            books = books.order_by('offer_price')
+        elif filter_status == 'price-high-to-low':
+            books = books.order_by('-offer_price')
+        elif filter_status == 'price-rating':
+            books = books.order_by('-rating')  # Assuming you have a rating field
+        elif filter_status == 'price-featured':
+            books = books.filter(is_featured=True)  # Assuming you have an is_featured field
+        elif filter_status == 'price-new':
+            books = books.order_by('-publication_date')
+        elif filter_status == 'aa-zz':
+            books = books.order_by('book_name')
+        elif filter_status == 'zz-aa':
+            books = books.order_by('-book_name')
 
     # Check if any active offer is associated with the category
     for book in books:
         active_offer = book.product_offer.filter(is_active=True).first()
         book.has_offer = bool(active_offer)
         book.active_offer_id = active_offer.id if active_offer else None
+
+    products_per_page = request.GET.get('product_per_page', 5)
+    try:
+        products_per_page = int(products_per_page)
+    except:
+        products_per_page = 5
+
+
     paginator = Paginator(books, products_per_page)
     page_number = request.GET.get('page')
     books = paginator.get_page(page_number)
@@ -555,7 +604,12 @@ def admin_products(request):
         })
 
             
-    return render(request,'admin_products.html',{'books':books})
+    context = {
+        'books': books,
+        'search_query': search_query,
+        'current_filter': filter_status,
+    }
+    return render(request, 'admin_products.html', context)
 
 #####################################################################################################################
 
