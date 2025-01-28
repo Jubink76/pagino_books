@@ -1474,6 +1474,16 @@ def add_category_offer(request, category_id):
                 errors.append("Discount type is required.")
             
             # Validate discount value based on discount type
+            try:
+                discount_value = float(discount_value)
+            except (ValueError, TypeError):
+                errors.append("Invalid discount value format. Please enter a valid number.")
+                return JsonResponse({
+                    'status': 'error',
+                    'message': '; '.join(errors)
+                }, status=400)
+
+            # Then proceed with business logic validation
             if discount_type == 'percentage':
                 if discount_value < 0 or discount_value > 95:
                     errors.append("Percentage discount must be between 0 and 95.")
