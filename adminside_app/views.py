@@ -1844,7 +1844,8 @@ def add_product_offer(request, product_id):
 
             # Validate discount value
             try:
-                discount_value = float(discount_value)
+                # Convert to Decimal instead of float for precise calculations
+                discount_value = Decimal(str(discount_value))
             except (ValueError, TypeError):
                 errors.append("Invalid discount value format. Please enter a valid number.")
                 return JsonResponse({
@@ -2006,7 +2007,8 @@ def edit_product_offer(request, product_id):
             
             # Validate discount value
             try:
-                discount_value = float(discount_value)
+                # Convert to Decimal instead of float for precise calculations
+                discount_value = Decimal(str(discount_value))
             except (ValueError, TypeError):
                 errors.append("Invalid discount value format. Please enter a valid number.")
                 return JsonResponse({

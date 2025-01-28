@@ -122,149 +122,123 @@
 {% block script %}
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-    const validFromInput = document.getElementById('valid-from');
-    const validToInput = document.getElementById('valid-to');
-
-    // Store the original values
-    const originalFromValue = validFromInput.value;
-    const originalToValue = validToInput.value;
-
-    // Function to get current date in YYYY-MM-DDThh:mm format
-    function getCurrentDateTime() {
-        const now = new Date();
-        const year = now.getFullYear();
-        const month = String(now.getMonth() + 1).padStart(2, '0');
-        const day = String(now.getDate()).padStart(2, '0');
-        const hours = String(now.getHours()).padStart(2, '0');
-        const minutes = String(now.getMinutes()).padStart(2, '0');
-        return `${year}-${month}-${day}T${hours}:${minutes}`;
-    }
-
-    // Function to set end of day time (23:59) for valid_to
-    function setEndOfDay() {
-        if (validToInput.value) {
-            const date = validToInput.value.split('T')[0];
-            validToInput.value = `${date}T23:59`;
+    document.addEventListener('DOMContentLoaded', function() {
+        const validFromInput = document.getElementById('valid-from');
+        const validToInput = document.getElementById('valid-to');
+        const form = document.querySelector('#offer-form');
+    
+        // Store the original values when the page loads
+        const originalValues = {
+            validFrom: validFromInput.value,
+            validTo: validToInput.value
+        };
+    
+        function getCurrentDateTime() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            return `${year}-${month}-${day}T${hours}:${minutes}`;
         }
-    }
-
-    // Function to check if a date is in the past
-    function isDateInPast(dateStr) {
-        const currentDateTime = new Date();
-        const selectedDateTime = new Date(dateStr);
-        return selectedDateTime < currentDateTime;
-    }
-
-    // Function to handle calendar display restrictions
-    function updateCalendarDisplay() {
-        if (validFromInput.value !== originalFromValue && isDateInPast(validFromInput.value)) {
-            validFromInput.value = getCurrentDateTime();
+    
+        function isDateInPast(dateStr) {
+            const currentDateTime = new Date();
+            const selectedDateTime = new Date(dateStr);
+            return selectedDateTime < currentDateTime;
         }
-        
-        if (validToInput.value !== originalToValue && isDateInPast(validToInput.value)) {
-            validToInput.value = getCurrentDateTime();
-        }
-    }
-
-    // Add event listeners for date changes
-    validFromInput.addEventListener('change', function() {
-        if (this.value !== originalFromValue) {
-            // Only modify if it's not the original value
-            if (isDateInPast(this.value)) {
-                this.value = getCurrentDateTime();
-            }
-            
-            // Update valid-to if needed
-            if (this.value && validToInput.value) {
-                const selectedDateTime = new Date(this.value);
-                const validToDate = new Date(validToInput.value);
-                if (validToDate < selectedDateTime) {
-                    validToInput.value = this.value;
-                    setEndOfDay();
+    
+        // Function to validate dates
+        function validateDates() {
+            const fromValue = validFromInput.value;
+    
+            // Only validate valid_from against current date if it's being changed
+            if (fromValue !== originalValues.validFrom) {
+                if (isDateInPast(fromValue)) {
+                    validFromInput.value = getCurrentDateTime();
                 }
             }
         }
-    });
-
-    validToInput.addEventListener('change', function() {
-        if (this.value !== originalToValue) {
-            // Only modify if it's not the original value
-            if (isDateInPast(this.value)) {
-                this.value = getCurrentDateTime();
-            }
-            
-            // Ensure valid-to is not before valid-from
-            if (this.value && validFromInput.value) {
-                const fromDateTime = new Date(validFromInput.value);
-                const selectedDateTime = new Date(this.value);
-                if (selectedDateTime < fromDateTime) {
-                    this.value = validFromInput.value;
-                }
-            }
-            setEndOfDay();
-        }
-    });
-
-    // Create a MutationObserver to watch for dynamically added min attributes
-    const observer = new MutationObserver(function(mutations) {
-        mutations.forEach(function(mutation) {
-            if (mutation.type === "attributes" && mutation.attributeName === "min") {
-                const target = mutation.target;
-                if (target.value === (target === validFromInput ? originalFromValue : originalToValue)) {
-                    // Remove min attribute for original values
-                    target.removeAttribute("min");
-                }
+    
+        // Event listener for valid_from changes
+        validFromInput.addEventListener('change', function() {
+            if (this.value !== originalValues.validFrom) {
+                validateDates();
             }
         });
-    });
-
-    // Start observing both inputs for min attribute changes
-    observer.observe(validFromInput, { attributes: true });
-    observer.observe(validToInput, { attributes: true });
-
-    // Form submission handling
-    document.addEventListener('DOMContentLoaded', function() {
-        document.getElementById("offer-form").addEventListener("submit", function (e) {
-            e.preventDefault();
-            const form = this;
-            const url = form.getAttribute("data-url");
-            const formData = new FormData(form);
-
-            fetch(url, {
-                method: "POST",
-                body: formData,
-                headers: {
-                    "X-CSRFToken": form.querySelector("[name=csrfmiddlewaretoken]").value
-                },
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === "success") {
-                    Swal.fire({
-                        title: "Success!",
-                        text: data.message,
-                        icon: "success",
-                        confirmButtonText: "OK",
-                    }).then(() => {
-                        window.location.href = data.redirect_url;
-                    });
-                } else {
-                    Swal.fire({
-                        title: "Error!",
-                        text: data.message,
-                        icon: "error",
-                        confirmButtonText: "Try Again",
-                    });
+    
+        // Create a MutationObserver to watch for dynamically added min attributes
+        const observer = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+                if (mutation.type === "attributes" && mutation.attributeName === "min") {
+                    const target = mutation.target;
+                    if (target.value === (target === validFromInput ? originalValues.validFrom : originalValues.validTo)) {
+                        // Remove min attribute for original values
+                        target.removeAttribute("min");
+                    }
                 }
-            })
-            .catch(error => {
-                Swal.fire({
-                    title: "Error!",
-                    text: "Something went wrong. Please try again later.",
-                    icon: "error",
-                    confirmButtonText: "OK",
-                });
             });
+        });
+    
+        // Start observing both inputs for min attribute changes
+        observer.observe(validFromInput, { attributes: true });
+        observer.observe(validToInput, { attributes: true });
+    
+        // Form submission handling
+        form.addEventListener("submit", async function(e) {
+            e.preventDefault();
+            
+            try {
+                const url = this.getAttribute("data-url");
+                const formData = new FormData(this);
+                
+                // Show loading state
+                Swal.fire({
+                    title: 'Processing...',
+                    text: 'Please wait while we update the offer',
+                    allowOutsideClick: false,
+                    allowEscapeKey: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+    
+                const response = await fetch(url, {
+                    method: "POST",
+                    body: formData,
+                    headers: {
+                        "X-CSRFToken": this.querySelector("[name=csrfmiddlewaretoken]").value,
+                        "X-Requested-With": "XMLHttpRequest"
+                    }
+                });
+    
+                const data = await response.json();
+    
+                await Swal.close();
+    
+                if (data.status === "success") {
+                    await Swal.fire({
+                        title: "Success!",
+                        text: data.message || "Offer updated successfully!",
+                        icon: "success",
+                        confirmButtonText: "OK"
+                    });
+                    
+                    if (data.redirect_url) {
+                        window.location.href = data.redirect_url;
+                    }
+                } else {
+                    throw new Error(data.message || "Something went wrong");
+                }
+            } catch (error) {
+                await Swal.fire({
+                    title: "Error!",
+                    text: error.message || "Something went wrong. Please try again later.",
+                    icon: "error",
+                    confirmButtonText: "OK"
+                });
+            }
         });
     });
 </script>
